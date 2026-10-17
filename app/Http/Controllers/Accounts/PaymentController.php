@@ -196,6 +196,7 @@ class PaymentController extends Controller
         return view('payments._open_invoices', [
             'invoices' => $invoices,
             'partyBalance' => $partyBalance,
+            'showInvoicePicker' => $data['party'] === 'retailer',
         ]);
     }
 

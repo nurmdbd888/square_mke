@@ -847,5 +847,14 @@
     "HTTP SMS endpoint URL": "HTTP SMS এন্ডপয়েন্ট URL",
     "POST JSON with phone, message, retailer and balance.": "phone, message, retailer ও balance সহ JSON POST করুন।",
     "WhatsApp Cloud access token": "WhatsApp Cloud অ্যাক্সেস টোকেন",
-    "WhatsApp phone number ID": "WhatsApp ফোন নম্বর ID"
+    "WhatsApp phone number ID": "WhatsApp ফোন নম্বর ID",
+    "Invoice number": "ইনভয়েস নম্বর",
+    "Receipt number": "রসিদ নম্বর",
+    "Payment number": "পেমেন্ট নম্বর",
+    "Your receipt or collection voucher number — not the sales invoice number.": "আপনার রসিদ বা সংগ্রহ ভাউচার নম্বর — বিক্রয় ইনভয়েস নম্বর নয়।",
+    "Your payment voucher or bank reference — not a supplier purchase invoice number.": "আপনার পেমেন্ট ভাউচার বা ব্যাংক রেফারেন্স — সরবরাহকারের ক্রয় ইনভয়েস নম্বর নয়।",
+    "Pay against invoice": "ইনভয়েসের বিপরীতে পরিশোধ",
+    "Choose invoice number…": "ইনভয়েস নম্বর বেছে নিন…",
+    "Due": "বকেয়া",
+    "Posted sales with an outstanding balance for this retailer. Choosing one fills that row; you can still pay partially or split across invoices below.": "এই খুচরা বিক্রেতার পোস্ট করা বিক্রয় যেগুলোর বকেয়া আছে। একটি বেছে নিলে সেই সারি পূরণ হয়; নিচের তালিকায় আংশিক বা একাধিক ইনভয়েসে ভাগ করা যায়।"
 }

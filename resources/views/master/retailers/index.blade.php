@@ -6,8 +6,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Retailers') }}</h1>
         <div class="flex flex-wrap items-center gap-2">
-            @include('import.partials.list-actions', ['entity' => 'retailers'])
-            @include('export.partials.actions', ['exportKey' => 'retailers'])
+            @include('master.partials.list-toolbar', ['entity' => 'retailers', 'exportKey' => 'retailers'])
             @can('retailers.manage')
                 <a href="{{ route('retailers.create') }}" class="btn-primary">{{ __('Add retailer') }}</a>
             @endcan
