@@ -6,6 +6,7 @@ use App\Domain\Import\EntityImportService;
 use App\Models\EntityImportBatch;
 use App\Models\Product;
 use App\Models\Retailer;
+use App\Models\SalesRep;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -70,6 +71,52 @@ class EntityImportTest extends TestCase
         $batch = app(EntityImportService::class)->preview('retailers', $file, $owner)['batch'];
         app(EntityImportService::class)->confirm($batch, EntityImportBatch::MODE_UPDATE, $owner);
         $this->assertSame('Corner Shop Import', Retailer::query()->where('code', 'R-IMP')->value('name'));
+    }
+
+    public function test_retailers_confirm_parses_comma_formatted_credit_limits(): void
+    {
+        $owner = $this->owner();
+        SalesRep::query()->create(['code' => '7287', 'name' => 'Field Rep']);
+        Retailer::query()->create(['code' => 'EXIST', 'name' => 'Existing', 'credit_limit' => '100.00']);
+
+        $csv = <<<'CSV'
+Retailer code,Name,Address,Phone,Route code,SR code,Credit limit
+NEW1,New Shop,Road 1,1,,7287,"1,500"
+NEW2,Other Shop,,1,,7287,"200,000"
+EXIST,Should Skip,,,,7287,"50,000"
+CSV;
+        $file = UploadedFile::fake()->createWithContent('retailers-import.csv', $csv);
+        $batch = app(EntityImportService::class)->preview('retailers', $file, $owner)['batch'];
+        $this->assertSame(0, $batch->error_count);
+
+        app(EntityImportService::class)->confirm($batch, EntityImportBatch::MODE_SKIP, $owner);
+
+        $this->assertSame('1500.00', Retailer::query()->where('code', 'NEW1')->value('credit_limit'));
+        $this->assertSame('200000.00', Retailer::query()->where('code', 'NEW2')->value('credit_limit'));
+        $this->assertSame('100.00', Retailer::query()->where('code', 'EXIST')->value('credit_limit'));
+        $this->assertSame('7287', SalesRep::query()->find(Retailer::query()->where('code', 'NEW1')->value('sales_rep_id'))?->code);
+    }
+
+    public function test_retailers_confirm_via_http_does_not_error_on_xlsx_style_amounts(): void
+    {
+        SalesRep::query()->create(['code' => '7287', 'name' => 'Field Rep']);
+        $csv = "Retailer code,Name,Address,Phone,Route code,SR code,Credit limit\nR-XLS,Live Row,Addr,1,,7287,\"1,500\"\n";
+        $file = UploadedFile::fake()->createWithContent('retailers-import.csv.xlsx', $csv);
+
+        $user = $this->owner();
+        $this->actingAs($user)
+            ->post(route('imports.entity.store', 'retailers'), ['file' => $file])
+            ->assertRedirect();
+
+        $batch = EntityImportBatch::query()->where('entity', 'retailers')->latest('id')->first();
+        $this->assertNotNull($batch);
+
+        $this->actingAs($user)
+            ->post(route('imports.entity.confirm', ['retailers', $batch]), ['duplicate_mode' => 'skip'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('1500.00', Retailer::query()->where('code', 'R-XLS')->value('credit_limit'));
     }
 
     #[DataProvider('listPagesWithImportActions')]
