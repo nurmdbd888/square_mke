@@ -8,7 +8,7 @@
         <form method="GET" class="flex items-end gap-2">
             <label class="block">
                 <span class="label">{{ __('As of') }}</span>
-                <input type="date" name="as_of" value="{{ $asOf }}" class="input">
+                <x-date-input name="as_of" :value="$asOf" />
             </label>
             <button class="btn-secondary">{{ __('Filter') }}</button>
         </form>
