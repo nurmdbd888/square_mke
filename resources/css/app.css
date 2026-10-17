@@ -1,0 +1,15 @@
+@import 'tailwindcss' source(none);
+
+@source '../views';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', 'Hind Siliguri',
+        'Nirmala UI', 'Vrinda', sans-serif;
+
+    --color-brand-50: #eef7ff;
+    --color-brand-100: #d9edff;
+    --color-brand-200: #bce0ff;
+    --color-brand-500: #2b83e6;
+    --color-brand-600: #1666cc;
+    --color-brand-700: #1352a5;
+}
