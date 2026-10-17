@@ -31,9 +31,13 @@ class PermissionMatrixTest extends TestCase
         $this->assertEqualsCanonicalizing(
             [
                 'products.view', 'retailers.view', 'sales.view', 'sales.manage',
-                'payments.view', 'payments.manage', 'returns.view', 'returns.manage',
+                'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage',
             ],
             Role::findByName('sr')->permissions->pluck('name')->all(),
+        );
+        $this->assertEqualsCanonicalizing(
+            ['payments.view', 'payments.collect', 'retailers.view'],
+            Role::findByName('collector')->permissions->pluck('name')->all(),
         );
         $this->assertEqualsCanonicalizing(
             [
@@ -90,6 +94,7 @@ class PermissionMatrixTest extends TestCase
                     'reports.view', 'reports.manage', 'exports.view', 'google.manage',
                 ],
                 'sr' => ['settings.view'],
+                'collector' => ['payments.view', 'payments.collect', 'retailers.view'],
                 'data_entry' => [
                     'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
@@ -125,7 +130,7 @@ class PermissionMatrixTest extends TestCase
             ->sole();
         $this->assertSame('role', $log->auditable_type);
         $this->assertEqualsCanonicalizing(
-            ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'returns.view', 'returns.manage', 'payments.view', 'payments.manage'],
+            ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'returns.view', 'returns.manage', 'payments.view', 'payments.collect', 'payments.manage'],
             $log->old_values['permissions'],
         );
         $this->assertSame(['permissions' => ['settings.view']], $log->new_values);
@@ -144,7 +149,8 @@ class PermissionMatrixTest extends TestCase
                     'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
                     'reports.view', 'reports.manage', 'exports.view', 'google.manage',
                 ],
-                'sr' => ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'payments.view', 'payments.manage', 'returns.view', 'returns.manage'],
+                'collector' => ['payments.view', 'payments.collect', 'retailers.view'],
+                'sr' => ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage'],
                 'data_entry' => [
                     'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
