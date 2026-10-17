@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
-use Throwable;
 
 class LoginController extends Controller
 {
@@ -67,17 +66,9 @@ class LoginController extends Controller
 
         Auth::login($user);
 
-        // Prefer Collections for field collectors; always fall back to dashboard.
-        $home = route('dashboard');
-        if ($user->hasRole('collector') && ! $user->isOwner()) {
-            try {
-                $home = route('collector.index');
-            } catch (Throwable) {
-                $home = route('dashboard');
-            }
-        }
-
-        return redirect()->intended($home);
+        // Always land on the dashboard after sign-in. Collectors open Collections
+        // from the nav — that avoids a 500 on login when migrations are pending.
+        return redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse
@@ -101,7 +92,7 @@ class LoginController extends Controller
     {
         try {
             return User::query()->whereHas('roles', fn ($q) => $q->where('name', PermissionRegistry::OWNER))->exists() ? null : 'no_owner';
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return 'no_database';
         }
     }
