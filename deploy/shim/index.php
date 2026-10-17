@@ -23,7 +23,7 @@ for ($dir = __DIR__; $dir !== dirname($dir); $dir = dirname($dir)) {
 
 if ($appRoot === null) {
     http_response_code(500);
-    exit('Square Dealer Manager: the folder mke/app was not found in your home folder.');
+    exit('Square Distributor Manager: the folder mke/app was not found in your home folder.');
 }
 
 require $appRoot.'/vendor/autoload.php';

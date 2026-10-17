@@ -1,4 +1,4 @@
-# Square Dealer Manager — SPEC (PHP 8.4 / Laravel)
+# Square Distributor Manager — SPEC (PHP 8.4 / Laravel)
 
 Owner: M/s Khaza Enterprise (Square distributor code 4831) · Host: cPanel shared hosting, `mke.rockproviders.com` · Version: 1.0, 2026-10-17
 

@@ -3,55 +3,68 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\SetLocale;
-use App\Models\SmokeHeartbeat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class HomePageTest extends TestCase
+class PublicPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_page_shows_the_firm_name_version_and_status(): void
+    public function test_guests_are_sent_to_the_login_page(): void
     {
-        $this->get('/')
-            ->assertOk()
-            ->assertSee('M/s Khaza Enterprise')
-            ->assertSee('Square Dealer Manager')
-            ->assertSee('4831')
-            ->assertSeeInOrder(['data-testid="version"', 'dev'], false)
-            ->assertSeeInOrder(['data-testid="database"', 'Connected'], false)
-            ->assertSeeInOrder(['data-testid="cron"', 'No heartbeat yet'], false);
+        $this->get('/')->assertRedirect(route('login'));
     }
 
-    public function test_firm_name_comes_from_configuration(): void
+    public function test_login_page_shows_the_product_firm_code_and_version(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Square Distributor Manager')
+            ->assertSee('M/s Khaza Enterprise')
+            ->assertSee('4831')
+            ->assertSee('Version');
+    }
+
+    public function test_login_page_tells_the_owner_to_create_an_account_first(): void
+    {
+        $this->get('/login')
+            ->assertSeeInOrder(['data-testid="setup-notice"', 'No owner account exists yet'], false);
+
+        $this->owner();
+
+        $this->get('/login')->assertDontSee('data-testid="setup-notice"', false);
+    }
+
+    public function test_firm_name_falls_back_to_configuration(): void
     {
         config(['sdm.firm_name' => 'Test Traders']);
 
-        $this->get('/')->assertOk()->assertSee('Test Traders');
-    }
-
-    public function test_home_page_shows_a_fresh_cron_heartbeat(): void
-    {
-        SmokeHeartbeat::create(['ran_at' => now()->subMinute(), 'php_version' => PHP_VERSION]);
-
-        $this->get('/')
-            ->assertOk()
-            ->assertDontSee('No heartbeat yet');
+        $this->get('/login')->assertOk()->assertSee('Test Traders');
     }
 
     public function test_bangla_is_used_when_the_locale_cookie_says_bn(): void
     {
         $this->withUnencryptedCookie(SetLocale::COOKIE, 'bn')
-            ->get('/')
+            ->get('/login')
             ->assertOk()
             ->assertSee('<html lang="bn">', false)
-            ->assertSee('স্কয়ার ডিলার ম্যানেজার');
+            ->assertSee('সাইন ইন')
+            ->assertSee('৪৮৩১');
+    }
+
+    public function test_product_name_stays_in_english_in_the_bangla_interface(): void
+    {
+        $this->withUnencryptedCookie(SetLocale::COOKIE, 'bn')
+            ->get('/login')
+            ->assertSee('Square Distributor Manager');
+
+        $this->assertSame('Square Distributor Manager', trans('Square Distributor Manager', [], 'bn'));
     }
 
     public function test_unknown_locale_cookie_falls_back_to_english(): void
     {
         $this->withUnencryptedCookie(SetLocale::COOKIE, 'xx')
-            ->get('/')
+            ->get('/login')
             ->assertOk()
             ->assertSee('<html lang="en">', false);
     }
@@ -79,7 +92,7 @@ class HomePageTest extends TestCase
         config(['app.key' => '']);
         $this->app->forgetInstance('encrypter');
 
-        $this->get('/')
+        $this->get('/login')
             ->assertStatus(503)
             ->assertSee('Setup is not finished yet')
             ->assertSee(route('maintenance'), false);

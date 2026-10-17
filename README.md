@@ -1,4 +1,4 @@
-# Square Dealer Manager
+# Square Distributor Manager
 
 Purchases, sales, stock, dues and profit for **M/s Khaza Enterprise**, a distributor of
 Square Toiletries Ltd. (distributor code 4831). Laravel 13 on PHP 8.4, MySQL/MariaDB,
@@ -9,7 +9,8 @@ built for cPanel shared hosting at `mke.rockproviders.com` with no terminal on t
 - Every assumption and decision: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Server install for the owner: [DEPLOY.md](DEPLOY.md)
 
-Current milestone: **M0, deploy smoke test** (home page, Maintenance page, one migration, cron heartbeat).
+Current milestone: **M1, setup, auth, roles, audit, i18n** (sign-in with optional 2FA, five roles and a permission
+matrix, user management, audit log, settings, English/Bangla). M0 (deploy smoke test) is live as v0.0.0.
 
 ## Local setup
 
@@ -23,10 +24,12 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
 php artisan migrate
+php artisan sdm:create-admin # first owner account (or use the Maintenance page)
 php artisan serve            # http://localhost:8000
 ```
 
 - Maintenance page: <http://localhost:8000/maintenance>, secret phrase = `MAINTENANCE_TOKEN` in `.env`.
+  Once an owner exists it also needs you to be signed in as an owner.
 - Cron locally: `php artisan schedule:work` (runs the every-minute heartbeat), or once: `php artisan schedule:run`.
 - Same checklist in the terminal: `php artisan sdm:check`.
 
@@ -80,20 +83,31 @@ Build locally: `scripts/build-release.sh v0.0.0-local` (output in `build/`).
 ## Layout
 
 ```
-app/Console/Commands/      sdm:heartbeat, sdm:check
-app/Http/Controllers/      Home, Maintenance, Locale
-app/Http/Middleware/       SetLocale (cookie), EnsureAppKey (setup page before APP_KEY exists)
-app/Support/               SharedPath (~/mke/shared), AppVersion
-app/Support/Maintenance/   MaintenanceGate (stateless token login), EnvironmentCheck, DatabaseProbe,
-                           MigrationStatus, AppKey, CronCommand
+app/Actions/               CreateOwner (Maintenance page and sdm:create-admin)
+app/Console/Commands/      sdm:heartbeat, sdm:check, sdm:create-admin
+app/Domain/                Money\Formatter (lakh/crore, Bangla digits), Calendar\FiscalYear (July-June)
+app/Http/Controllers/      Auth/*, Dashboard, Users, Roles, Settings, AuditLog, Profile, TwoFactor,
+                           Health, Maintenance, Locale
+app/Http/Middleware/       SetLocale (user, cookie, setting), EnsureAppKey (setup page before APP_KEY),
+                           EnsureAccountReady (temporary password, required 2FA), MaintenanceSession
+app/Models/                User, AuditLog, Setting, SmokeHeartbeat
+app/Settings/              SettingsRegistry, CoreSettings, SettingsStore (effective-dated rows)
+app/Support/               SharedPath (~/mke/shared), AppVersion, Health
+app/Support/Access/        PermissionRegistry (roles, permissions, defaults)
+app/Support/Audit/         AuditLogger, Auditable trait, AuditEvents
+app/Support/Auth/          TwoFactor (TOTP, recovery codes), LoginThrottle
+app/Support/Maintenance/   MaintenanceGate (stateless token login), OwnerAccess, EnvironmentCheck,
+                           DatabaseProbe, MigrationStatus, AppKey, CronCommand, FolderGuard
+app/helpers.php            setting(), format_number(), format_money(), local_digits()
 bootstrap/app.php          routing, middleware groups, ../shared for .env and storage
 config/sdm.php             firm name, distributor code, maintenance and heartbeat settings
-database/migrations/       smoke_heartbeats
+database/migrations/       smoke_heartbeats, users, cache, jobs, permissions, audit_logs, settings
 deploy/shared.example/     production .env.example and storage skeleton
 deploy/cpanel/             deploy.sh and cpanel.yml for the release branch
 deploy/shim/               index.php/.htaccess if the docroot must live in public_html
-lang/bn.json               Bangla strings
-resources/views/           Blade views (layouts, home, maintenance)
+lang/                      bn.json (Bangla UI strings), en/ and bn/ (roles, permissions, audit, validation)
+public/js/, public/fonts/  vendored HTMX 2.0.7 and Alpine 3.15.0, Noto Sans Bengali (OFL)
+resources/views/           Blade views (layouts app/guest, auth, users, roles, settings, audit, maintenance)
 routes/                    web.php, maintenance.php (stateless), console.php (schedule)
 scripts/                   build-css.sh, build-release.sh, publish-release-branch.sh
 docs/                      SPEC, PLAN, DECISIONS, samples/

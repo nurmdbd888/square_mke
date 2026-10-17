@@ -1,6 +1,6 @@
 # Decisions and assumptions log
 
-Every assumption made for Square Dealer Manager. Newest entries go at the bottom; superseded entries stay, marked **Superseded by #n**. In the code repo this file is `docs/DECISIONS.md`.
+Every assumption made for Square Distributor Manager. Newest entries go at the bottom; superseded entries stay, marked **Superseded by #n**. In the code repo this file is `docs/DECISIONS.md`.
 
 Format: **#. Title** — date · Decision · Reason · How to change.
 
@@ -58,7 +58,7 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: no Node on the server, and no external CDN dependency for offline/PWA use.
 - Change: rebuild CSS locally or in CI.
 
-**11. Queue, cache, session drivers** — 2026-10-17 · **Deferred to M1 by #46** (M0 uses file/sync)
+**11. Queue, cache, session drivers** — 2026-10-17 · **Deferred to M1 by #46** (M0 uses file/sync) · **Sessions and cache superseded by #70** (they stay on files)
 - Decision: queue = database, cache = database, session = database, mail = SMTP (cPanel mailbox) or log.
 - Reason: no Redis or Memcached on shared hosting. A database cache also keeps rate limiting consistent.
 - Change: `.env` keys `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER`.
@@ -213,7 +213,7 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: there is no terminal to run `create_admin`.
 - Change: rotate `MAINTENANCE_TOKEN` in `.env` at any time.
 
-**40. 2FA optional, recommended for owner** — 2026-10-17
+**40. 2FA optional, recommended for owner** — 2026-10-17 · **Amended by #72**
 - Decision: TOTP is optional per user. The owner is prompted to enable it at go-live.
 - Reason: brief says "optional 2FA".
 - Change: Settings > Security > "Require 2FA for roles".
@@ -247,12 +247,12 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: plan M0 asks for exactly one migration run from the Maintenance page.
 - Change: M1 migrations.
 
-**46. M0 uses file sessions, file cache and the sync queue** — 2026-10-17
+**46. M0 uses file sessions, file cache and the sync queue** — 2026-10-17 · **Change superseded by #70**
 - Decision: config defaults and both `.env` examples use `SESSION_DRIVER=file`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`. #11 (database drivers) takes effect in M1, once its tables exist.
 - Reason: the home and Maintenance pages must work before the first migration; database sessions or cache would crash every page on a fresh install.
 - Change: switch the three `.env` keys after M1's migrations have run.
 
-**47. Maintenance page is stateless and token-protected** — 2026-10-17
+**47. Maintenance page is stateless and token-protected** — 2026-10-17 · **Amended by #74** (owner login once an owner exists)
 - Decision: `/maintenance` runs in its own middleware group without sessions, cookie encryption or CSRF middleware. Login posts `MAINTENANCE_TOKEN`; on success the browser gets cookie `sdm_maintenance` = expiry + HMAC-SHA256(expiry, token): 2 hours, HttpOnly, SameSite=Strict, Secure on HTTPS. POST buttons carry a form token derived from the same cookie. Changing the token logs everyone out. Login is limited to 5 failures per IP per 10 minutes (file cache); if the cache folder is unwritable the limit is skipped and a warning is logged, so the owner can still reach the page that reports the problem. Token shorter than 20 characters: page locked (403). `MAINTENANCE_ENABLED=false`: 404. Owner login on top of the token (#5, #39) arrives in M1.
 - Reason: the page must work before `APP_KEY` and the database exist (spec §2), with no terminal fallback.
 - Change: `config/sdm.php` `maintenance.*`.
@@ -304,22 +304,22 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: the owner needs to see which version is live.
 - Change: `.gitattributes`, `scripts/build-release.sh`.
 
-**57. Tailwind standalone CLI, no Node anywhere** — 2026-10-17
+**57. Tailwind standalone CLI, no Node anywhere** — 2026-10-17 · **Amended by #80**
 - Decision: `scripts/build-css.sh` downloads the pinned Tailwind CLI (v4.3.3) into `.tools/` and compiles `resources/css/app.css` to the committed `public/css/app.css`. Vite, `package.json` and `resources/js` from the skeleton were removed. CI fails if the committed CSS is stale. HTMX and Alpine are vendored in M1. Tailwind v4 needs no `tailwind.config.js`; the theme lives in `resources/css/app.css`.
 - Reason: #10 and spec §2.
 - Change: bump `TAILWIND_VERSION` in the script and rebuild.
 
-**58. Bangla font not yet self-hosted** — 2026-10-17
+**58. Bangla font not yet self-hosted** — 2026-10-17 · **Superseded by #78**
 - Decision: M0 uses a system font stack with Bangla fallbacks (Noto Sans Bengali, Hind Siliguri, Nirmala UI, Vrinda). The self-hosted woff2 font arrives in M1 (plan).
 - Reason: keep M0 small; Android, Windows and macOS all ship a Bangla font.
 - Change: M1.
 
-**59. Locale by cookie in M0** — 2026-10-17
+**59. Locale by cookie in M0** — 2026-10-17 · **Superseded by #78**
 - Decision: English default, Bangla optional, chosen with `/locale/{en|bn}` and stored in an unencrypted cookie `sdm_locale` (1 year) so it also works on the stateless Maintenance page. Only UI strings are translated (`lang/bn.json`); the technical detail text on the Maintenance checklist stays English. Per-user locale comes in M1.
 - Reason: plan M1 owns the full i18n; M0 only wires it.
 - Change: M1.
 
-**60. Firm name and distributor code from config until M1** — 2026-10-17
+**60. Firm name and distributor code from config until M1** — 2026-10-17 · **Superseded by #77**
 - Decision: `config/sdm.php` reads `SDM_FIRM_NAME` (default "M/s Khaza Enterprise") and `SDM_DISTRIBUTOR_CODE` (default 4831). M1's settings table overrides them.
 - Reason: no settings table in M0.
 - Change: `.env`.
@@ -358,3 +358,85 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: supersedes the "zip is primary" part of #53. The owner has cPanel Git™ Version Control working on `release`, so `DEPLOY.md` now describes the Git way first (first install and updates: **Update from Remote** → **Deploy HEAD Commit**) and keeps the zip way as the fallback for hosts that refuse deployment. The folder layout, rollback by renaming `app-prev`, and "republish an older tag with Actions → Release → Run workflow" are unchanged. The release tree carries `deploy/root.htaccess`; `deploy.sh` rewrites `~/mke/.htaccess` from it on every deploy, outside the `app` → `app-prev` swap, so the safety net (#66) is never lost and a cPanel PHP handler block in it is kept. The release workflow runs `scripts/test-deploy.sh` against the built tree (first deploy, two updates, and a v0.0.0-style install without the safety files) before the branch is published.
 - Reason: two clicks per update, no file uploads, and cPanel's PHP settings survive updates (#55). The zip stays because cPanel lets accounts without shell access clone but not deploy.
 - Change: if the Git deploy ever stops working on this host, `DEPLOY.md`'s zip way is complete on its own.
+
+## M1 setup, auth, roles, audit, i18n
+
+**68. Product name is Square Distributor Manager, never translated** — 2026-10-17
+- Decision: the product is renamed from "Square Dealer Manager" to "Square Distributor Manager" in code, config defaults, both `.env` examples, views, docs and tests. The name stays in English in the Bangla interface too (`lang/bn.json` maps it to itself; a test enforces it). The session cookie (`sdm_session`) and cache prefix (`sdm-cache-`) are fixed names instead of being derived from `APP_NAME`, and the authenticator-app issuer is a constant.
+- Reason: owner request. Fixed cookie and cache names mean editing `APP_NAME` never signs everyone out or empties the cache; the live `.env`'s `APP_NAME` now only sets the sender name of password-reset e-mails.
+- Change: `APP_NAME` in `.env` (optional); the in-app name is the `__('Square Distributor Manager')` string.
+
+**69. Sign-in by user name or e-mail** — 2026-10-17
+- Decision: every user has a unique lower-case user name (letters, digits, `.`, `_`, `-`); e-mail is optional and unique. Passwords are 10–128 characters (bcrypt). No "remember me": sessions end after `SESSION_LIFETIME` (120 minutes) without activity. Wrong user name and wrong password give the same message, and an unknown user name still costs one bcrypt check so timing does not reveal valid names. The session id changes at sign-in and the session is destroyed at sign-out. Users created by someone else (and passwords reset by the owner) are temporary: the user must choose a new password before any other page opens. A password change signs the user out of other browsers (`auth.session` middleware).
+- Reason: staff such as SRs may have no e-mail; the plan asks for secure sessions.
+- Change: `Password::defaults()` in `AppServiceProvider`.
+
+**70. Sessions and cache stay on files; the queue stays sync** — 2026-10-17 · supersedes the session and cache part of #11 and the "Change" line of #46
+- Decision: `SESSION_DRIVER=file`, `CACHE_STORE=file` and `QUEUE_CONNECTION=sync` remain the defaults after M1. M1's migrations still create the `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches` and `failed_jobs` tables, so switching later is one `.env` line. The queue moves to `database` with the first milestone that queues work.
+- Reason: file sessions keep the sign-in page, its "database is not ready" notice and the Maintenance page's owner check working while the database is down or not migrated. This is one server, so file locks keep rate limiting consistent, which was #11's reason for a database cache. The owner does not need to edit `.env` for this release.
+- Change: set the three `.env` keys to `database` (after **Run migrations**).
+
+**71. Sign-in rate limits** — 2026-10-17
+- Decision: 5 failed attempts per minute per user name + IP; the 6th attempt within the minute is refused even with the right password, and a successful sign-in clears that counter. A second limit of 20 failures per minute per IP across all user names stops one machine from guessing many accounts. The two-factor step has the same limits. Lockouts are audited (`auth.lockout`). "Forgot password" and "reset password" posts are limited to 5 per minute. The Maintenance phrase keeps its own limit (#47).
+- Reason: plan M1 acceptance ("the 6th failed login within a minute is blocked").
+- Change: `App\Support\Auth\LoginThrottle`.
+
+**72. Two-factor sign-in (TOTP)** — 2026-10-17 · amends #40
+- Decision: optional per user, set up from **My profile**: `pragmarx/google2fa` (RFC 6238, 30-second codes, ±1 step of clock drift) and an inline SVG QR code from `bacon/bacon-qr-code` (no image extension). The new secret stays in the session until the user types a working code. The secret and 8 one-time recovery codes are stored encrypted with `APP_KEY`. A code that was already accepted, or an older one, is refused (replay protection via `two_factor_last_step`). After the password step only the user id waits in the session (5 minutes); nobody is signed in until the code is right. Turning 2FA off, or making new recovery codes, needs the current password. The setting `require_2fa_roles` sends users of those roles to their profile until 2FA is on. The owner can turn 2FA off for another user; an owner without another owner uses recovery (#74). The "prompt the owner" in #40 is a step in `DEPLOY.md`, not a forced screen.
+- Reason: brief says optional 2FA; works with Google or Microsoft Authenticator.
+- Change: Settings → Security.
+
+**73. Roles and permissions** — 2026-10-17
+- Decision: `spatie/laravel-permission` with five roles: `owner`, `accountant`, `sr`, `data_entry`, `viewer`. Each user has exactly one role. The owner passes every check (`Gate::before`), so the permission matrix cannot lock the owner out. Permissions are listed in `App\Support\Access\PermissionRegistry` and created by a migration (later milestones add theirs the same way). A permission's default roles are granted only when the permission is first created, so the owner's later edits in **Roles and permissions** survive updates. M1 defaults: accountant has `health.view`, `users.view`, `settings.view`, `audit.view`; viewer has `settings.view`; SR and data entry have none yet (their screens arrive with purchases and sales). `users.manage`, `roles.manage` and `settings.manage` are owner-only by default; a non-owner given `users.manage` still cannot create, edit, reset or deactivate an owner, or make anyone an owner. The last owner cannot be demoted or deactivated, and nobody can deactivate themselves.
+- Reason: plan M1; one role per user keeps the matrix readable for the owner.
+- Change: **Roles and permissions** page.
+
+**74. Owner lock on the Maintenance page** — 2026-10-17 · implements #5 and #39, amends #47
+- Decision: while no owner exists, the secret phrase alone opens `/maintenance`, and the page shows **Create the owner account**. Once an owner exists, every Maintenance request also needs the visitor to be signed in to the app as an owner; otherwise a 403 page links to the sign-in page, which returns there. If the users table cannot be read (database down, not migrated), the phrase alone works again, so the owner can still see what is wrong. The Maintenance routes start a session only when `APP_KEY` is valid and the session folder is usable; they still have no CSRF middleware and keep their own form token (#47). A signed-in owner can add more owners there. `MAINTENANCE_OWNER_RECOVERY=true` in `.env` lifts the owner lock and shows a form to reset an owner's password (it also turns off that owner's 2FA); `DEPLOY.md` says to set it back to `false` straight away. Generate key, migrate, clear caches, create owner and recovery are all audited with source `maintenance`.
+- Reason: there is no terminal; the phrase alone must not stay enough once the app holds data, and someone with cPanel access must be able to recover.
+- Change: `config/sdm.php` `maintenance.owner_recovery`.
+
+**75. Users are deactivated, not deleted; password reset** — 2026-10-17
+- Decision: **Deactivate** soft-deletes the user. They cannot sign in, their audit history and later their documents keep pointing at them, the user name stays reserved, and **Reactivate** restores them. The users list has active, inactive and all filters, search, a role filter and 50 rows per page. "Forgot your password?" sends a reset link only when mail is set up (`MAIL_MAILER` is not `log`, `array` or empty) and the user has an e-mail address; the answer on screen is the same either way. Otherwise the owner sets a temporary password on the Users page.
+- Reason: the host's mail setup is unknown; history must stay intact.
+- Change: SMTP lines in `.env` (`deploy/shared.example/.env.example`).
+
+**76. Audit log** — 2026-10-17
+- Decision: one append-only `audit_logs` table: when, user id and user name (kept if the user is renamed or deactivated), source (`web`, `maintenance`, `console`), event, record type and id, old and new values as JSON, IP, user agent, and "METHOD path" (no query string). Models using the `Auditable` trait log `created`, `updated` (changed fields only), `deleted` and `restored`; passwords, remember tokens and 2FA secrets are stored as `[hidden]` or skipped. Sign-in, sign-out, failed sign-in, lockout, password changes and resets, 2FA changes, role changes, permission-matrix changes and Maintenance actions are explicit events. One settings save writes one row listing only the changed keys. A failed audit write is logged as a warning and never stops the user's action. The viewer (owner and accountant by default) filters by user, event (or event group), record type and id, source and date range, 50 rows per page, with a before/after table per entry. No pruning yet.
+- Reason: plan M1 "full audit log (who, when, IP, old/new JSON)".
+- Change: retention and export come with M10 (backups and hardening).
+
+**77. Settings store with effective-dated rows** — 2026-10-17 · supersedes #60
+- Decision: each setting is declared in code (`App\Settings\SettingsRegistry`: key, type, default, group, label, help, validation, and whether it is effective-dated). The `settings` table holds only what the owner changed, as JSON. A plain setting has one row (`effective_from` empty); an effective-dated setting has one row per start date, and the value on a date is the row with the latest start on or before it, else the default. Reads never throw: before migrations or with the database down every setting returns its default. M1 registers firm name, distributor code (defaults still from `SDM_FIRM_NAME` and `SDM_DISTRIBUTOR_CODE`), default language, fiscal-year start month (7) and `require_2fa_roles`. Business-rule settings (VAT, commission, …) are registered by the milestones that read them. Only future-dated rows can be removed; a past rate is changed by adding a new row from today.
+- Reason: plan M1; rates must apply by document date, not by the day they were typed.
+- Change: **Settings** page.
+
+**78. Language per user; Bangla font self-hosted** — 2026-10-17 · supersedes #58 and #59
+- Decision: the language is the signed-in user's choice (saved by the switch in the top bar or on **My profile**), else the `sdm_locale` cookie, else the **Default language** setting, else `APP_LOCALE`. UI strings live in `lang/bn.json`, with role, permission, setting-group and audit-event names in `lang/{en,bn}/*.php` and Bangla validation messages in `lang/bn/validation.php`. A test fails if any `__()` string lacks a Bangla translation or loses a placeholder. Technical detail text on the Maintenance checklist stays English (#59). Noto Sans Bengali 400, 600 and 700 are served from `public/fonts` as woff2 (Bengali code points only, about 45 KB each, SIL Open Font License in `OFL.txt`), so Bangla looks the same on every phone; Latin text keeps the system font.
+- Reason: plan M1 "English/Bangla switch per user, self-hosted Bangla font".
+- Change: add strings to `lang/bn.json`.
+
+**79. Number formatting and fiscal year** — 2026-10-17
+- Decision: `App\Domain\Money\Formatter` works on decimal strings with `brick/math` (never floats): lakh/crore grouping (`1234567.89` → `12,34,567.89`), round half up, Bangla digits in Bangla (`১২,৩৪,৫৬৭.৮৯`), `৳` amounts, and short forms ("1.23 crore", "১২.৩৫ লাখ"). Blade helpers: `format_number()`, `format_money()`, `local_digits()`. `App\Domain\Calendar\FiscalYear` gives the July–June year containing a date, labelled `2026-27` (`২০২৬-২৭` in Bangla); the start month is the setting `fiscal_year_start_month`. Dates on screen are `dd-mm-yyyy`.
+- Reason: plan M1; Bangladesh fiscal year.
+- Change: none.
+
+**80. HTMX and Alpine vendored** — 2026-10-17 · amends #57
+- Decision: `public/js/htmx.min.js` (2.0.7) and `public/js/alpine.min.js` (3.15.0) are committed, loaded with `defer` and a file-time version query. `public/js/app.js` adds the CSRF token to every HTMX request and reloads the page if a request comes back 401 or 419 (signed out or expired). List filters use HTMX and get back only the table; every list is paginated (50 rows). Shared button, input, card and table styles are Tailwind `@utility` classes in `resources/css/app.css`.
+- Reason: #10, no Node or CDN on the server.
+- Change: replace the files and update the version numbers here.
+
+**81. CSRF and cookie settings** — 2026-10-17
+- Decision: every app form has `@csrf`, and Laravel's `PreventRequestForgery` middleware also accepts a request whose browser marks it `Sec-Fetch-Site: same-origin`. Tests switch the check back on (Laravel skips it in tests) and prove a forged cross-site post gets 419. The session cookie is HttpOnly and SameSite=Lax, and Secure whenever `SESSION_SECURE_COOKIE=true` or, if that line is missing, when `APP_URL` starts with `https://`. The locale cookie is unencrypted and HttpOnly; the Maintenance cookie is unchanged (#47).
+- Reason: plan M1 acceptance.
+- Change: `config/session.php`.
+
+**82. `sdm:create-admin` shares the Maintenance code** — 2026-10-17
+- Decision: `php artisan sdm:create-admin` (for development, or a host with a terminal) asks for the password without echoing it and calls the same `App\Actions\CreateOwner` as the Maintenance page, so the validation and audit row (source `console`) are identical. The Maintenance page does not run it through `Artisan::call`.
+- Reason: one code path; the password never passes through command-line arguments.
+- Change: none.
+
+**83. M1 and the folder safety net ship as v0.1.0** — 2026-10-17
+- Decision: the safety net (#66, #67) was merged after v0.0.0 but not tagged; it ships with M1 in v0.1.0, following the plan's `v0.N.0` rule. `DEPLOY.md` says "versions from v0.1.0" for the safety file and has one combined update section for v0.0.0 → v0.1.0.
+- Reason: one release for the owner to deploy.
+- Change: if a different tag is used, update those two places in `DEPLOY.md`.
