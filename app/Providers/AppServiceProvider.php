@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Models\CustomField;
+use App\Models\DailyClosing;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\ExpenseCategory;
 use App\Models\OpeningBalance;
+use App\Models\Payment;
+use App\Models\PaymentAllocation;
 use App\Models\PriceList;
 use App\Models\PriceListItem;
 use App\Models\Product;
@@ -82,6 +86,10 @@ class AppServiceProvider extends ServiceProvider
             'document' => Document::class,
             'document_line' => DocumentLine::class,
             'stock_ledger_entry' => StockLedgerEntry::class,
+            'payment' => Payment::class,
+            'payment_allocation' => PaymentAllocation::class,
+            'daily_closing' => DailyClosing::class,
+            'expense_category' => ExpenseCategory::class,
         ]);
 
         // The owner can never be locked out by the permission matrix.

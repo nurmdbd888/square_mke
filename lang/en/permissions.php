@@ -8,6 +8,7 @@ return [
         'audit' => 'Audit',
         'master' => 'Master data',
         'documents' => 'Purchases and sales',
+        'accounts' => 'Payments and accounts',
     ],
     'names' => [
         'health.view' => 'See system health',
@@ -28,5 +29,9 @@ return [
         'sales.view' => 'See sales documents',
         'sales.manage' => 'Create, edit, post and void sales',
         'stock.view' => 'See the stock ledger',
+        'payments.view' => 'See receipts and payments',
+        'payments.manage' => 'Create, edit, post and void receipts and payments',
+        'accounts.view' => 'See receivables, payables and cash/bank books',
+        'accounts.manage' => 'Record daily closings',
     ],
 ];

@@ -51,6 +51,16 @@ return [
             'posted_edited' => 'Posted document edited',
             'voided' => 'Document voided',
         ],
+        'payment' => [
+            '*' => 'All payment actions',
+            'posted' => 'Payment posted',
+            'posted_edited' => 'Posted payment edited',
+            'voided' => 'Payment voided',
+            'cleared' => 'Post-dated cheque cleared',
+        ],
+        'daily_closing' => [
+            'created' => 'Daily closing recorded',
+        ],
     ],
     'types' => [
         'user' => 'User',
@@ -70,6 +80,10 @@ return [
         'document' => 'Document',
         'document_line' => 'Document line',
         'stock_ledger_entry' => 'Stock ledger entry',
+        'payment' => 'Payment',
+        'payment_allocation' => 'Payment allocation',
+        'daily_closing' => 'Daily closing',
+        'expense_category' => 'Expense category',
     ],
     'sources' => [
         'web' => 'App',

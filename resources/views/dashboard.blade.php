@@ -38,6 +38,6 @@
 
     <section class="mt-6 card">
         <h2 class="font-semibold text-slate-900">{{ __('What is ready') }}</h2>
-        <p class="mt-1 text-sm text-slate-600">{{ __('Sign-in, users and roles, settings, the audit log, the Bangla interface, master data, purchases, sales and stock costing are ready. Payments and returns come in the next updates.') }}</p>
+        <p class="mt-1 text-sm text-slate-600">{{ __('Sign-in through stock costing, payments, receivables, payables and the cash and bank books are ready. Returns and claims come in the next updates.') }}</p>
     </section>
 @endsection

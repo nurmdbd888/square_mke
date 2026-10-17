@@ -510,3 +510,33 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: `purchases.view` → accountant, data entry, viewer; `purchases.manage` → accountant, data entry; `sales.view` → accountant, SR, data entry, viewer; `sales.manage` → accountant, SR, data entry; `stock.view` → accountant, data entry, viewer. Nav adds Purchases, Sales and Stock. The dashboard ready line now includes purchases, sales and stock costing.
 - Reason: plan M3.
 - Change: Roles and permissions.
+
+**98. Receipts, payments and allocations** — 2026-10-17
+- Decision: one `payments` table with `kind` receipt or payment, methods cash / bKash / Nagad / Rocket / bank / cheque / pdc / petty, statuses draft / posted / void. Allocations live in `payment_allocations` (payment + document + amount). Unallocated amount is an advance (`is_advance`). Posted payments are voided, never hard-deleted; a draft is soft-deleted. Amounts use `brick/math` (#24).
+- Reason: plan M4.
+- Change: Payments screens.
+
+**99. Post-dated cheques enter the books only when cleared** — 2026-10-17
+- Decision: a PDC is posted with `clearing_status = pending` and a due date. It does not move cash/bank books, party balances or open-invoice remaining until marked cleared (`cleared_at`). The book date is the cleared date. Ordinary cheques count on the payment date.
+- Reason: plan M4 acceptance.
+- Change: `Payment::countsInBooks()` / `bookDate()`; Clear action on the payment page.
+
+**100. Receivables, payables and ageing** — 2026-10-17
+- Decision: outstanding = opening balance + posted invoices − allocated − advances (PDC counted only when cleared, #99). Ageing buckets are 0–30 / 31–60 / 61–90 / 90+ by invoice date. Retailer statements show buckets and open invoices. A credit-limit warning (flash) appears when a posted sale leaves the retailer over `retailers.credit_limit`; it does not block the sale.
+- Reason: plan M4.
+- Change: Receivables, Payables, Statement; `App\Domain\Payments\CreditLimit`.
+
+**101. Cash book, bank book, day book and daily closing** — 2026-10-17
+- Decision: cash methods are cash, bKash, Nagad, Rocket, petty; bank methods are bank, cheque, pdc (after clear). Day book = cash + bank movements for the range. Daily closing stores opening/in/out/closing for cash and bank; the next day's opening is the last closing. Opening balances (#90) seed the books when no closing exists yet.
+- Reason: plan M4 acceptance.
+- Change: Cash / Bank / Day book and Daily closing screens.
+
+**102. Petty cash and expense categories** — 2026-10-17
+- Decision: a payment with no supplier may carry an `expense_categories` row (seeded: van rent, fuel, toll, loading, godown rent, SR salary, mobile, trade licence, other). Petty is a cash-book method. Categories are soft-deleted.
+- Reason: plan M4 brief list.
+- Change: migration seeds categories; payment form.
+
+**103. Payment and accounts permissions** — 2026-10-17 · amends #97
+- Decision: `payments.view` → accountant, SR, data entry, viewer; `payments.manage` → accountant, SR, data entry; `accounts.view` → accountant, data entry, viewer; `accounts.manage` → accountant (daily closing). Nav adds Payments, Receivables, Payables, Cash book, Bank book, Day book, Daily closing. The dashboard ready line now includes payments and the books.
+- Reason: plan M4.
+- Change: Roles and permissions.
