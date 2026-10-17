@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
 use App\Http\Controllers\Accounts\LedgerController;
 use App\Http\Controllers\Accounts\PaymentController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Import\EntityImportController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
 use App\Http\Controllers\Master\MastersController;
@@ -124,6 +126,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
             Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
+        });
+
+        $importEntities = implode('|', EntityImportRegistry::ENTITIES);
+        Route::prefix('imports')->group(function () use ($importEntities) {
+            Route::get('/{entity}/template', [EntityImportController::class, 'template'])->where('entity', $importEntities)->name('imports.entity.template');
+            Route::get('/{entity}/export', [EntityImportController::class, 'export'])->where('entity', $importEntities)->name('imports.entity.export');
+            Route::get('/{entity}', [EntityImportController::class, 'index'])->where('entity', $importEntities)->name('imports.entity.index');
+            Route::post('/{entity}', [EntityImportController::class, 'store'])->where('entity', $importEntities)->name('imports.entity.store');
+            Route::post('/{entity}/profiles', [EntityImportController::class, 'storeProfile'])->where('entity', $importEntities)->name('imports.entity.profiles.store');
+            Route::get('/{entity}/batches/{entityImportBatch}', [EntityImportController::class, 'show'])->where('entity', $importEntities)->name('imports.entity.show');
+            Route::post('/{entity}/batches/{entityImportBatch}/confirm', [EntityImportController::class, 'confirm'])->where('entity', $importEntities)->name('imports.entity.confirm');
+            Route::post('/{entity}/batches/{entityImportBatch}/undo', [EntityImportController::class, 'undo'])->where('entity', $importEntities)->name('imports.entity.undo');
         });
 
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');

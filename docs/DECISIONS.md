@@ -550,3 +550,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: claims use statuses open → submitted → approved → settled (or rejected at most steps). CSV comparison upload matches product code (then name), flags qty differences and unknown products; `near_expiry_days` drives the near-expiry alert on the stock page.
 - Reason: plan M5.
 - Change: Claims, Compare with export, stock alerts.
+
+**106. Universal entity import/export** — 2026-10-17
+- Decision: every master list exposes **Export** (CSV of template columns) and **Import** (download template → upload `.csv`/`.xls`/`.xlsx` → preview with row errors → choose **update** or **skip** duplicates → confirm → undo batch). Entities: products, retailers, suppliers, routes, sales reps, vehicles, price lists, price list items. Permissions reuse existing `*.manage` (no separate import permission). Soft-deleted rows can be restored on update. Mapping profiles stored per entity. **PDF is not used** for generic import v1 (stock PDF stays on stock comparison only). When filenames match owner exports (`ProductList*`, `SalesRegister*`), products/retailers imports auto-map Crystal column headers. Samples in `docs/samples/master-exports/`.
+- Reason: owner scope change — templates beat auto-detect; M6 paused.
+- Change: `/imports/{entity}`, list page actions, PhpSpreadsheet reader.
