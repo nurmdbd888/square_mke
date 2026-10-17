@@ -1,7 +1,7 @@
 @extends('print.layout')
 
 @php
-    $pageSize = $printSize ?? setting('default_print_size', 'a5');
+    $pageSize = $printSize ?? (setting('default_print_size') ?: 'a5');
 @endphp
 
 @push('print-styles')
