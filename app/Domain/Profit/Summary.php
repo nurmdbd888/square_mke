@@ -8,6 +8,8 @@ use App\Models\Document;
 use App\Models\Payment;
 use App\Models\StockNote;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
@@ -164,7 +166,7 @@ final class Summary
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     private function applyBusinessDayFilter($query, string $column, mixed $from, mixed $to, bool $businessDaysOnly): void
     {

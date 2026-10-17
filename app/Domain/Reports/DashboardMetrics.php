@@ -10,6 +10,8 @@ use App\Models\Document;
 use App\Models\Product;
 use App\Models\Retailer;
 use App\Models\StockLedgerEntry;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -155,7 +157,7 @@ final class DashboardMetrics
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>|\Illuminate\Database\Query\Builder  $query
+     * @param  Builder<Model>|\Illuminate\Database\Query\Builder  $query
      */
     private function applyBusinessDayFilter($query, string $column, string $from, string $to, bool $businessDaysOnly): void
     {
