@@ -1,0 +1,7 @@
+---
+# Copied to .cpanel.yml at the root of the "release" branch by
+# scripts/build-release.sh. Not present on main on purpose: deploying main
+# (no vendor/ folder) would break the site, so cPanel refuses to deploy it.
+deployment:
+  tasks:
+    - /bin/bash deploy/cpanel/deploy.sh

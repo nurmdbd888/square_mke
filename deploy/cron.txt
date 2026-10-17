@@ -1,0 +1,21 @@
+Square Dealer Manager: the one cron job
+========================================
+
+cPanel > Cron Jobs > Add New Cron Job
+  Common Settings: Once Per Minute (* * * * *)
+  Command: copy it from the "Cron command" box on
+           https://mke.rockproviders.com/maintenance
+
+The Maintenance page fills in the exact PHP 8.4 path for your server. It looks
+like one of these (USER is your cPanel user name):
+
+  /opt/cpanel/ea-php84/root/usr/bin/php /home/USER/mke/app/artisan schedule:run >> /dev/null 2>&1
+  /opt/alt/php84/usr/bin/php /home/USER/mke/app/artisan schedule:run >> /dev/null 2>&1
+
+Full crontab line, if your host asks for it in one piece:
+
+  * * * * * /opt/cpanel/ea-php84/root/usr/bin/php /home/USER/mke/app/artisan schedule:run >> /dev/null 2>&1
+
+Troubleshooting: to see errors, temporarily change ">> /dev/null 2>&1" to
+">> /home/USER/mke/shared/storage/logs/cron.log 2>&1", wait two minutes, read
+the file in File Manager, then change it back (the file grows every minute).

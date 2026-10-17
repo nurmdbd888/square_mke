@@ -1,0 +1,99 @@
+name: Release
+
+# Builds the server-ready app (vendor/ included, CSS compiled) and publishes it
+# two ways, because the owner has no terminal or Composer on the host:
+#   1. mke-<version>.zip on the GitHub Release (File Manager upload, folder swap)
+#   2. the "release" branch (cPanel Git Version Control + .cpanel.yml)
+# See DEPLOY.md and docs/DECISIONS.md.
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag, branch or commit to build. To roll back, enter an older tag such as v0.0.1.
+        required: true
+        default: main
+      publish_branch:
+        description: Update the "release" branch (cPanel Git Version Control)
+        type: boolean
+        default: true
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - scripts/build-release.sh
+      - scripts/publish-release-branch.sh
+      - deploy/**
+      - composer.json
+      - composer.lock
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ inputs.ref || github.ref }}
+
+  build:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd, fileinfo, xml, openssl, curl
+          tools: composer:v2
+          coverage: none
+
+      - name: Work out the version
+        id: version
+        run: |
+          if tag="$(git describe --tags --exact-match HEAD 2>/dev/null)"; then
+            echo "version=$tag" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-dev.$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        run: ./scripts/build-release.sh "${{ steps.version.outputs.version }}"
+
+      - name: Upload zip as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mke-${{ steps.version.outputs.version }}
+          path: build/mke-${{ steps.version.outputs.version }}.zip
+          retention-days: 30
+
+      - name: Attach zip to the GitHub Release
+        if: github.event_name != 'pull_request' && steps.version.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          zip="build/mke-$TAG.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$zip" --clobber
+          else
+            gh release create "$TAG" "$zip" --title "$TAG" --notes "Install or update: see DEPLOY.md. Download mke-$TAG.zip below."
+          fi
+
+      - name: Publish the release branch
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_branch)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ./scripts/publish-release-branch.sh "${{ steps.version.outputs.version }}" origin release

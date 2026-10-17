@@ -1,0 +1,18 @@
+serial,product_description,unit,qty,unit_price,value,sd_pct,sd_amount,vat_pct,vat_amount,total_incl_vat,read_confidence,notes
+1,Chaka Advanced Ball Soap - 125gm,Pcs,1440,23.83,34309.44,0,0.00,15,5146.42,39455.86,high,
+2,Chaka Advanced Washing Powder (All in 1) - 1 kg,Pcs,200,111.30,22260.86,0,0.00,15,3339.13,25599.99,high,description wraps to 2nd line ("kg")
+3,Jui Pure Coconut Oil (Tin) - 335ml,Pcs,144,237.39,34184.35,0,0.00,15,5127.65,39312.00,high,
+4,Jui Pure Coconut Oil (Plastic) - 335ml,Pcs,144,273.91,39443.47,0,0.00,15,5916.52,45359.99,high,
+5,Meril Lipgel Orange (26 Pcs Plastic dispenser)-10 gm,Pcs,288,32.67,9409.19,5,470.46,15,1481.95,11361.60,high,"description clipped at cell edge after ""-1""; ""10 gm"" inferred from wrap line ""gm"""
+6,Meril Lipgel (13 Pcs Jar) -10gm,Pcs,624,32.67,20386.58,5,1019.33,15,3210.89,24616.79,high,
+7,Meril Petroleum Jelly - 50 ml,Pcs,1040,54.17,56340.86,0,0.00,15,8451.13,64791.98,medium,"value last digit could be 5 or 6 (blur); printed value+VAT = 64791.99 vs printed total 64791.98"
+8,Meril Petroleum Jelly - 100 ml,Pcs,360,93.04,33495.62,0,0.00,15,5024.34,38519.97,high,
+9,Revive Moisturizing Lotion- 300ml,Pcs,96,243.48,23373.92,10,2337.39,15,3856.70,29568.00,high,
+10,Sepnil Disinfectant Spray -300ml,Pcs,96,269.57,25878.26,0,0.00,15,3881.74,29760.00,high,
+11,Sepnil Instant Hand Sanitizer Pump Pack 200ml,Pcs,72,173.91,12521.74,0,0.00,15,1878.26,14400.00,high,
+12,Sepnil Disinfectant Liquid Floor Cleaner-1 Ltr,Pcs,96,186.96,17947.82,0,0.00,15,2692.17,20640.00,medium,"qty glyph looks like ""90"" and price like ""180.96""; 96 / 186.96 / 2692.17 / 20640.00 confirmed by qty column total 5188, value/qty = 186.9565 and 15% VAT math"
+13,Sepnil Disinfectant Liquid Floor Cleaner- 5 Ltr,Pcs,48,608.70,29217.39,0,0.00,15,4382.61,33600.00,high,
+14,Spring Air Freshener (Lemon Fresh) - 300 ml,Pcs,12,205.67,2468.05,15,370.21,15,425.74,3264.00,high,
+15,Zerocal Tablet-200'S,Pcs,240,144.78,34747.82,0,0.00,15,5212.17,39960.00,high,
+16,Zerocal Sachet - 75's,Pcs,144,181.16,26086.54,0,0.00,15,3912.98,29999.52,high,
+17,Zerocal Sachet 150'S,Pcs,144,289.85,41738.72,0,0.00,15,6260.81,,medium,"total_incl_vat clipped by photo edge: visible ""47,999.5?""; computed value+VAT = 47999.53 (NOT printed-confirmed)"

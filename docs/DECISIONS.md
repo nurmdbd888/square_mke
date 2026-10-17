@@ -1,0 +1,350 @@
+# Decisions and assumptions log
+
+Every assumption made for Square Dealer Manager. Newest entries go at the bottom; superseded entries stay, marked **Superseded by #n**. In the code repo this file is `docs/DECISIONS.md`.
+
+Format: **#. Title** — date · Decision · Reason · How to change.
+
+---
+
+## Stack and hosting
+
+**1. Stack switched from Python/Flask to PHP/Laravel** — 2026-10-17
+- Decision: build on PHP 8.4 + Laravel (12.x or the current stable major at M0, pinned in `composer.lock`). The Python/Flask design in the brief is dropped.
+- Reason: PHP is native on every cPanel host and needs no Passenger app setup. The owner asked for the best fit for shared hosting. The host confirmed PHP 8.4 with the needed extensions.
+- Change: a full rewrite. The business rules and tests in the spec are stack-neutral, so they carry over.
+
+**2. Only pure-PHP packages limited to the confirmed extensions** — 2026-10-17
+- Decision: allowed extensions are bcmath, intl, mbstring, pdo_mysql, zip, gd, fileinfo, xml, openssl, curl, plus PHP built-ins. Packages: laravel/framework, brick/math, phpoffice/phpspreadsheet, openspout/openspout, google/apiclient, pragmarx/google2fa, bacon/bacon-qr-code, spatie/laravel-permission, dompdf/dompdf, druidfi/mysqldump-php. Nothing that needs `exec()`, PECL, Redis or system binaries.
+- Reason: no root, no compiler, and `exec()` is often disabled.
+- Change: `composer.json` pins `config.platform.php` to 8.4. The CI build job runs on PHP 8.4 with only these extensions enabled, so a package that needs anything else fails the build. Add a package only when that job passes.
+
+**3. Assumed built-in extensions** — 2026-10-17
+- Decision: assume ctype, tokenizer, dom, json, filter, session, iconv, simplexml, xmlreader, xmlwriter, zlib are present (Laravel, PhpSpreadsheet and OpenSpout need them). They were not on the confirmed list.
+- Reason: they are compiled into standard cPanel PHP builds (EasyApache / alt-php).
+- Change: the M0 env check lists each one. If any is missing, enable it in cPanel > Select PHP Version > Extensions, or ask the host.
+
+**4. Subdomain document root = Laravel `public/`** — 2026-10-17
+- Decision: app in `~/mke/app`, persistent data in `~/mke/shared`, subdomain docroot `~/mke/app/public`.
+- Reason: keeps code, `.env`, uploads and logs outside the web root. Replaces `passenger_wsgi.py`.
+- Change: if cPanel forces the docroot under `public_html`, use the shipped `deploy/shim/` (an `index.php` and `.htaccess` that load `~/mke/app` and set the public path).
+
+**5. Maintenance page replaces "Execute python script"** — 2026-10-17
+- Decision: `/maintenance` has buttons for env check, migrate, create admin, backup, restore, run jobs, clear caches and view logs. Each one calls an artisan command in-process. Access needs `MAINTENANCE_TOKEN`; once an owner exists it also needs owner login. The env-check view works without `APP_KEY` or a database and can generate a key.
+- Reason: the owner may have no terminal, and web access must not become a back door.
+- Change: set `MAINTENANCE_ENABLED=false` in `.env` to switch the page off entirely; cron and artisan still work.
+
+**6. Background work through one cron line** — 2026-10-17 · **Amended by #48** (everything runs in-process)
+- Decision: cron runs `php artisan schedule:run` every minute. The scheduler runs `queue:work database --stop-when-empty --max-time=50` (no overlap) plus scheduled tasks. The `app_jobs` table shows status to users. The PHP binary path is shown on the env-check page for copy-paste (for example `/opt/cpanel/ea-php84/root/usr/bin/php` or `/opt/alt/php84/usr/bin/php`).
+- Reason: there are no always-on processes. 50 s fits inside the one-minute window.
+- Change: if cron is unavailable, the Maintenance "Run jobs now" button processes the queue for up to 20 s per click (degraded mode, no nightly tasks).
+
+**7. `.env` and storage in `~/mke/shared`** — 2026-10-17
+- Decision: `bootstrap/app.php` resolves `../shared` relative to the app folder for `.env` and `storage/`. cPanel environment variables are not used.
+- Reason: updates replace the whole `app/` folder without touching config, uploads, logs or backups.
+- Change: edit the two paths in `bootstrap/app.php`.
+
+**8. `vendor/` built off-server** — 2026-10-17
+- Decision: GitHub Actions builds a release zip (`composer install --no-dev -o`, compiled Tailwind CSS, vendored HTMX/Alpine, no tests or dev files). The owner uploads it through File Manager. The server never runs Composer or Node.
+- Reason: Composer and Terminal may be unavailable, and shared hosts run out of memory during installs.
+- Change: if Composer becomes available, the same repo still works with `composer install --no-dev` on the server.
+
+**9. Deploy by folder swap, no symlinks** — 2026-10-17
+- Decision: to update, rename `app` → `app-prev`, extract the new zip as `app`, then press Migrate. To roll back, swap the names back.
+- Reason: File Manager cannot create symlinks, and `symlink()` is often disabled.
+- Change: an in-app "upload update" button may be added in M10 if extraction fits the host's limits.
+
+**10. Frontend without a server build** — 2026-10-17
+- Decision: Blade + HTMX + Alpine. Tailwind is compiled with the standalone CLI to `public/css/app.css`, committed to the repo. Bangla font is self-hosted.
+- Reason: no Node on the server, and no external CDN dependency for offline/PWA use.
+- Change: rebuild CSS locally or in CI.
+
+**11. Queue, cache, session drivers** — 2026-10-17 · **Deferred to M1 by #46** (M0 uses file/sync)
+- Decision: queue = database, cache = database, session = database, mail = SMTP (cPanel mailbox) or log.
+- Reason: no Redis or Memcached on shared hosting. A database cache also keeps rate limiting consistent.
+- Change: `.env` keys `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER`.
+
+**12. Backups without `mysqldump`** — 2026-10-17
+- Decision: druidfi/mysqldump-php (PDO) writes a gzipped SQL dump; `ZipArchive` zips uploads; both upload to Google Drive. 14 days are kept locally and on Drive. Restore runs through `sdm:restore` / a Maintenance button that needs a typed confirmation; phpMyAdmin import is the documented fallback.
+- Reason: `exec()` and the `mysqldump` binary are usually unavailable.
+- Change: setting `backup_retention_days`.
+
+**13. Server-side PDFs English-only via dompdf** — 2026-10-17
+- Decision: user-facing PDFs are print-styled pages saved from the browser. dompdf is used only for English server-generated PDFs (Drive uploads, scheduled jobs).
+- Reason: dompdf, like ReportLab, does not shape Bangla conjuncts correctly.
+- Change: none planned. Bangla Google Docs output covers server-side Bangla documents.
+
+**14. google/apiclient trimmed** — 2026-10-17
+- Decision: keep only the Drive, Sheets and Docs services through `Google\Task\Composer::cleanup`.
+- Reason: the full services package is tens of MB and thousands of files, which strains inode quotas.
+- Change: list more services in `composer.json` `extra.google/apiclient-services`.
+
+**15. Tests run in CI, not on the server** — 2026-10-17
+- Decision: PHPUnit with SQLite in-memory for unit tests, and a MySQL 8 service in GitHub Actions for feature and engine tests. A release is built only when all tests pass.
+- Reason: no terminal on the host, and SQLite-only tests can hide MySQL DECIMAL and collation behaviour.
+- Change: `.github/workflows/ci.yml`.
+
+## Numbers
+
+**16. Exact decimals, never float** — 2026-10-17
+- Decision: brick/math `BigDecimal` for all arithmetic, wrapped in `Money`, `Qty` and `Rate` value objects with Eloquent casts. Rounding is `HALF_UP` at the points the spec defines. Column types: money DECIMAL(14,2), qty DECIMAL(14,3), unit price/cost DECIMAL(14,4), running averages DECIMAL(18,6), percentages DECIMAL(7,4). A CI check (PHPStan rule or grep) fails on `(float)`, `floatval` or `round(` inside `app/Domain`.
+- Reason: brief requirement. Unit prices need 4 dp (the true challan unit cost is 23.8260; the combo policy amount 419.7312 has 4 dp).
+- Change: the column widths are in the migrations.
+
+**17. Lakh/crore and Bangla digits by a string formatter** — 2026-10-17
+- Decision: a custom formatter groups the decimal string (`12,34,567.89`) and maps digits to Bangla (০–৯) for the bn locale. It does not use `NumberFormatter::format`, which takes a float.
+- Reason: avoids float conversion.
+- Change: `app/Domain/Money/Formatter.php`.
+
+## Business-rule defaults (owner had no answers; each one is a setting)
+
+**18. SD is included in stock cost** — 2026-10-17
+- Decision: setting `sd_in_cost` defaults to on, so stock cost = value ex-tax + SD. VAT stays excluded while `vat_recoverable` is on.
+- Reason: supplementary duty is normally not creditable. The challan shows SD of 5%, 10% and 15% on Lipgel, Revive and Spring.
+- Change: Settings > Costing > "Include SD in cost". The change is effective-dated and triggers a recompute.
+
+**19. Sales revenue is the invoiced VAT-inclusive trade price** — 2026-10-17
+- Decision: revenue = the invoiced amount as charged. No output VAT is split out for the distributor. Setting `revenue_vat_inclusive` defaults to true.
+- Reason: the samples show the distributor sells at the same VAT+SD-inclusive TP that Square uses, and Square pays the VAT at source.
+- Change: Settings > Revenue. If set to false, revenue is shown ex-VAT using the product VAT%.
+
+**20. Slab adjustment and combo bonus price discount are invoice-level discounts** — 2026-10-17
+- Decision: both are stored as header discounts that reduce revenue and are allocated to lines pro rata. The 4-dp "Combo Bonus Policy (Price Disc.)" is stored for information; the 2-dp slab adjustment is what gets posted.
+- Reason: in the sample, 419.7312 = exactly 4% × lines 2+3+4, and the slab adjustment 419.73 is that figure rounded.
+- Change: Settings > Import > "Header discount source" (slab adjustment / combo policy / both).
+
+**21. Whole-taka rounding is its own `rounding_adjustment` line** — 2026-10-17
+- Decision: rounding_adjustment = printed net total − (total − header discounts). In the sample it is −0.13. It is part of net revenue and shown as its own row in P&L.
+- Reason: Square prints 21,297.00 where the arithmetic gives 21,297.13, and the amount in words confirms 21,297. One sample cannot tell truncation from rounding, so the app stores the printed value rather than applying a rule.
+- Change: Settings > Revenue > "Report rounding as" (revenue / other income-expense).
+
+**22. Petroleum jelly 50 ml at 62.30 and 57.81 are separate products** — 2026-10-17
+- Decision: two SKUs (challan TP 62.30 versus the invoice "৫২ পিস" at 57.81). The 15 ml variants also stay separate.
+- Reason: different prices and pack text; merging wrongly would corrupt the average cost.
+- Change: Products > Merge (moves aliases and ledger entries, then recomputes).
+
+## Sample findings
+
+**23. Import line tolerance is about qty × 0.005** — 2026-10-17
+- Decision: a line passes when |qty × printed price − discount − amount| ≤ max(0.01, qty × 0.005). Subtotal check: ±0.01. Line VAT/SD checks: ±0.01. Header VAT total versus the sum of lines: ±0.01 (warning, not error).
+- Reason: Square prints unit prices rounded to 2 dp while the value is computed from the unrounded price. A fixed ±0.01 would flag 16 of 17 challan lines; the largest gap is −5.76 on 1,440 qty. The printed VAT total is 0.01 below the sum of its lines.
+- Change: setting `import_line_tolerance_per_qty`.
+
+**24. Store printed amounts; do not recompute from percentages** — 2026-10-17
+- Decision: imported line discounts, values, SD, VAT and totals are stored exactly as printed. Percentages are informational.
+- Reason: lotion discounts are about 7.69%, and no single rule reproduces both lines to the paisa.
+- Change: none.
+
+**25. Purchase cost uses the printed value, not qty × printed price** — 2026-10-17
+- Decision: stock cost comes from the line's printed value ex-tax (for example 34,309.44 for 1,440 soap, which is 23.8260 per unit).
+- Reason: the value is what Square charges; the printed unit price is rounded.
+- Change: none.
+
+**26. Golden test uses the rounded 23.83** — 2026-10-17
+- Decision: the golden test keeps the brief's figures exactly (buy 100 at 23.83). A second test checks the real challan line 1 (1,440 for 34,309.44, average 23.8260).
+- Reason: the brief fixes the golden values; the second test covers real data.
+- Change: none.
+
+**27. No product codes in the documents** — 2026-10-17
+- Decision: matching order is code (if present), then normalised name + pack, then aliases. Normalising strips case, punctuation and spaces and maps Bangla digits to ASCII. English challan names and Bangla invoice names are linked through aliases learned from corrections.
+- Reason: neither sample prints product codes.
+- Change: if the owner supplies Square codes (from the master software export), code matching takes over automatically.
+
+**28. Free goods in two forms** — 2026-10-17
+- Decision: "Bonus" rows (no serial; the Amount column says "Bonus") attach to the previous numbered line as bonus_qty. "Invoice Combo Bonus" section rows become `combo_bonus` lines with amount 0. Both reduce stock at average cost and count as free-goods cost.
+- Reason: the sample shows both forms; 42 free pieces are worth 1,829.04 at the printed prices.
+- Change: none.
+
+**29. Rep collection becomes a payment** — 2026-10-17
+- Decision: a non-zero `rep_collection` on an imported sales invoice creates a cash receipt allocated to that invoice, attributed to the SR.
+- Reason: the sample header carries it as cash collected at delivery.
+- Change: Settings > Import > "Post rep collection as payment".
+
+**30. Seed products are candidates** — 2026-10-17
+- Decision: the 24 products in `products-seed.csv` are seeded with English names from the challan. Bangla names are suggested transliterations (or as printed for sales-only items) and are flagged for owner review.
+- Reason: several Bangla names were low-confidence reads, and the challan line 12 qty/price (96 / 186.96) was inferred from totals.
+- Change: edit products in the UI.
+
+## Engine
+
+**31. Ledger order within a day** — 2026-10-17
+- Decision: opening, purchase, sales return, adjustment-in, sale (incl. bonus), purchase return/claim-out, loss/adjustment-out; then posting time, then id.
+- Reason: the brief fixes purchases before sales; putting other inbound movements before outbound ones follows the same logic.
+- Change: `app/Domain/Costing/LedgerOrder.php`.
+
+**32. Average-cost issue rounding** — 2026-10-17
+- Decision: issue cost = round(stock value × qty ÷ stock qty, 2); issuing the full balance takes the remaining value.
+- Reason: no paisa drift; a full rebuild gives identical results.
+- Change: none.
+
+**33. Negative stock allowed with warning** — 2026-10-17
+- Decision: a sale beyond the available stock posts with a warning and is costed at the last known average (or the product buy price if there is none). A later back-dated purchase fixes it on recompute. Setting `block_negative_stock` defaults to off.
+- Reason: back-dated challans often arrive after the sales are entered.
+- Change: Settings > Stock.
+
+**34. Purchase bonus qty enters at zero cost** — 2026-10-17
+- Decision: free goods received from Square increase stock qty at zero value, which lowers the average.
+- Reason: no cost was paid for them; rule 3 covers the sales side only.
+- Change: setting `purchase_bonus_cost` (zero / at list price as other income).
+
+**35. Sales returns cost** — 2026-10-17
+- Decision: a return linked to an invoice comes back at that sale's issue cost; an unlinked return comes back at the current average. Damaged or expired returns go straight to loss.
+- Reason: reverses the original COGS correctly.
+- Change: none.
+
+**36. Recompute scope and timing** — 2026-10-17
+- Decision: rebuild only the affected products from the earliest affected date, inside the request. If the estimate exceeds 15 s (large imports, rule changes), it is queued, and reports show a "costing update pending" banner until it is done.
+- Reason: the 30 s request limit. A property test proves the result equals a full rebuild.
+- Change: `config/sdm.php` `recompute_inline_limit`.
+
+**37. Commission defaults** — 2026-10-17
+- Decision: `count_commission` defaults to on; the base is net sales revenue after all discounts; it is computed per document with the rate valid on the document date.
+- Reason: the golden test includes net commission in profit (180.21).
+- Change: Settings > Commission (effective-dated rows).
+
+**38. Header discounts on purchases** — 2026-10-17
+- Decision: a purchase header discount lowers stock cost, allocated to lines pro rata by value; the last line takes the rounding remainder.
+- Reason: consistent with the sales-side allocation; the totals reconcile exactly.
+- Change: none.
+
+## Security and access
+
+**39. Maintenance token and first admin** — 2026-10-17
+- Decision: create the first owner from the Maintenance page (token needed). Once an owner exists, creating admins there also needs owner login.
+- Reason: there is no terminal to run `create_admin`.
+- Change: rotate `MAINTENANCE_TOKEN` in `.env` at any time.
+
+**40. 2FA optional, recommended for owner** — 2026-10-17
+- Decision: TOTP is optional per user. The owner is prompted to enable it at go-live.
+- Reason: brief says "optional 2FA".
+- Change: Settings > Security > "Require 2FA for roles".
+
+## Open items (not yet decided)
+
+**41. GitHub repository name and owner** — 2026-10-17 · **Superseded by #43**
+- Decision: pending. M0 cannot ship a release zip until the repo exists.
+- Reason: the release zip is built by GitHub Actions.
+- Change: the coordinator records the repo when the owner supplies it.
+
+**42. Real Excel exports from Square / master software** — 2026-10-17
+- Decision: pending. The templates are based on the photographed samples only.
+- Reason: the column-mapping profiles need real headers.
+- Change: add the files to `docs/samples/` and create mapping profiles in M8.
+
+## M0 deploy smoke test
+
+**43. Repository is `nurmdbd888/square_mke`, public** — 2026-10-17
+- Decision: code lives in the public GitHub repo `nurmdbd888/square_mke`; default branch `main`. Supersedes #41.
+- Reason: supplied by the owner. Public means cPanel Git Version Control can clone over HTTPS without keys, and the release zip downloads without a GitHub login.
+- Change: if the repo becomes private, Way B in `DEPLOY.md` needs a deploy key (cPanel SSH Access) and the zip must be sent to the owner. Never commit `.env` or any secret: the repo is world-readable.
+
+**44. Laravel 13 with PHP 8.4 as the floor** — 2026-10-17
+- Decision: Laravel 13.x (13.37 at M0, current stable) with `config.platform.php = 8.4.0` (per #2), so `composer.lock` resolves Symfony 8 and requires PHP 8.4 at runtime. The coordinator asked for code "compatible with PHP 8.2+": the app's own code uses nothing newer than PHP 8.1 syntax, but Laravel 13 itself needs PHP 8.3+, so the deployed app needs the host's 8.4.
+- Reason: the host confirmed PHP 8.4. Laravel 12 (the last major that runs on 8.2) is past its bug-fix window (Aug 2026).
+- Change: to run on PHP 8.3, set `config.platform.php` to `8.3.0` and run `composer update` (pulls Symfony 7.4 LTS), and set `sdm.min_php` to `8.3.0`.
+
+**45. One migration in M0; Laravel's default tables removed** — 2026-10-17
+- Decision: the only migration is `smoke_heartbeats`. The skeleton's `users`, `cache` and `jobs` migrations, the `User` model and its factory were removed. M1 adds users, sessions, cache and jobs tables with auth.
+- Reason: plan M0 asks for exactly one migration run from the Maintenance page.
+- Change: M1 migrations.
+
+**46. M0 uses file sessions, file cache and the sync queue** — 2026-10-17
+- Decision: config defaults and both `.env` examples use `SESSION_DRIVER=file`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`. #11 (database drivers) takes effect in M1, once its tables exist.
+- Reason: the home and Maintenance pages must work before the first migration; database sessions or cache would crash every page on a fresh install.
+- Change: switch the three `.env` keys after M1's migrations have run.
+
+**47. Maintenance page is stateless and token-protected** — 2026-10-17
+- Decision: `/maintenance` runs in its own middleware group without sessions, cookie encryption or CSRF middleware. Login posts `MAINTENANCE_TOKEN`; on success the browser gets cookie `sdm_maintenance` = expiry + HMAC-SHA256(expiry, token): 2 hours, HttpOnly, SameSite=Strict, Secure on HTTPS. POST buttons carry a form token derived from the same cookie. Changing the token logs everyone out. Login is limited to 5 failures per IP per 10 minutes (file cache); if the cache folder is unwritable the limit is skipped and a warning is logged, so the owner can still reach the page that reports the problem. Token shorter than 20 characters: page locked (403). `MAINTENANCE_ENABLED=false`: 404. Owner login on top of the token (#5, #39) arrives in M1.
+- Reason: the page must work before `APP_KEY` and the database exist (spec §2), with no terminal fallback.
+- Change: `config/sdm.php` `maintenance.*`.
+
+**48. Scheduled work runs in-process, never as a child process** — 2026-10-17
+- Decision: `routes/console.php` uses `Schedule::call(fn () => Artisan::call(...))`, not `Schedule::command()`, which starts a new PHP process through `proc_open`. All later scheduled work (queue worker, backups, reminders) must follow the same pattern. CI runs the whole test suite with `exec, shell_exec, system, passthru, proc_open, popen` disabled. Amends #6.
+- Reason: shared hosts often disable these functions; `Schedule::command()` would then silently do nothing.
+- Change: none planned.
+
+**49. Heartbeat design** — 2026-10-17
+- Decision: `sdm:heartbeat` inserts one `smoke_heartbeats` row per run (`ran_at`, `source`, `php_version`, `php_binary`, `hostname`) and deletes rows older than 7 days (about 10,000 rows at most). A heartbeat is "fresh" if it is under 3 minutes old. The env check warns when the cron's PHP major.minor differs from the website's.
+- Reason: the owner must see that cron works and that it uses PHP 8.4, not the server's default PHP.
+- Change: `config/sdm.php` `heartbeat.*`.
+
+**50. Cron PHP path is detected, not guessed by the owner** — 2026-10-17
+- Decision: the Maintenance page builds the cron command from the first existing executable among: the CLI next to the web binary (`…/lsphp` → `…/php`, `…/sbin/php-fpm` → `…/bin/php`), `/opt/cpanel/ea-phpXY/root/usr/bin/php`, `/opt/alt/phpXY/usr/bin/php`, `/usr/local/bin/ea-phpXY`, `/usr/bin/phpX.Y`; fallback `/usr/local/bin/php`. Output goes to `/dev/null`; `DEPLOY.md` shows how to log it temporarily.
+- Reason: on cPanel the plain `php` in cron is often an older default version.
+- Change: `app/Support/Maintenance/CronCommand.php`.
+
+**51. Shared folder detection** — 2026-10-17
+- Decision: `bootstrap/app.php` uses `../shared` for `.env` and `storage/` only when that folder contains `.env` or `storage/`; otherwise Laravel's defaults inside the project (local development). A real server environment variable `SDM_SHARED_PATH` overrides the location (not needed on cPanel).
+- Reason: implements #7 without breaking local checkouts.
+- Change: `app/Support/SharedPath.php`.
+
+**52. Missing `APP_KEY` shows a setup page, not an error** — 2026-10-17
+- Decision: a global middleware answers every non-maintenance request with a 503 "Setup is not finished yet" page that links to `/maintenance` while `APP_KEY` is missing or invalid. "Generate APP_KEY" writes a new key into the loaded `.env` only if neither the running config nor the file already holds a valid key; it never rotates a key. If the file is missing or read-only it shows the line to paste.
+- Reason: without a key Laravel crashes on cookie encryption; the owner cannot run `key:generate`. Rotating a key would make encrypted data unreadable.
+- Change: none.
+
+**53. Two deploy methods with one server layout; zip is primary** — 2026-10-17
+- Decision: both methods produce `~/mke/app`, `~/mke/app-prev`, `~/mke/shared` (#4, #9).
+  - **Way A (primary): release zip + File Manager folder swap**, as in the plan. Works on every cPanel.
+  - **Way B (optional, faster updates): cPanel Git Version Control.** The repo is cloned to `~/repositories/square_mke` with branch `release` checked out; "Update from Remote" + "Deploy HEAD Commit" runs `deploy/cpanel/deploy.sh` through `.cpanel.yml`. The script copies the build to `~/mke/app-new`, then swaps `app` → `app-prev`, `app-new` → `app`; creates `shared/` and `shared/.env` from the example on the first deploy and adds any new storage folders; never touches existing `shared/`. It uses only bash and coreutils (no rsync, php, composer or node).
+- Reason: Way B is two clicks per update and keeps cPanel's PHP settings (#55), but cPanel documents that accounts without shell access may only clone and view repositories, so Way B cannot be the only path.
+- Change: either way can be used at any time; they can be mixed because the layout is the same.
+
+**54. The `release` branch** — 2026-10-17
+- Decision: GitHub Actions appends one commit per build to branch `release` (never force-pushed, because cPanel pulls with `--ff-only`). It holds the built app: `vendor/` (no dev packages), `public/css/app.css`, `version.json` and `.cpanel.yml`. `main` has no `.cpanel.yml` (the template is `deploy/cpanel/cpanel.yml`), so cPanel refuses to deploy `main`, which has no `vendor/`. Builds run on tag push `vX.Y.Z` and on "Run workflow" (any ref); running it with an older tag is the Git rollback path. Pull requests that touch the build only produce the zip as a workflow artifact.
+- Reason: no Composer or Node on the server (#8); history on the branch doubles as a release log.
+- Change: `.github/workflows/release.yml`, `scripts/build-release.sh`, `scripts/publish-release-branch.sh`.
+
+**55. cPanel-written files in the docroot are preserved by Way B** — 2026-10-17
+- Decision: `deploy.sh` carries over the `BEGIN/END cPanel-generated` blocks of `public/.htaccess` (MultiPHP handler and INI directives), `public/.user.ini`, `public/php.ini` and `public/.well-known/` (AutoSSL). With Way A these are lost when `app` is replaced, so `DEPLOY.md` tells the owner to re-check the PHP version in MultiPHP Manager after each zip update.
+- Reason: MultiPHP Manager stores the PHP version in the docroot's `.htaccess`; losing it silently downgrades PHP.
+- Change: none.
+
+**56. Release contents and versioning** — 2026-10-17
+- Decision: `git archive` of the tagged commit (so only committed files ship), minus `export-ignore` paths (`tests/`, `docs/`, `scripts/`, `.github/`, `phpunit.xml`, `README.md`, `.env.example`), plus `composer install --no-dev -o`. `DEPLOY.md` and `deploy/` ship. The zip is about 8 MB and 7,500 files. `version.json` holds the tag (or `0.0.0-dev.<sha>`), commit and build time; the home and Maintenance pages show it. Following the plan's `v0.N.0` rule, M0's first tag is `v0.0.0`; fixes bump the patch number.
+- Reason: the owner needs to see which version is live.
+- Change: `.gitattributes`, `scripts/build-release.sh`.
+
+**57. Tailwind standalone CLI, no Node anywhere** — 2026-10-17
+- Decision: `scripts/build-css.sh` downloads the pinned Tailwind CLI (v4.3.3) into `.tools/` and compiles `resources/css/app.css` to the committed `public/css/app.css`. Vite, `package.json` and `resources/js` from the skeleton were removed. CI fails if the committed CSS is stale. HTMX and Alpine are vendored in M1. Tailwind v4 needs no `tailwind.config.js`; the theme lives in `resources/css/app.css`.
+- Reason: #10 and spec §2.
+- Change: bump `TAILWIND_VERSION` in the script and rebuild.
+
+**58. Bangla font not yet self-hosted** — 2026-10-17
+- Decision: M0 uses a system font stack with Bangla fallbacks (Noto Sans Bengali, Hind Siliguri, Nirmala UI, Vrinda). The self-hosted woff2 font arrives in M1 (plan).
+- Reason: keep M0 small; Android, Windows and macOS all ship a Bangla font.
+- Change: M1.
+
+**59. Locale by cookie in M0** — 2026-10-17
+- Decision: English default, Bangla optional, chosen with `/locale/{en|bn}` and stored in an unencrypted cookie `sdm_locale` (1 year) so it also works on the stateless Maintenance page. Only UI strings are translated (`lang/bn.json`); the technical detail text on the Maintenance checklist stays English. Per-user locale comes in M1.
+- Reason: plan M1 owns the full i18n; M0 only wires it.
+- Change: M1.
+
+**60. Firm name and distributor code from config until M1** — 2026-10-17
+- Decision: `config/sdm.php` reads `SDM_FIRM_NAME` (default "M/s Khaza Enterprise") and `SDM_DISTRIBUTOR_CODE` (default 4831). M1's settings table overrides them.
+- Reason: no settings table in M0.
+- Change: `.env`.
+
+**61. Database compatibility** — 2026-10-17
+- Decision: `DB_CONNECTION=mysql` for both MySQL and MariaDB. `Schema::defaultStringLength(191)` for old utf8mb4 index limits. The env check shows "MySQL" or "MariaDB" plus the version from `SELECT VERSION()`. CI tests MySQL 8.0, MariaDB 10.6 and 10.11, and checks the detected server type.
+- Reason: the host's server type and version are not confirmed yet.
+- Change: if the env check shows a very old server (MySQL < 5.7, MariaDB < 10.3), tell the developer.
+
+**62. M0 security baseline** — 2026-10-17
+- Decision: `public/.htaccess` refuses every dotfile except `.well-known/`; `robots.txt` and a `noindex` meta tag keep the site out of search engines; in production with an `https://` `APP_URL`, URLs are forced to HTTPS. Public pages never show database errors or full server paths (the locked Maintenance page shows only `shared/.env`). `DEPLOY.md` asks for `.env` permission 600.
+- Reason: the app holds business data; full hardening is M10.
+- Change: M10.
+
+**63. CI limits extensions to the confirmed list** — 2026-10-17
+- Decision: CI's PHP is set up with `extensions: none` plus the confirmed list and built-ins (#2, #3), plus `pdo_sqlite`/`sqlite3` for tests and `phar`/`posix` for Composer and PHPUnit.
+- Reason: a package needing another extension fails CI before it reaches the server.
+- Change: `.github/workflows/ci.yml` `PHP_EXTENSIONS`.
+
+**64. Docroot shim walks up to find the app** — 2026-10-17
+- Decision: `deploy/shim/index.php` searches parent folders of the docroot for `mke/app/artisan` and calls `usePublicPath()` with the docroot. The owner copies `app/public/*` plus the shim files into the docroot after every update (neither deploy method does this automatically).
+- Reason: no file editing needed for the owner if cPanel forces the docroot under `public_html` (#4).
+- Change: only used if `DEPLOY.md` Step 3 fails.
+
+**65. No backup button in M0** — 2026-10-17
+- Decision: until M10's backup feature, `DEPLOY.md` asks the owner to export the database in phpMyAdmin before every update.
+- Reason: plan puts backups in M10.
+- Change: M10.

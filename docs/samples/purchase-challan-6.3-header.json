@@ -1,0 +1,76 @@
+{
+  "_source": "samples/mushak-6.3-purchase-challan.png",
+  "_note": "Values transcribed from photo. null = not printed or unreadable; see *_uncertain fields and field-analysis.md.",
+  "document_type": "Mushak-6.3 tax challan (purchase from Square)",
+  "form_code": "মূসক-৬.৩",
+  "copy_marker": "Copy",
+  "issuing_authority": {
+    "line1_bn": "গণপ্রজাতন্ত্রী বাংলাদেশ সরকার",
+    "line2_bn": "জাতীয় রাজস্ব বোর্ড",
+    "title_bn": "কর চালানপত্র",
+    "rule_reference_bn": "[বিধি ৪০ এর উপ-বিধি (১) এর দফা (গ) ও দফা (চ) দ্রষ্টব্য]"
+  },
+  "seller": {
+    "registered_name": "Square Toiletries Ltd.",
+    "bin": "000241211-1105",
+    "challan_issue_address": "Meril Road Shalgaria, Pabna.",
+    "branch_name": "Square Toiletries Ltd. (Adhuria Plant)",
+    "branch_address": "Adhuria, Rupgonj, Narayangonj."
+  },
+  "challan_number": "INV-ADU/4344/1026",
+  "challan_number_uncertain": "Printed as 'INV-ADUI4344I1026'; the 'I' glyphs are read as '/' separators (font/blur). Confirm against a clean copy.",
+  "issue_date": "2026-10-15",
+  "issue_date_printed": "15/10/2026",
+  "issue_date_in_words": "FIFTEEN OCTOBER TWO THOUSAND TWENTY-SIX",
+  "issue_time": "16:51:46",
+  "issue_time_in_words": "SIXTEEN HOUR FIFTY-ONE MINUTE(S)",
+  "buyer": {
+    "name": "M/S Khaza Enterprise - (Kitchen Market) Toi+Soap",
+    "bin": "0",
+    "bin_note": "Printed '0' under 'ক্রেতার বিআইএন (প্রযোজ্য ক্ষেত্রে)' i.e. buyer BIN not recorded",
+    "address": "Shop No:15, Amborsha, Sahi Masjid Market, Karwan Bazar, Tejgaon PS Dhaka-1215"
+  },
+  "delivery_destination": "Shop No:15, Amborsha, Sahi Masjid Market, Karwan Bazar, Tejgaon PS Dhaka-1215",
+  "vehicle_type": "COVER VAN",
+  "vehicle_number": "DM-NA-20-3036",
+  "line_count": 17,
+  "totals_printed": {
+    "qty": 5188,
+    "value_ex_tax": 463810.63,
+    "sd_amount": 4197.39,
+    "vat_amount": 70201.20,
+    "total_incl_tax": null,
+    "total_incl_tax_visible": "538,209.?? (last digits clipped by photo edge)"
+  },
+  "totals_computed_from_lines": {
+    "qty": 5188,
+    "value_ex_tax": 463810.63,
+    "sd_amount": 4197.39,
+    "vat_amount": 70201.21,
+    "total_incl_tax_sum_of_line_totals": 538209.23,
+    "total_incl_tax_value_plus_sd_plus_printed_vat": 538209.22
+  },
+  "footnote_bn": "¹ সকল প্রকার কর ব্যতীত মূল্য",
+  "footnote_en": "Unit price and total price columns (5, 6) are exclusive of all taxes",
+  "authorised_person": {
+    "name": "Md. Sarwar Hossain",
+    "designation": "Jr. Executive",
+    "stamp": "Md. Sarwar Hossain, Jr. Executive, A&F, Square Toiletries Ltd., Adhuria Depot, Rupganj, Narayanganj"
+  },
+  "central_registration_bin_printed": "000241211-110?",
+  "central_registration_bin_note": "Footer 'প্রদেয় মূসক কেন্দ্রীয় নিবন্ধন নং' clipped after '110'; assumed same as seller BIN 000241211-1105 (not confirmed from this line)",
+  "column_headers_bn": {
+    "1": "ক্রমিক",
+    "2": "পণ্য বা সেবার বর্ণনা (প্রযোজ্য ক্ষেত্রে ব্র্যান্ড নামসহ)",
+    "3": "সরবরাহের একক",
+    "4": "পরিমাণ",
+    "5": "একক মূল্য¹ (টাকায়)",
+    "6": "মোট মূল্য¹ (টাকায়)",
+    "7": "সম্পূরক শুল্কের হার",
+    "8": "সম্পূরক শুল্কের পরিমাণ (টাকায়)",
+    "9": "মূল্য সংযোজন করের হার / সুনির্দিষ্ট কর",
+    "10": "মূল্য সংযোজন কর / সুনির্দিষ্ট করের পরিমাণ (টাকায়)",
+    "11": "সকল প্রকার শুল্ক ও করসহ মূল্য"
+  },
+  "column_headers_note": "Bangla column headers are small and blurred; text reconstructed from the standard NBR Mushak-6.3 layout plus visible glyphs."
+}

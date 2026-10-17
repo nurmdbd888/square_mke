@@ -1,0 +1,14 @@
+section,line_type,serial,product_name_bn,product_name_en_guess,pack_size,unit_price,qty,prod_discount,bonus_qty,amount,amount_printed,bn_confidence,notes
+Invoice,invoice,1,মেরিল বেবি লোশন,Meril Baby Lotion,200 ml,302.00,6,139.38,0,1672.62,"1,672.62",medium,"2nd word glyph reads like ""বোব""; could be বেবি (baby) or বডি (body); discount = 7.69% of 1812.00"
+Invoice,invoice,2,মেরিল পেট্রোলিয়াম জেলি (৩৯ পিসের জা[র]),Meril Petroleum Jelly (39 Pcs Jar),15ml,26.80,144,0.00,0,3859.20,"3,859.20",medium,"name truncated at column edge after ""জা""; ""জার"" (jar) inferred"
+Invoice,invoice,3,মেরিল পেট্রোলিয়াম জেলি (১৫৬ পিসের [?],Meril Petroleum Jelly (156 Pcs ?),15ml,26.80,144,0.00,0,3859.20,"3,859.20",low,"numeral read as ১৫৬ (156); pack word truncated (last glyph unreadable)"
+Invoice,invoice,4,মেরিল পেট্রোলিয়াম জেলি ৫২ পিস,Meril Petroleum Jelly 52 Pcs,50 ml,57.81,48,0.00,0,2774.88,"2,774.88",medium,
+Invoice,invoice,5,মেরিল পেট্রোলিয়াম জেলি,Meril Petroleum Jelly,100 ml,107.00,36,154.08,0,3697.92,"3,697.92",high,discount = exactly 4.00% of 3852.00
+Invoice,bonus,,মেরিল পেট্রোলিয়াম জেলি,Meril Petroleum Jelly,100 ml,,,,3,,Bonus,high,"unnumbered row under line 5; '3' sits in Bonus Qty column; amount column prints the word ""Bonus""; 3 free on 36 sold (1 per 12)"
+Invoice,invoice,6,মেরিল মিল্ক এন্ড বেরি সোপ ১০০ গ্রাম এ[নাপ?],Meril Milk & Berry Soap 100g,100gm,57.60,24,0.00,0,1382.40,"1,382.40",medium,"name truncated at column edge after ""এ""; suffix probably same ""এনাপ"" as lines 7-8"
+Invoice,invoice,7,মেরিল মিল্ক এবং কিউই সোপ এনাপ,Meril Milk & Kiwi Soap 100g (?),100gm,57.60,24,0.00,0,1382.40,"1,382.40",low,"flavour word glyphs read like ""কি৬ৎ"" -> best guess কিউই (kiwi); suffix ""এনাপ"" meaning unknown (pack/variant code?)"
+Invoice,invoice,8,মেরিল মিল্ক সোপ ১০০ গ্রাম এনাপ,Meril Milk Soap 100g,100gm,57.60,24,0.00,0,1382.40,"1,382.40",medium,"suffix ""এনাপ"" meaning unknown"
+Invoice,invoice,9,রিভাইভ ময়েশ্চারাইজিং লোশন - ৩০০ মিঃ,Revive Moisturizing Lotion 300ml,300ml,308.00,6,142.16,0,1705.84,"1,705.84",medium,"discount = 7.69% of 1848.00; same product as challan line 9 (TP incl. VAT 308.00)"
+Invoice Combo Bonus,combo_bonus,1,মেরিল পেট্রোলিয়াম জেলি (১৫৬ পিসের [?],Meril Petroleum Jelly (156 Pcs ?),15ml,26.80,24,0.00,0,0.00,0.00,low,"numeral could be ১৫৬ or ১২৬ (blur); price 26.80 matches invoice lines 2-3; 24 free on 288 sold of 15ml (1 per 12)"
+Invoice Combo Bonus,combo_bonus,2,মেরিল পেট্রোলিয়াম জেলি (২৬ পিসের জা[র]),Meril Petroleum Jelly (26 Pcs Jar),50ml,57.81,4,0.00,0,0.00,0.00,medium,"pack text ""২৬ পিসের জার"" differs from invoice line 4 ""৫২ পিস"" but same pack size and price 57.81; 4 free on 48 sold (1 per 12)"
+Invoice Combo Bonus,combo_bonus,3,মেরিল মিল্ক সোপ ১০০ গ্রাম এনাপ,Meril Milk Soap 100g,100gm,57.60,11,0.00,0,0.00,0.00,medium,11 free on 72 soap sold across lines 6-8 (ratio not a clean 1:12)
