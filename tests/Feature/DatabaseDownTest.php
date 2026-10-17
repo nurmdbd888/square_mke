@@ -44,12 +44,28 @@ class DatabaseDownTest extends TestCase
         $this->assertFalse($results->has('migrations'));
     }
 
-    public function test_home_page_still_renders(): void
+    public function test_login_page_still_renders_and_points_to_maintenance(): void
     {
-        $this->get('/')
+        $this->get('/login')
             ->assertOk()
             ->assertSee('M/s Khaza Enterprise')
-            ->assertSee('Not connected');
+            ->assertSeeInOrder(['data-testid="setup-notice"', 'The database is not ready.', route('maintenance')], false)
+            ->assertDontSee('pw-should-not-leak');
+    }
+
+    public function test_sign_in_attempt_explains_instead_of_crashing(): void
+    {
+        $this->from('/login')->post('/login', ['login' => 'owner', 'password' => 'whatever-123'])
+            ->assertRedirect('/login')
+            ->assertSessionHasErrors(['login' => 'The database is not ready. Open the Maintenance page to check the settings and run migrations.']);
+    }
+
+    public function test_maintenance_page_opens_with_the_phrase_alone(): void
+    {
+        $this->asMaintenanceUser()
+            ->get('/maintenance')
+            ->assertOk()
+            ->assertDontSee('data-testid="owner-section"', false);
     }
 
     public function test_maintenance_dashboard_still_renders(): void

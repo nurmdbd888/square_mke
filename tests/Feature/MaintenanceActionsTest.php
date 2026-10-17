@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\SmokeHeartbeat;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -34,7 +36,7 @@ class MaintenanceActionsTest extends TestCase
             ->assertOk()
             ->assertSee('data-check="db_connection" data-status="ok"', false)
             ->assertSee('data-check="migrations" data-status="warn"', false)
-            ->assertSee('1 pending: press &quot;Run migrations&quot;', false)
+            ->assertSee('pending: press &quot;Run migrations&quot;', false)
             ->assertSee('data-check="heartbeat" data-status="warn"', false)
             ->assertSee('run migrations first');
     }
@@ -87,6 +89,37 @@ class MaintenanceActionsTest extends TestCase
             ->get('/maintenance')
             ->assertSee('data-check="heartbeat" data-status="warn"', false)
             ->assertSee('cron has stopped or is failing');
+    }
+
+    public function test_create_owner_before_migrations_asks_for_them(): void
+    {
+        $this->asMaintenanceUser()
+            ->get('/maintenance')
+            ->assertDontSee('data-testid="owner-section"', false);
+
+        $this->asMaintenanceUser()
+            ->post('/maintenance/create-owner', ['_maintenance_token' => $this->maintenanceFormToken(), 'name' => 'X'])
+            ->assertOk()
+            ->assertSee('Press &quot;Run migrations&quot; first.', false);
+    }
+
+    public function test_after_migrations_the_owner_can_be_created(): void
+    {
+        $this->asMaintenanceUser()
+            ->post('/maintenance/migrate', ['_maintenance_token' => $this->maintenanceFormToken()])
+            ->assertSee('Finished successfully.')
+            ->assertSee('data-testid="owner-section"', false);
+
+        $this->asMaintenanceUser()->post('/maintenance/create-owner', [
+            '_maintenance_token' => $this->maintenanceFormToken(),
+            'name' => 'Khaza Owner',
+            'username' => 'khaza',
+            'password' => 'owner-password-1',
+            'password_confirmation' => 'owner-password-1',
+        ])->assertSee('Owner khaza was created.');
+
+        $this->assertTrue(User::query()->where('username', 'khaza')->sole()->isOwner());
+        $this->assertSame(5, Role::query()->count());
     }
 
     public function test_clear_caches_button_runs(): void
