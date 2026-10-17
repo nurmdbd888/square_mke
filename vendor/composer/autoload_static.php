@@ -800,6 +800,7 @@ class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
         'App\\Support\\Maintenance\\MaintenanceGate' => __DIR__ . '/../..' . '/app/Support/Maintenance/MaintenanceGate.php',
         'App\\Support\\Maintenance\\MigrationStatus' => __DIR__ . '/../..' . '/app/Support/Maintenance/MigrationStatus.php',
         'App\\Support\\Maintenance\\OwnerAccess' => __DIR__ . '/../..' . '/app/Support/Maintenance/OwnerAccess.php',
+        'App\\Support\\SafeAccess' => __DIR__ . '/../..' . '/app/Support/SafeAccess.php',
         'App\\Support\\SharedPath' => __DIR__ . '/../..' . '/app/Support/SharedPath.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'BaconQrCode\\Common\\BitArray' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/Common/BitArray.php',

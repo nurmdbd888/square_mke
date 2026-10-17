@@ -7,10 +7,10 @@ use App\Models\Document;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Models\User;
+use App\Support\SafeAccess;
 use Brick\Math\BigDecimal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -105,7 +105,7 @@ final class SaleCollectionStatus
 
     public function columnsReady(): bool
     {
-        return Schema::hasColumn('documents', 'collection_status');
+        return SafeAccess::hasColumn('documents', 'collection_status');
     }
 
     public function remainingAmount(Document $document): BigDecimal

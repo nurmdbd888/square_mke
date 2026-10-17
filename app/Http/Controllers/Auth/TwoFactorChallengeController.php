@@ -72,16 +72,7 @@ class TwoFactorChallengeController extends Controller
 
         Auth::login($user);
 
-        $home = route('dashboard');
-        if ($user->hasRole('collector') && ! $user->isOwner()) {
-            try {
-                $home = route('collector.index');
-            } catch (\Throwable) {
-                $home = route('dashboard');
-            }
-        }
-
-        return redirect()->intended($home);
+        return redirect()->intended(route('dashboard'));
     }
 
     private function pendingUser(Request $request): ?User

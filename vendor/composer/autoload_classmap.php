@@ -200,6 +200,7 @@ return array(
     'App\\Support\\Maintenance\\MaintenanceGate' => $baseDir . '/app/Support/Maintenance/MaintenanceGate.php',
     'App\\Support\\Maintenance\\MigrationStatus' => $baseDir . '/app/Support/Maintenance/MigrationStatus.php',
     'App\\Support\\Maintenance\\OwnerAccess' => $baseDir . '/app/Support/Maintenance/OwnerAccess.php',
+    'App\\Support\\SafeAccess' => $baseDir . '/app/Support/SafeAccess.php',
     'App\\Support\\SharedPath' => $baseDir . '/app/Support/SharedPath.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'BaconQrCode\\Common\\BitArray' => $vendorDir . '/bacon/bacon-qr-code/src/Common/BitArray.php',

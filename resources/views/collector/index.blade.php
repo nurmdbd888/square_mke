@@ -5,6 +5,9 @@
 @section('content')
     <h1 class="text-2xl font-semibold text-slate-900">{{ __('Collections') }}</h1>
     <p class="mt-1 text-sm text-slate-600">{{ __('Pending sales invoices and confirmations for field collectors.') }}</p>
+    @if (! empty($warning))
+        <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">{{ $warning }}</div>
+    @endif
 
     <section class="card mt-6">
         <h2 class="font-semibold text-slate-900">{{ __('Today\'s posted receipts') }}</h2>

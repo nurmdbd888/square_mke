@@ -1,7 +1,7 @@
 @php
-    $firmName = setting('firm_name');
+    $firmName = setting('firm_name') ?: config('sdm.firm_name');
     $user = auth()->user();
-    $nav = array_filter([
+    $nav = array_values(array_filter([
         ['route' => 'dashboard', 'label' => __('Dashboard'), 'active' => 'dashboard', 'can' => null],
         ['route' => 'products.index', 'label' => __('Products'), 'active' => 'products.*', 'can' => 'products.view'],
         ['route' => 'retailers.index', 'label' => __('Retailers'), 'active' => 'retailers.*', 'can' => 'retailers.view'],
@@ -26,7 +26,7 @@
         ['route' => 'settings.index', 'label' => __('Settings'), 'active' => 'settings.*', 'can' => 'settings.view'],
         ['route' => 'audit.index', 'label' => __('Audit log'), 'active' => 'audit.*', 'can' => 'audit.view'],
         ['route' => 'health', 'label' => __('System health'), 'active' => 'health', 'can' => 'health.view'],
-    ], fn ($item) => $item['can'] === null || $user->can($item['can']));
+    ], fn ($item) => \App\Support\SafeAccess::routeExists($item['route']) && \App\Support\SafeAccess::can($user, $item['can'])));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
