@@ -1,0 +1,75 @@
+{
+  "_source": [
+    "samples/square-invoice-report-summary.png",
+    "samples/square-invoice-report-lines.png"
+  ],
+  "_note": "Both photos show the same invoice (identical header). null = not printed or unreadable; see *_uncertain fields and field-analysis.md.",
+  "document_type": "Square 'Invoice Report' (Square -> retailer sale, distributor copy)",
+  "form_marker": "মূসক ৬.৩",
+  "form_marker_note": "Hand-drawn/printed box top-right reads 'মূসক ৬.৩'",
+  "issuer": {
+    "name": "Square Toiletries Ltd.",
+    "address": "Samson Center, 43 South Avenue, Road:126, Gulshan-1, Dhaka-1212"
+  },
+  "barcode_present": true,
+  "invoice_no": "2610050652897",
+  "invoice_no_uncertain": "Top half of digits clipped by print; 13 digits read as 2610050652897. Barcode not decoded.",
+  "invoice_date": "2026-10-15",
+  "invoice_date_printed": "15-10-202?",
+  "invoice_date_note": "Year's last digit clipped at paper edge; 2026 assumed from the matching Mushak-6.3 challan dated 15/10/2026 (inference, not printed)",
+  "delivery_date": "2026-10-16",
+  "delivery_date_printed": "16-10-202?",
+  "delivery_date_note": "Year's last digit clipped; 2026 assumed (inference)",
+  "type": "Normal",
+  "distributor": {
+    "name": "M/S Khaza Enterprise",
+    "code": "4831"
+  },
+  "route": {
+    "name": "Kitchen Market",
+    "code": "000240"
+  },
+  "sr": {
+    "name": "Mr. Mir Tanvir",
+    "code": "00007287",
+    "code_uncertain": "Printed '(0000/287)'; the '/' is read as '7'"
+  },
+  "retailer": {
+    "name_bn": "মতালিব স্টোর",
+    "name_bn_uncertain": "Glyphs read as 'মতালব স্টোর'/'মতালিব স্টোর'; romanised guess 'Motalib Store'",
+    "code": "366350",
+    "address_bn": "কিচেন মার্কেট তেজগাঁও ঢাকা",
+    "address_en": "Kitchen Market, Tejgaon, Dhaka",
+    "contact": "1711459077",
+    "contact_note": "Printed without leading 0; BD mobile would be 01711459077"
+  },
+  "retailer_discount_pct": null,
+  "retailer_discount_printed": "%",
+  "rep_collection": 0.00,
+  "subtotal_invoice_lines": 21716.86,
+  "subtotal_combo_bonus_lines": 0.00,
+  "total_amt": 21716.86,
+  "slab_adjustment": 419.73,
+  "slab_adjustment_uncertain": "Partly obscured by a fold ('41?.73'); 419.73 consistent with Combo Bonus Policy 419.7312 rounded",
+  "net_total_amt": 21297.00,
+  "net_total_amt_uncertain": "Printed value partly faded ('21,297.00'); confirmed by amount in words",
+  "amount_in_words": "Twenty-One Thousand Two Hundred Ninety-Seven Taka Only",
+  "combo_bonus_policy_price_disc": 419.7312,
+  "footer_bn": "আগুনে পোড়া ও ইঁদুরের কাটা পণ্য ফেরত নেওয়া হয় না",
+  "footer_en": "Fire-damaged and rat-bitten goods are not taken back",
+  "line_columns": ["S/N", "Product Name", "Pack Size", "Unit Price", "Qty", "Prod Discount", "Bonus Qty", "Amount"],
+  "sections": ["Invoice", "Invoice Combo Bonus"],
+  "line_counts": {
+    "invoice": 9,
+    "bonus": 1,
+    "combo_bonus": 3
+  },
+  "computed": {
+    "invoice_lines_sum": 21716.86,
+    "net_before_rounding": 21297.13,
+    "rounding_to_net": -0.13,
+    "combo_bonus_policy_reconstruction": "4.00% x (line2 + line3 + line4 = 10493.28) = 419.7312 exactly (hypothesis)",
+    "free_goods_qty_total": 42,
+    "free_goods_value_at_unit_price": 1829.04
+  }
+}
