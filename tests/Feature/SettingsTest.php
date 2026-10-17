@@ -88,8 +88,14 @@ class SettingsTest extends TestCase
         ]));
 
         $log = AuditLog::query()->where('event', 'settings.updated')->sole();
-        $this->assertSame(['distributor_code' => '4831', 'fiscal_year_start_month' => 7, 'require_2fa_roles' => []], $log->old_values);
-        $this->assertSame(['distributor_code' => '5000', 'fiscal_year_start_month' => 1, 'require_2fa_roles' => ['owner', 'accountant']], $log->new_values);
+        // MySQL's JSON type may reorder object keys; compare as maps, not sequences.
+        $this->assertEqualsCanonicalizing(['distributor_code', 'fiscal_year_start_month', 'require_2fa_roles'], array_keys($log->old_values));
+        $this->assertSame('4831', $log->old_values['distributor_code']);
+        $this->assertSame(7, $log->old_values['fiscal_year_start_month']);
+        $this->assertSame([], $log->old_values['require_2fa_roles']);
+        $this->assertSame('5000', $log->new_values['distributor_code']);
+        $this->assertSame(1, $log->new_values['fiscal_year_start_month']);
+        $this->assertSame(['owner', 'accountant'], $log->new_values['require_2fa_roles']);
         $this->assertSame(1, setting('fiscal_year_start_month'));
     }
 
@@ -132,8 +138,9 @@ class SettingsTest extends TestCase
         $this->assertCount(2, $store->history('test_rate'));
 
         $log = AuditLog::query()->where('event', 'settings.updated')->latest('id')->first();
-        $this->assertSame(['test_rate' => '10'], $log->old_values);
-        $this->assertSame(['test_rate' => '7.5', 'effective_from' => '2027-07-01'], $log->new_values);
+        $this->assertSame('10', $log->old_values['test_rate']);
+        $this->assertSame('7.5', $log->new_values['test_rate']);
+        $this->assertSame('2027-07-01', $log->new_values['effective_from']);
     }
 
     public function test_effective_dated_setting_from_the_form(): void
