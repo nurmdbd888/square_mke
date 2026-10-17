@@ -92,7 +92,7 @@ class LoginController extends Controller
     {
         try {
             return User::query()->whereHas('roles', fn ($q) => $q->where('name', PermissionRegistry::OWNER))->exists() ? null : 'no_owner';
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return 'no_database';
         }
     }
