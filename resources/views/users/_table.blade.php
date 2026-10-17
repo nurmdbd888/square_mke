@@ -45,7 +45,7 @@
                     <td class="text-right">
                         @can('users.manage')
                             @if (! $row->isOwner() || auth()->user()->isOwner())
-                                <a href="{{ route('users.edit', $row) }}" class="font-medium text-brand-700 underline">{{ __('Edit') }}</a>
+                                <x-row-actions :edit="route('users.edit', $row)" />
                             @endif
                         @endcan
                     </td>

@@ -50,7 +50,7 @@
                     @endforeach
                     <td class="text-right">
                         @can('masters.manage')
-                            <a href="{{ route('masters.directory.edit', [$kind, $row]) }}" class="font-medium text-brand-700 underline">{{ __('Edit') }}</a>
+                            <x-row-actions :edit="route('masters.directory.edit', [$kind, $row])" />
                         @endcan
                     </td>
                 </tr>

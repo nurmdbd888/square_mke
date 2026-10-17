@@ -16,7 +16,7 @@
         <div>
             <h1 class="text-2xl font-semibold text-slate-900 font-mono">{{ $document->number }}</h1>
             <p class="mt-1 text-sm text-slate-600">
-                {{ local_digits($document->doc_date->format('d-m-Y')) }}
+                {{ format_app_date($document->doc_date) }}
                 · {{ $document->partyLabel() }}
                 · <span @class([
                     'font-medium',
@@ -29,8 +29,9 @@
         @if (! $document->isVoid())
             <div class="flex flex-wrap gap-2">
                 @if ($document->isSale())
-                    <a href="{{ route('sales.print.invoice', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice') }}</a>
-                    <a href="{{ route('sales.print.challan', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
+                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a5']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice (A5)') }}</a>
+                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a4']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice (A4)') }}</a>
+                    <a href="{{ route('sales.print.challan', [$document, 'size' => 'a5']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
                     <a href="{{ route('sales.print.thermal', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
                 @else
                     <a href="{{ route('purchases.print.challan', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>

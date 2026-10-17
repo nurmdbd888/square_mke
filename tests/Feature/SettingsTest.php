@@ -23,6 +23,8 @@ class SettingsTest extends TestCase
                 'firm_name' => 'M/s Khaza Enterprise',
                 'distributor_code' => '4831',
                 'default_locale' => 'en',
+                'date_display_format' => 'd/m/Y',
+                'default_print_size' => 'a5',
                 'fiscal_year_start_month' => '7',
                 'require_2fa_roles' => [],
                 'weekly_holiday_weekdays' => ['2'],

@@ -4,6 +4,7 @@ use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
 use App\Http\Controllers\Accounts\LedgerController;
 use App\Http\Controllers\Accounts\PaymentAttachmentController;
+use App\Http\Controllers\Accounts\CollectorController;
 use App\Http\Controllers\Accounts\PaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
@@ -213,12 +214,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
         Route::post('/claims/bulk', [ClaimController::class, 'bulk'])->middleware('can:claims.manage')->name('claims.bulk');
 
+        Route::get('/collections', [CollectorController::class, 'index'])->middleware('can:payments.collect')->name('collector.index');
+        Route::post('/sales/{document}/collection/confirm', [CollectorController::class, 'confirm'])
+            ->middleware('can:payments.collect')
+            ->name('sales.collection.confirm');
+
         Route::get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
         Route::post('/payments/bulk', [PaymentController::class, 'bulk'])->name('payments.bulk');
         Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.receipt-write')->name('payments.open-invoices');
         Route::get('/payments/create', [PaymentController::class, 'create'])->middleware('can:payments.receipt-write')->name('payments.create');
         Route::post('/payments', [PaymentController::class, 'store'])->middleware('can:payments.receipt-write')->name('payments.store');
         Route::get('/payments/{payment}', [PaymentController::class, 'show'])->middleware('can:payments.view')->name('payments.show');
+        Route::get('/payments/{payment}/print', [PaymentController::class, 'print'])->middleware('can:payments.view')->name('payments.print');
         Route::get('/payments/{payment}/attachments/{attachment}', [PaymentAttachmentController::class, 'show'])
             ->middleware('can:payments.view')
             ->name('payments.attachments.show');

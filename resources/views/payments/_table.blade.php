@@ -32,7 +32,7 @@
                         </td>
                     @endif
                     <td class="font-mono">{{ $payment->number }}</td>
-                    <td>{{ local_digits($payment->payment_date->format('d-m-Y')) }}</td>
+                    <td>{{ format_app_date($payment->payment_date) }}</td>
                     <td>{{ $payment->isReceipt() ? __('Receipt') : __('Payment') }}</td>
                     <td>{{ $payment->partyLabel() }}</td>
                     <td>{{ \App\Domain\Payments\Methods::label($payment->method) }}
@@ -49,7 +49,17 @@
                             'bg-slate-100 text-slate-600' => $payment->isVoid(),
                         ])>{{ __(ucfirst($payment->status)) }}</span>
                     </td>
-                    <td class="text-right"><a href="{{ route('payments.show', $payment) }}" class="text-brand-700 underline">{{ __('Open') }}</a></td>
+                    <td class="text-right">
+                        <x-row-actions
+                            :view="route('payments.show', $payment)"
+                            :view-label="__('Open')"
+                            :edit="($canManage ?? false) || (($canCollect ?? false) && $payment->isReceipt() && $payment->isDraft()) ? route('payments.edit', $payment) : null"
+                        >
+                            @if ($payment->isPosted())
+                                <a href="{{ route('payments.print', $payment) }}" class="btn-secondary px-2.5 py-1 text-xs" target="_blank" rel="noopener">{{ __('Print') }}</a>
+                            @endif
+                        </x-row-actions>
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="{{ $span }}" class="py-8 text-center text-slate-500">{{ __('No payments yet.') }}</td></tr>

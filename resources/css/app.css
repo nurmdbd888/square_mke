@@ -75,6 +75,10 @@
     @apply mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 focus:outline-none;
 }
 
+@utility input-num {
+    @apply input min-w-[5.5rem] w-full max-w-[8rem];
+}
+
 @utility label {
     @apply block text-sm font-medium text-slate-700;
 }

@@ -9,7 +9,7 @@
         <div>
             <h1 class="text-2xl font-semibold text-slate-900 font-mono">{{ $payment->number }}</h1>
             <p class="mt-1 text-sm text-slate-600">
-                {{ local_digits($payment->payment_date->format('d-m-Y')) }}
+                {{ format_app_date($payment->payment_date) }}
                 · {{ $payment->isReceipt() ? __('Receipt') : __('Payment') }}
                 · {{ \App\Domain\Payments\Methods::label($payment->method) }}
                 · {{ $payment->partyLabel() }}
@@ -24,6 +24,9 @@
                 @endif
             </p>
         </div>
+        @if ($payment->isPosted())
+            <a href="{{ route('payments.print', $payment) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
+        @endif
         @if (($canWrite ?? $canManage) && ! $payment->isVoid())
             <div class="flex flex-wrap gap-2">
                 @unless ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status === 'cleared')

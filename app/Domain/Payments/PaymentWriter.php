@@ -4,6 +4,7 @@ namespace App\Domain\Payments;
 
 use App\Domain\Money\Exact;
 use App\Domain\Reports\MonthLockService;
+use App\Domain\Payments\SaleCollectionStatus;
 use App\Models\Document;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
@@ -21,6 +22,7 @@ final class PaymentWriter
     public function __construct(
         private readonly PartyBalance $balances,
         private readonly MonthLockService $monthLocks,
+        private readonly SaleCollectionStatus $collectionStatus,
     ) {}
 
     /**
@@ -142,6 +144,9 @@ final class PaymentWriter
             ], $by);
         }
 
+        $payment->load('allocations');
+        $this->syncSaleCollectionFromPayment($payment);
+
         return $payment->fresh('allocations');
     }
 
@@ -168,7 +173,22 @@ final class PaymentWriter
             'status' => Payment::STATUS_VOID,
         ], $by);
 
+        $payment->load('allocations');
+        $this->syncSaleCollectionFromPayment($payment);
+
         return $payment->fresh();
+    }
+
+    private function syncSaleCollectionFromPayment(Payment $payment): void
+    {
+        if (! $payment->isReceipt()) {
+            return;
+        }
+
+        $documentIds = $payment->allocations()->pluck('document_id');
+        Document::query()->whereIn('id', $documentIds)->each(function (Document $document) {
+            $this->collectionStatus->sync($document);
+        });
     }
 
     public function clearPdc(Payment $payment, ?User $by = null, ?string $clearedOn = null): Payment
