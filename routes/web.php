@@ -3,6 +3,7 @@
 use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
 use App\Http\Controllers\Accounts\LedgerController;
+use App\Http\Controllers\Accounts\PaymentAttachmentController;
 use App\Http\Controllers\Accounts\PaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
@@ -201,15 +202,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
 
         Route::get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
-        Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.manage')->name('payments.open-invoices');
-        Route::get('/payments/create', [PaymentController::class, 'create'])->middleware('can:payments.manage')->name('payments.create');
-        Route::post('/payments', [PaymentController::class, 'store'])->middleware('can:payments.manage')->name('payments.store');
+        Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.receipt-write')->name('payments.open-invoices');
+        Route::get('/payments/create', [PaymentController::class, 'create'])->middleware('can:payments.receipt-write')->name('payments.create');
+        Route::post('/payments', [PaymentController::class, 'store'])->middleware('can:payments.receipt-write')->name('payments.store');
         Route::get('/payments/{payment}', [PaymentController::class, 'show'])->middleware('can:payments.view')->name('payments.show');
-        Route::get('/payments/{payment}/edit', [PaymentController::class, 'edit'])->middleware('can:payments.manage')->name('payments.edit');
-        Route::put('/payments/{payment}', [PaymentController::class, 'update'])->middleware('can:payments.manage')->name('payments.update');
-        Route::post('/payments/{payment}/post', [PaymentController::class, 'post'])->middleware('can:payments.manage')->name('payments.post');
-        Route::post('/payments/{payment}/clear', [PaymentController::class, 'clear'])->middleware('can:payments.manage')->name('payments.clear');
-        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->middleware('can:payments.manage')->name('payments.destroy');
+        Route::get('/payments/{payment}/attachments/{attachment}', [PaymentAttachmentController::class, 'show'])
+            ->middleware('can:payments.view')
+            ->name('payments.attachments.show');
+        Route::get('/payments/{payment}/edit', [PaymentController::class, 'edit'])->name('payments.edit');
+        Route::put('/payments/{payment}', [PaymentController::class, 'update'])->name('payments.update');
+        Route::post('/payments/{payment}/post', [PaymentController::class, 'post'])->name('payments.post');
+        Route::post('/payments/{payment}/clear', [PaymentController::class, 'clear'])->middleware('can:payments.admin-write')->name('payments.clear');
+        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
 
         Route::middleware('can:accounts.view')->group(function () {
             Route::get('/accounts/receivables', [LedgerController::class, 'receivables'])->name('accounts.receivables');

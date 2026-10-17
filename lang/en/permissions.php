@@ -39,6 +39,7 @@ return [
         'claims.view' => 'See Square claims',
         'claims.manage' => 'Create and update claims',
         'payments.view' => 'See receipts and payments',
+        'payments.collect' => 'Record receipts and upload payment slips (field collectors)',
         'payments.manage' => 'Create, edit, post and void receipts and payments',
         'accounts.view' => 'See receivables, payables and cash/bank books',
         'accounts.manage' => 'Record daily closings',

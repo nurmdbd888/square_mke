@@ -20,8 +20,8 @@ class RoleAccessTest extends TestCase
      * Page => roles that may open it (default permission matrix).
      */
     private const PAGES = [
-        '/' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
-        '/profile' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
+        '/profile' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
         '/health' => ['owner', 'accountant'],
         '/users' => ['owner', 'accountant'],
         '/users/create' => ['owner'],
@@ -30,7 +30,7 @@ class RoleAccessTest extends TestCase
         '/audit' => ['owner', 'accountant'],
         '/products' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         '/products/create' => ['owner', 'data_entry'],
-        '/retailers' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/retailers' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
         '/retailers/create' => ['owner', 'data_entry'],
         '/masters' => ['owner', 'accountant', 'data_entry'],
         '/masters/suppliers' => ['owner', 'accountant', 'data_entry'],
@@ -49,8 +49,9 @@ class RoleAccessTest extends TestCase
         '/claims' => ['owner', 'accountant', 'data_entry', 'viewer'],
         '/claims/create' => ['owner', 'accountant', 'data_entry'],
         '/stock/comparison' => ['owner', 'accountant', 'data_entry'],
-        '/payments' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
-        '/payments/create?kind=receipt' => ['owner', 'accountant', 'sr', 'data_entry'],
+        '/payments' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
+        '/payments/create?kind=receipt' => ['owner', 'accountant', 'sr', 'collector', 'data_entry'],
+        '/payments/create?kind=payment' => ['owner', 'accountant', 'sr', 'data_entry'],
         '/accounts/receivables' => ['owner', 'accountant', 'data_entry', 'viewer'],
         '/accounts/payables' => ['owner', 'accountant', 'data_entry', 'viewer'],
         '/accounts/cash-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
@@ -63,9 +64,9 @@ class RoleAccessTest extends TestCase
      * Navigation entry => roles that see it.
      */
     private const NAV = [
-        'dashboard' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'dashboard' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
         'products.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
-        'retailers.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'retailers.index' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
         'masters.index' => ['owner', 'accountant', 'data_entry'],
         'purchases.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'sales.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
@@ -74,7 +75,7 @@ class RoleAccessTest extends TestCase
         'claims.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'returns.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         'claims.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
-        'payments.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'payments.index' => ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'],
         'accounts.receivables' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'accounts.payables' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'accounts.cash-book' => ['owner', 'accountant', 'data_entry', 'viewer'],

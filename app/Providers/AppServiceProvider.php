@@ -21,6 +21,7 @@ use App\Models\MonthLock;
 use App\Models\OpeningBalance;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Models\PaymentAttachment;
 use App\Models\PriceList;
 use App\Models\PriceListItem;
 use App\Models\Product;
@@ -112,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
             'stock_comparison_line' => StockComparisonLine::class,
             'payment' => Payment::class,
             'payment_allocation' => PaymentAllocation::class,
+            'payment_attachment' => PaymentAttachment::class,
             'daily_closing' => DailyClosing::class,
             'expense_category' => ExpenseCategory::class,
             'month_lock' => MonthLock::class,
@@ -128,6 +130,9 @@ class AppServiceProvider extends ServiceProvider
 
         // The owner can never be locked out by the permission matrix.
         Gate::before(fn ($user) => $user instanceof User && $user->isOwner() ? true : null);
+
+        Gate::define('payments.receipt-write', fn (User $user) => $user->can('payments.manage') || $user->can('payments.collect'));
+        Gate::define('payments.admin-write', fn (User $user) => $user->can('payments.manage'));
 
         Password::defaults(fn () => Password::min(10)->max(128));
 
