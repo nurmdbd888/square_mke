@@ -23,8 +23,25 @@
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         @foreach ($definitions as $definition)
                             @php($value = old('settings.'.$definition->key, $store->get($definition->key)))
-                            <div @class(['sm:col-span-2' => $definition->type === SettingDefinition::ROLES])>
-                                @if ($definition->type === SettingDefinition::ROLES)
+                            <div @class(['sm:col-span-2' => in_array($definition->type, [SettingDefinition::ROLES, SettingDefinition::WEEKDAYS, SettingDefinition::DATE_LIST], true)])>
+                                @if ($definition->type === SettingDefinition::WEEKDAYS)
+                                    <fieldset data-testid="setting-{{ $definition->key }}">
+                                        <legend class="label">{{ __($definition->label) }}</legend>
+                                        <div class="mt-2 flex flex-wrap gap-4">
+                                            @foreach ($definition->options as $option => $label)
+                                                <label class="flex items-center gap-2 text-sm">
+                                                    <input type="checkbox" name="settings[{{ $definition->key }}][]" value="{{ $option }}" class="size-4 accent-brand-600" @checked(in_array((int) $option, array_map('intval', (array) $value), true))>
+                                                    {{ __($label) }}
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </fieldset>
+                                @elseif ($definition->type === SettingDefinition::DATE_LIST)
+                                    <label class="block" data-testid="setting-{{ $definition->key }}">
+                                        <span class="label">{{ __($definition->label) }}</span>
+                                        <textarea name="settings_lines[{{ $definition->key }}]" rows="4" class="input font-mono text-sm" placeholder="2026-10-21">{{ old('settings_lines.'.$definition->key, implode("\n", (array) $value)) }}</textarea>
+                                    </label>
+                                @elseif ($definition->type === SettingDefinition::ROLES)
                                     <fieldset>
                                         <legend class="label">{{ __($definition->label) }}</legend>
                                         <div class="mt-2 flex flex-wrap gap-4">

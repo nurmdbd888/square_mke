@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'nurmdbd888/square-distributor-manager',
-        'pretty_version' => 'v0.5.1',
-        'version' => '0.5.1.0',
-        'reference' => '54ee5e113eec7fe2df4a2db52e25137cd3469868',
+        'pretty_version' => 'v0.5.2',
+        'version' => '0.5.2.0',
+        'reference' => '55dac693986aa6ca09b43ea694ff2ae8d654c61a',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -635,9 +635,9 @@
             'dev_requirement' => false,
         ),
         'nurmdbd888/square-distributor-manager' => array(
-            'pretty_version' => 'v0.5.1',
-            'version' => '0.5.1.0',
-            'reference' => '54ee5e113eec7fe2df4a2db52e25137cd3469868',
+            'pretty_version' => 'v0.5.2',
+            'version' => '0.5.2.0',
+            'reference' => '55dac693986aa6ca09b43ea694ff2ae8d654c61a',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

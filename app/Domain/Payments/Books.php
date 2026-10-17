@@ -2,6 +2,7 @@
 
 namespace App\Domain\Payments;
 
+use App\Domain\Calendar\BusinessCalendar;
 use App\Domain\Money\Exact;
 use App\Models\DailyClosing;
 use App\Models\OpeningBalance;
@@ -19,17 +20,17 @@ final class Books
     /**
      * @return array{opening: string, in: string, out: string, closing: string, rows: Collection<int, array<string, mixed>>}
      */
-    public function cashBook(CarbonInterface|string $from, CarbonInterface|string $to): array
+    public function cashBook(CarbonInterface|string $from, CarbonInterface|string $to, bool $businessDaysOnly = false): array
     {
-        return $this->book('cash', $from, $to);
+        return $this->book('cash', $from, $to, $businessDaysOnly);
     }
 
     /**
      * @return array{opening: string, in: string, out: string, closing: string, rows: Collection<int, array<string, mixed>>}
      */
-    public function bankBook(CarbonInterface|string $from, CarbonInterface|string $to): array
+    public function bankBook(CarbonInterface|string $from, CarbonInterface|string $to, bool $businessDaysOnly = false): array
     {
-        return $this->book('bank', $from, $to);
+        return $this->book('bank', $from, $to, $businessDaysOnly);
     }
 
     /**
@@ -37,10 +38,10 @@ final class Books
      *
      * @return array{cash: array{in: string, out: string}, bank: array{in: string, out: string}, in: string, out: string, rows: Collection<int, array<string, mixed>>}
      */
-    public function dayBook(CarbonInterface|string $from, CarbonInterface|string $to): array
+    public function dayBook(CarbonInterface|string $from, CarbonInterface|string $to, bool $businessDaysOnly = false): array
     {
-        $cash = $this->cashBook($from, $to);
-        $bank = $this->bankBook($from, $to);
+        $cash = $this->cashBook($from, $to, $businessDaysOnly);
+        $bank = $this->bankBook($from, $to, $businessDaysOnly);
         $rows = $cash['rows']->concat($bank['rows'])
             ->sortBy([
                 fn ($r) => $r['date'],
@@ -84,24 +85,29 @@ final class Books
     /**
      * @return array{opening: string, in: string, out: string, closing: string, rows: Collection<int, array<string, mixed>>}
      */
-    private function book(string $book, CarbonInterface|string $from, CarbonInterface|string $to): array
+    private function book(string $book, CarbonInterface|string $from, CarbonInterface|string $to, bool $businessDaysOnly = false): array
     {
         $fromDate = Carbon::parse($from)->toDateString();
         $toDate = Carbon::parse($to)->toDateString();
         $methods = $book === 'cash' ? Payment::CASH_METHODS : Payment::BANK_METHODS;
+        $calendar = $businessDaysOnly ? app(BusinessCalendar::class) : null;
 
         $payments = Payment::query()
             ->with(['retailer', 'supplier', 'expenseCategory'])
             ->where('status', Payment::STATUS_POSTED)
             ->whereIn('method', $methods)
             ->get()
-            ->filter(function (Payment $payment) use ($fromDate, $toDate) {
+            ->filter(function (Payment $payment) use ($fromDate, $toDate, $calendar) {
                 if (! $payment->countsInBooks()) {
                     return false;
                 }
                 $bookDate = $payment->bookDate();
 
-                return $bookDate !== null && $bookDate >= $fromDate && $bookDate <= $toDate;
+                if ($bookDate === null || $bookDate < $fromDate || $bookDate > $toDate) {
+                    return false;
+                }
+
+                return $calendar === null || $calendar->isBusinessDay($bookDate);
             })
             ->sortBy(fn (Payment $p) => [$p->bookDate(), $p->id])
             ->values();
