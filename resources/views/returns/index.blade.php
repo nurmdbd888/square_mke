@@ -39,35 +39,7 @@
         <button class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 
-    <div class="mt-4 table-wrap">
-        <table class="data-table" data-testid="returns-table">
-            <thead>
-                <tr>
-                    <th>{{ __('Number') }}</th>
-                    <th>{{ __('Date') }}</th>
-                    <th>{{ __('Type') }}</th>
-                    <th>{{ __('Retailer') }}</th>
-                    <th class="text-right">{{ __('Total') }}</th>
-                    <th>{{ __('Status') }}</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($notes as $note)
-                    <tr>
-                        <td class="font-mono">{{ $note->number }}</td>
-                        <td>{{ local_digits($note->doc_date->format('d-m-Y')) }}</td>
-                        <td>{{ __(str_replace('_', ' ', ucfirst($note->type))) }}</td>
-                        <td>{{ $note->retailer?->name ?? '—' }}</td>
-                        <td class="text-right font-mono">{{ format_money($note->net_total) }}</td>
-                        <td><span class="badge">{{ __(ucfirst($note->status)) }}</span></td>
-                        <td class="text-right"><a href="{{ route('returns.show', $note) }}" class="text-brand-700 underline">{{ __('Open') }}</a></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="py-8 text-center text-slate-500">{{ __('No stock notes yet.') }}</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="mt-4">
+        @include('returns._table')
     </div>
-    {{ $notes->links() }}
 @endsection

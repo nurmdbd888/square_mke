@@ -1,11 +1,19 @@
 @php
     $showRoute = $type === 'purchase' ? 'purchases.show' : 'sales.show';
+    $bulkRoute = $type === 'purchase' ? 'purchases.bulk' : 'sales.bulk';
+    $span = 6 + ($canManage ? 1 : 0);
 @endphp
-
+@if ($canManage)
+    <form method="POST" action="{{ route($bulkRoute) }}">
+        @csrf
+@endif
 <div class="table-wrap">
     <table class="data-table">
         <thead>
             <tr>
+                @if ($canManage)
+                    <th scope="col"><x-bulk-select-all /></th>
+                @endif
                 <th>{{ __('Number') }}</th>
                 <th>{{ __('Date') }}</th>
                 <th>{{ __('Party') }}</th>
@@ -17,6 +25,11 @@
         <tbody>
             @forelse ($documents as $document)
                 <tr>
+                    @if ($canManage)
+                        <td>
+                            <input type="checkbox" name="ids[]" value="{{ $document->id }}" class="rounded border-slate-300" aria-label="{{ $document->number }}">
+                        </td>
+                    @endif
                     <td class="font-mono">{{ $document->number }}</td>
                     <td>{{ local_digits($document->doc_date->format('d-m-Y')) }}</td>
                     <td>{{ $document->partyLabel() }}</td>
@@ -32,9 +45,16 @@
                     <td class="text-right"><a href="{{ route($showRoute, $document) }}" class="text-brand-700 underline">{{ __('Open') }}</a></td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="py-8 text-center text-slate-500">{{ __('No documents yet.') }}</td></tr>
+                <tr><td colspan="{{ $span }}" class="py-8 text-center text-slate-500">{{ __('No documents yet.') }}</td></tr>
             @endforelse
         </tbody>
     </table>
 </div>
+@if ($canManage)
+    <x-bulk-action-bar :actions="[
+        'post' => __('Post drafts'),
+        'void' => __('Void or delete'),
+    ]" />
+    </form>
+@endif
 {{ $documents->links() }}

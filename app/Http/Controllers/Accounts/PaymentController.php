@@ -13,6 +13,8 @@ use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\Supplier;
 use App\Support\Access\PaymentAccess;
+use App\Support\Bulk\BulkActionResult;
+use App\Support\Bulk\BulkSelection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -136,6 +138,64 @@ class PaymentController extends Controller
         $this->storeAttachments($request, $payment);
 
         return redirect()->route('payments.show', $payment)->with('status', __('Saved.'));
+    }
+
+    public function bulk(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless(PaymentAccess::canCollectReceipts($user), 403);
+
+        $action = $request->validate([
+            'action' => ['required', Rule::in(['post', 'void'])],
+        ])['action'];
+        $ids = BulkSelection::ids($request);
+        $result = new BulkActionResult;
+
+        Payment::query()
+            ->whereIn('id', $ids)
+            ->orderBy('id')
+            ->get()
+            ->each(function (Payment $payment) use ($action, $user, $result) {
+                try {
+                    if ($action === 'post') {
+                        if (! $payment->isDraft()) {
+                            $result->skipped++;
+
+                            return;
+                        }
+                        $allowed = $payment->isReceipt()
+                            ? PaymentAccess::canWriteReceipt($user, $payment)
+                            : PaymentAccess::canWritePayment($user, $payment);
+                        if (! $allowed) {
+                            $result->skipped++;
+
+                            return;
+                        }
+                        $this->writer->post($payment->load('allocations'), $user);
+                        $result->applied++;
+
+                        return;
+                    }
+
+                    if (! PaymentAccess::canManage($user)) {
+                        $result->skipped++;
+
+                        return;
+                    }
+                    if ($payment->isVoid()) {
+                        $result->skipped++;
+
+                        return;
+                    }
+                    $this->writer->void($payment, $user);
+                    $result->applied++;
+                } catch (\Throwable $e) {
+                    $result->skipped++;
+                    $result->errors[] = $payment->number.': '.$e->getMessage();
+                }
+            });
+
+        return redirect()->route('payments.index')->with('status', $result->message());
     }
 
     public function destroy(Request $request, Payment $payment): RedirectResponse

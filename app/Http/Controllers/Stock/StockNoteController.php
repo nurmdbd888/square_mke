@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Retailer;
 use App\Models\StockNote;
+use App\Support\Bulk\BulkActionResult;
+use App\Support\Bulk\BulkSelection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -97,6 +99,50 @@ class StockNoteController extends Controller
 
         return redirect()->route('returns.show', $note)
             ->with('status', __('Return :number was updated.', ['number' => $note->number]));
+    }
+
+    public function bulk(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->can('returns.manage'), 403);
+
+        $action = $request->validate([
+            'action' => ['required', Rule::in(['post', 'void'])],
+        ])['action'];
+        $ids = BulkSelection::ids($request);
+        $result = new BulkActionResult;
+
+        StockNote::query()
+            ->whereIn('id', $ids)
+            ->orderBy('id')
+            ->get()
+            ->each(function (StockNote $note) use ($action, $request, $result) {
+                try {
+                    if ($action === 'post') {
+                        if (! $note->isDraft()) {
+                            $result->skipped++;
+
+                            return;
+                        }
+                        $this->writer->post($note->fresh('lines'), $request->user());
+                        $result->applied++;
+
+                        return;
+                    }
+
+                    if ($note->isVoid()) {
+                        $result->skipped++;
+
+                        return;
+                    }
+                    $this->writer->void($note, $request->user());
+                    $result->applied++;
+                } catch (\Throwable $e) {
+                    $result->skipped++;
+                    $result->errors[] = $note->number.': '.$e->getMessage();
+                }
+            });
+
+        return redirect()->route('returns.index')->with('status', $result->message());
     }
 
     public function post(Request $request, StockNote $stockNote): RedirectResponse

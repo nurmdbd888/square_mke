@@ -784,6 +784,8 @@ class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
         'App\\Support\\Audit\\Auditable' => __DIR__ . '/../..' . '/app/Support/Audit/Auditable.php',
         'App\\Support\\Auth\\LoginThrottle' => __DIR__ . '/../..' . '/app/Support/Auth/LoginThrottle.php',
         'App\\Support\\Auth\\TwoFactor' => __DIR__ . '/../..' . '/app/Support/Auth/TwoFactor.php',
+        'App\\Support\\Bulk\\BulkActionResult' => __DIR__ . '/../..' . '/app/Support/Bulk/BulkActionResult.php',
+        'App\\Support\\Bulk\\BulkSelection' => __DIR__ . '/../..' . '/app/Support/Bulk/BulkSelection.php',
         'App\\Support\\Health' => __DIR__ . '/../..' . '/app/Support/Health.php',
         'App\\Support\\Http\\BusinessDaysFilter' => __DIR__ . '/../..' . '/app/Support/Http/BusinessDaysFilter.php',
         'App\\Support\\Maintenance\\AppKey' => __DIR__ . '/../..' . '/app/Support/Maintenance/AppKey.php',

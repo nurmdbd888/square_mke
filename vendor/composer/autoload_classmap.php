@@ -184,6 +184,8 @@ return array(
     'App\\Support\\Audit\\Auditable' => $baseDir . '/app/Support/Audit/Auditable.php',
     'App\\Support\\Auth\\LoginThrottle' => $baseDir . '/app/Support/Auth/LoginThrottle.php',
     'App\\Support\\Auth\\TwoFactor' => $baseDir . '/app/Support/Auth/TwoFactor.php',
+    'App\\Support\\Bulk\\BulkActionResult' => $baseDir . '/app/Support/Bulk/BulkActionResult.php',
+    'App\\Support\\Bulk\\BulkSelection' => $baseDir . '/app/Support/Bulk/BulkSelection.php',
     'App\\Support\\Health' => $baseDir . '/app/Support/Health.php',
     'App\\Support\\Http\\BusinessDaysFilter' => $baseDir . '/app/Support/Http/BusinessDaysFilter.php',
     'App\\Support\\Maintenance\\AppKey' => $baseDir . '/app/Support/Maintenance/AppKey.php',

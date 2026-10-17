@@ -47,15 +47,12 @@
                 <input type="date" name="doc_date" value="{{ old('doc_date', $note->doc_date?->format('Y-m-d') ?? now()->toDateString()) }}" required class="input">
             </label>
             @if ($type === 'sales_return')
-                <label class="block">
-                    <span class="label">{{ __('Retailer') }}</span>
-                    <select name="retailer_id" class="input" required>
-                        <option value="">{{ __('Choose') }}</option>
-                        @foreach ($retailers as $retailer)
-                            <option value="{{ $retailer->id }}" @selected((string) old('retailer_id', $note->retailer_id) === (string) $retailer->id)>{{ $retailer->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
+                <x-party-code-picker
+                    name="retailer_id"
+                    :label="__('Retailer')"
+                    :parties="$retailers"
+                    :selected-id="$note->retailer_id"
+                />
             @endif
             <label class="block sm:col-span-2">
                 <span class="label">{{ __('Notes') }}</span>

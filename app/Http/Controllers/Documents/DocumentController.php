@@ -12,6 +12,8 @@ use App\Models\SalesRep;
 use App\Models\SalesRoute;
 use App\Models\Supplier;
 use App\Models\Vehicle;
+use App\Support\Bulk\BulkActionResult;
+use App\Support\Bulk\BulkSelection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -153,6 +155,55 @@ class DocumentController extends Controller
             ->with('status', __('Document :number was voided.', ['number' => $number]));
     }
 
+    public function bulk(Request $request, string $type): RedirectResponse
+    {
+        $this->assertType($type);
+        $this->authorizeManage($request, $type);
+
+        $action = $request->validate([
+            'action' => ['required', Rule::in(['post', 'void'])],
+        ])['action'];
+        $ids = BulkSelection::ids($request);
+        $result = new BulkActionResult;
+
+        Document::query()
+            ->where('type', $type)
+            ->whereIn('id', $ids)
+            ->orderBy('id')
+            ->get()
+            ->each(function (Document $document) use ($action, $request, $result) {
+                try {
+                    if ($action === 'post') {
+                        if (! $document->isDraft()) {
+                            $result->skipped++;
+
+                            return;
+                        }
+                        $document->load('lines');
+                        $this->writer->post($document, $request->user());
+                        $result->applied++;
+
+                        return;
+                    }
+
+                    if ($document->isVoid()) {
+                        $result->skipped++;
+
+                        return;
+                    }
+                    $this->writer->void($document, $request->user());
+                    $result->applied++;
+                } catch (\Throwable $e) {
+                    $result->skipped++;
+                    $result->errors[] = $document->number.': '.$e->getMessage();
+                }
+            });
+
+        $route = $type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index';
+
+        return redirect()->route($route)->with('status', $result->message());
+    }
+
     public function post(Request $request, Document $document): RedirectResponse
     {
         $this->assertRouteMatches($request, $document);
@@ -199,7 +250,7 @@ class DocumentController extends Controller
         return [
             'type' => $type,
             'document' => $document,
-            'products' => Product::query()->orderBy('name_en')->get(['id', 'code', 'name_en', 'buy_price', 'sell_price', 'sd_pct', 'vat_pct']),
+            'products' => Product::query()->with('aliases:id,product_id,name')->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'brand', 'buy_price', 'sell_price', 'sd_pct', 'vat_pct']),
             'parties' => $type === Document::TYPE_PURCHASE
                 ? Supplier::query()->orderBy('name')->get(['id', 'code', 'name'])
                 : Retailer::query()->orderBy('name')->get(['id', 'code', 'name']),
