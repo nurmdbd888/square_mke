@@ -285,6 +285,34 @@ Only if the Git way does not work on your host.
 
 ---
 
+## Backup and restore (M10)
+
+Nightly **sdm:backup** runs at 02:30 server time when cron calls `schedule:run`. Each backup is a zip in `mke/shared/storage/backups/` named `mke-backup-YYYY-MM-DD-HHMMSS.zip` (database dump + private uploads). When Google is connected in Settings, copies upload to your Drive folder; files older than **Backup retention (days)** (default 14) are pruned locally and on Drive.
+
+### Backup before every update
+
+1. Maintenance page → **Backup now** (or phpMyAdmin export until M10 is deployed).
+2. Wait for **Finished successfully** and note the filename in the green box.
+
+### Restore (Maintenance)
+
+Use only when you must roll back data (wrong import, bad deploy). This **overwrites** the live database and payment slip files.
+
+1. Maintenance → **Backup now** first (current state).
+2. In the amber **Restore from backup** box, pick the zip, type `RESTORE`, submit.
+3. **Clear caches**, sign in again, spot-check dashboard totals and one invoice.
+
+### Restore (terminal fallback)
+
+If the button fails, on a host with SSH:  
+`php artisan sdm:restore mke-backup-YYYY-MM-DD-HHMMSS.zip --force`
+
+phpMyAdmin import of a `.sql` export remains the fallback if zip restore is unavailable.
+
+See [docs/GO-LIVE.md](docs/GO-LIVE.md) for the owner checklist.
+
+---
+
 ## Part 3 — Going back to the previous version (rollback)
 
 ### Quick rollback (works for the Git way and the zip way)

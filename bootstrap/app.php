@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAccountReady;
 use App\Http\Middleware\EnsureAppKey;
 use App\Http\Middleware\MaintenanceSession;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Support\Maintenance\MaintenanceGate;
 use App\Support\SharedPath;
@@ -25,7 +26,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(EnsureAppKey::class);
         $middleware->encryptCookies(except: [SetLocale::COOKIE, MaintenanceGate::COOKIE]);
-        $middleware->web(append: [SetLocale::class]);
+        $middleware->web(append: [SetLocale::class, SecurityHeaders::class]);
         $middleware->alias(['account.ready' => EnsureAccountReady::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));

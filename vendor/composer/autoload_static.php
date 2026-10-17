@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
+class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
 {
     public static $files = array (
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
@@ -171,6 +171,7 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
         ),
         'D' =>
         array (
+            'Druidfi\\Mysqldump\\' => 18,
             'Dotenv\\' => 7,
             'Dompdf\\' => 7,
             'Doctrine\\Inflector\\' => 19,
@@ -534,6 +535,10 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
         array (
             0 => __DIR__ . '/..' . '/egulias/email-validator/src',
         ),
+        'Druidfi\\Mysqldump\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/druidfi/mysqldump-php/src',
+        ),
         'Dotenv\\' =>
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
@@ -603,10 +608,15 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
     public static $classMap = array (
         'AllowDynamicProperties' => __DIR__ . '/..' . '/symfony/polyfill-php82/Resources/stubs/AllowDynamicProperties.php',
         'App\\Actions\\CreateOwner' => __DIR__ . '/../..' . '/app/Actions/CreateOwner.php',
+        'App\\Console\\Commands\\BackupCommand' => __DIR__ . '/../..' . '/app/Console/Commands/BackupCommand.php',
         'App\\Console\\Commands\\CreateAdminCommand' => __DIR__ . '/../..' . '/app/Console/Commands/CreateAdminCommand.php',
         'App\\Console\\Commands\\EnvironmentCheckCommand' => __DIR__ . '/../..' . '/app/Console/Commands/EnvironmentCheckCommand.php',
         'App\\Console\\Commands\\RecordHeartbeat' => __DIR__ . '/../..' . '/app/Console/Commands/RecordHeartbeat.php',
+        'App\\Console\\Commands\\RestoreCommand' => __DIR__ . '/../..' . '/app/Console/Commands/RestoreCommand.php',
         'App\\Console\\Commands\\SendDueRemindersCommand' => __DIR__ . '/../..' . '/app/Console/Commands/SendDueRemindersCommand.php',
+        'App\\Domain\\Backup\\BackupCatalog' => __DIR__ . '/../..' . '/app/Domain/Backup/BackupCatalog.php',
+        'App\\Domain\\Backup\\BackupRunner' => __DIR__ . '/../..' . '/app/Domain/Backup/BackupRunner.php',
+        'App\\Domain\\Backup\\RestoreRunner' => __DIR__ . '/../..' . '/app/Domain/Backup/RestoreRunner.php',
         'App\\Domain\\Calendar\\BusinessCalendar' => __DIR__ . '/../..' . '/app/Domain/Calendar/BusinessCalendar.php',
         'App\\Domain\\Calendar\\FiscalYear' => __DIR__ . '/../..' . '/app/Domain/Calendar/FiscalYear.php',
         'App\\Domain\\Costing\\HeaderDiscountAllocator' => __DIR__ . '/../..' . '/app/Domain/Costing/HeaderDiscountAllocator.php',
@@ -707,6 +717,7 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
         'App\\Http\\Middleware\\EnsureAccountReady' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureAccountReady.php',
         'App\\Http\\Middleware\\EnsureAppKey' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureAppKey.php',
         'App\\Http\\Middleware\\MaintenanceSession' => __DIR__ . '/../..' . '/app/Http/Middleware/MaintenanceSession.php',
+        'App\\Http\\Middleware\\SecurityHeaders' => __DIR__ . '/../..' . '/app/Http/Middleware/SecurityHeaders.php',
         'App\\Http\\Middleware\\SetLocale' => __DIR__ . '/../..' . '/app/Http/Middleware/SetLocale.php',
         'App\\Jobs\\ProcessDocumentImportJob' => __DIR__ . '/../..' . '/app/Jobs/ProcessDocumentImportJob.php',
         'App\\Jobs\\ProcessEntityImportJob' => __DIR__ . '/../..' . '/app/Jobs/ProcessEntityImportJob.php',
@@ -757,6 +768,7 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
         'App\\Models\\Vehicle' => __DIR__ . '/../..' . '/app/Models/Vehicle.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
+        'App\\Settings\\BackupSettings' => __DIR__ . '/../..' . '/app/Settings/BackupSettings.php',
         'App\\Settings\\BusinessSettings' => __DIR__ . '/../..' . '/app/Settings/BusinessSettings.php',
         'App\\Settings\\CalendarSettings' => __DIR__ . '/../..' . '/app/Settings/CalendarSettings.php',
         'App\\Settings\\CoreSettings' => __DIR__ . '/../..' . '/app/Settings/CoreSettings.php',
@@ -1192,6 +1204,33 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
         'Dotenv\\Util\\Regex' => __DIR__ . '/..' . '/vlucas/phpdotenv/src/Util/Regex.php',
         'Dotenv\\Util\\Str' => __DIR__ . '/..' . '/vlucas/phpdotenv/src/Util/Str.php',
         'Dotenv\\Validator' => __DIR__ . '/..' . '/vlucas/phpdotenv/src/Validator.php',
+        'Druidfi\\Mysqldump\\Attribute\\Constraint' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Attribute/Constraint.php',
+        'Druidfi\\Mysqldump\\Attribute\\DefaultValue' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Attribute/DefaultValue.php',
+        'Druidfi\\Mysqldump\\Attribute\\Deprecated' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Attribute/Deprecated.php',
+        'Druidfi\\Mysqldump\\Attribute\\Injectable' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Attribute/Injectable.php',
+        'Druidfi\\Mysqldump\\Attribute\\ValidatesValue' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Attribute/ValidatesValue.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressBzip2' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressBzip2.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressGzip' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressGzip.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressGzipstream' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressGzipstream.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressInterface' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressInterface.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressLz4' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressLz4.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressManagerFactory' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressManagerFactory.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressNone' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressNone.php',
+        'Druidfi\\Mysqldump\\Compress\\CompressZstd' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Compress/CompressZstd.php',
+        'Druidfi\\Mysqldump\\ConfigOption' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ConfigOption.php',
+        'Druidfi\\Mysqldump\\ConfigValidator' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ConfigValidator.php',
+        'Druidfi\\Mysqldump\\DatabaseConnector' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/DatabaseConnector.php',
+        'Druidfi\\Mysqldump\\DumpSettings' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/DumpSettings.php',
+        'Druidfi\\Mysqldump\\DumpWriter' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/DumpWriter.php',
+        'Druidfi\\Mysqldump\\Mysqldump' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/Mysqldump.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\DumperInterface' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/DumperInterface.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\EventsDumper' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/EventsDumper.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\RoutinesDumper' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/RoutinesDumper.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\TablesDumper' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/TablesDumper.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\TriggersDumper' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/TriggersDumper.php',
+        'Druidfi\\Mysqldump\\ObjectDumper\\ViewsDumper' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/ObjectDumper/ViewsDumper.php',
+        'Druidfi\\Mysqldump\\TypeAdapter\\TypeAdapterInterface' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/TypeAdapter/TypeAdapterInterface.php',
+        'Druidfi\\Mysqldump\\TypeAdapter\\TypeAdapterMysql' => __DIR__ . '/..' . '/druidfi/mysqldump-php/src/TypeAdapter/TypeAdapterMysql.php',
         'Egulias\\EmailValidator\\EmailLexer' => __DIR__ . '/..' . '/egulias/email-validator/src/EmailLexer.php',
         'Egulias\\EmailValidator\\EmailParser' => __DIR__ . '/..' . '/egulias/email-validator/src/EmailParser.php',
         'Egulias\\EmailValidator\\EmailValidator' => __DIR__ . '/..' . '/egulias/email-validator/src/EmailValidator.php',
@@ -44075,9 +44114,9 @@ class ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit89fbb4fb82c6dbc3b73c4c6dad80bb34::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1::$classMap;
 
         }, null, ClassLoader::class);
     }

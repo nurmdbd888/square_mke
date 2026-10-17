@@ -88,6 +88,7 @@ return array(
     'FontLib\\' => array($vendorDir . '/dompdf/php-font-lib/src/FontLib'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
     'Egulias\\EmailValidator\\' => array($vendorDir . '/egulias/email-validator/src'),
+    'Druidfi\\Mysqldump\\' => array($vendorDir . '/druidfi/mysqldump-php/src'),
     'Dotenv\\' => array($vendorDir . '/vlucas/phpdotenv/src'),
     'Dompdf\\' => array($vendorDir . '/dompdf/dompdf/src'),
     'Doctrine\\Inflector\\' => array($vendorDir . '/doctrine/inflector/src'),

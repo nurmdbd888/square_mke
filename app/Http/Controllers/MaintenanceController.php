@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateOwner;
+use App\Domain\Backup\BackupCatalog;
 use App\Models\User;
 use App\Support\Access\PermissionRegistry;
 use App\Support\Audit\AuditLogger;
@@ -130,6 +131,41 @@ class MaintenanceController extends Controller
         return $this->dashboard($request, $result);
     }
 
+    public function backup(Request $request): BaseResponse
+    {
+        if ($denied = $this->denied($request)) {
+            return $denied;
+        }
+
+        $result = $this->artisan(__('Backup now'), 'sdm:backup', ['--no-drive' => false]);
+        AuditLogger::log('maintenance.backup', null, null, ['success' => $result['success']]);
+
+        return $this->dashboard($request, $result);
+    }
+
+    public function restore(Request $request): BaseResponse
+    {
+        if ($denied = $this->denied($request)) {
+            return $denied;
+        }
+
+        $data = $request->validate([
+            'basename' => ['required', 'string', 'max:191'],
+            'confirm' => ['required', 'string', 'in:RESTORE'],
+        ]);
+
+        $result = $this->artisan(__('Restore backup'), 'sdm:restore', [
+            'basename' => $data['basename'],
+            '--force' => true,
+        ]);
+        AuditLogger::log('maintenance.restore', null, null, [
+            'success' => $result['success'],
+            'basename' => $data['basename'],
+        ]);
+
+        return $this->dashboard($request, $result);
+    }
+
     public function createOwner(Request $request, CreateOwner $createOwner): BaseResponse
     {
         if ($denied = $this->denied($request)) {
@@ -242,6 +278,7 @@ class MaintenanceController extends Controller
 
         return response()->view('maintenance.dashboard', $check + [
             'summary' => EnvironmentCheck::summary($check['results']),
+            'backups' => app(BackupCatalog::class)->listLocal(),
             'action' => $action,
             'formToken' => $this->gate->formToken($request),
             'owners' => $this->owners()->ownerCount(),
