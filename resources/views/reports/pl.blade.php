@@ -5,7 +5,10 @@
 @section('content')
     <div class="flex flex-wrap items-end justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Profit and loss') }}</h1>
-        <a href="{{ route('reports.month-locks') }}" class="btn-secondary">{{ __('Month locks') }}</a>
+        <div class="flex flex-wrap items-center gap-2">
+            @include('export.partials.actions', ['exportKey' => 'reports_pl'])
+            <a href="{{ route('reports.month-locks') }}" class="btn-secondary">{{ __('Month locks') }}</a>
+        </div>
     </div>
 
     <form method="GET" class="mt-4 flex flex-wrap items-end gap-3">

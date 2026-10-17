@@ -66,6 +66,8 @@ return [
 
     'entity_import_inline_limit' => (int) env('SDM_ENTITY_IMPORT_INLINE_LIMIT', 500),
 
+    'export_inline_limit' => (int) env('SDM_EXPORT_INLINE_LIMIT', 500),
+
     'min_php' => '8.4.0',
 
     'required_extensions' => [
