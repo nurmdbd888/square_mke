@@ -595,3 +595,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: sales and purchase document forms label the document field **Invoice number** (still stored in `documents.number`). Customer **receipt** forms label the payment field **Receipt number** with help text that it is not the sales invoice; supplier **payment** forms use **Payment number** (voucher/bank reference, not purchase invoice). Retailer receipts add a **Pay against invoice** dropdown listing posted sales with open balance (same rows as the allocation table); choosing one highlights the row and prefills **This payment** with the full remaining amount, while partial pay and multi-invoice splits stay in the table.
 - Reason: owner UX — collectors were confusing receipt voucher numbers with invoice numbers when collecting against due sales.
 - Change: `payments/_open_invoices`, receipt/payment form labels.
+
+**115. Master list toolbar export deduplication** — 2026-10-17
+- Decision: master list pages use **`master.partials.list-toolbar`**: one **Import** link and one **Export** control. When an entity is registered in `ExportRegistry` (products, retailers), Export is the M7 downloads menu (`export.partials.actions`); other importable entities keep a single CSV **Export** via `imports.entity.export`. Removed duplicate Export from `import.partials.list-actions` on pages that also included the M7 menu.
+- Reason: owner bug — Products showed Export | Import | Export | Add.
+- Change: products/retailers index, shared toolbar partial.
