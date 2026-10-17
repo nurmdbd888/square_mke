@@ -7,6 +7,7 @@ use App\Domain\Costing\PurchaseCost;
 use App\Domain\Costing\Recompute;
 use App\Domain\Money\Exact;
 use App\Domain\Profit\Commission;
+use App\Domain\Reports\MonthLockService;
 use App\Domain\Stock\BatchRegistry;
 use App\Models\Document;
 use App\Models\DocumentLine;
@@ -29,6 +30,7 @@ final class DocumentWriter
         private readonly Commission $commission,
         private readonly Recompute $recompute,
         private readonly BatchRegistry $batches,
+        private readonly MonthLockService $monthLocks,
     ) {}
 
     /**
@@ -40,6 +42,8 @@ final class DocumentWriter
         if ($lines === []) {
             throw ValidationException::withMessages(['lines' => __('Add at least one line.')]);
         }
+
+        $this->monthLocks->assertWritable($header['doc_date'] ?? $existing?->doc_date ?? now());
 
         return DB::transaction(function () use ($type, $header, $lines, $by, $existing) {
             $document = $existing ?? new Document(['type' => $type, 'status' => Document::STATUS_DRAFT]);

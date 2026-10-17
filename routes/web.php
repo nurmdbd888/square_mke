@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
 use App\Http\Controllers\Accounts\LedgerController;
 use App\Http\Controllers\Accounts\PaymentController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Import\EntityImportController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
 use App\Http\Controllers\Master\MastersController;
@@ -19,6 +21,8 @@ use App\Http\Controllers\Master\PriceListController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Reports\MonthLockController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Stock\ClaimController;
@@ -126,6 +130,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
         });
 
+        $importEntities = implode('|', EntityImportRegistry::ENTITIES);
+        Route::prefix('imports')->group(function () use ($importEntities) {
+            Route::get('/{entity}/template', [EntityImportController::class, 'template'])->where('entity', $importEntities)->name('imports.entity.template');
+            Route::get('/{entity}/export', [EntityImportController::class, 'export'])->where('entity', $importEntities)->name('imports.entity.export');
+            Route::get('/{entity}', [EntityImportController::class, 'index'])->where('entity', $importEntities)->name('imports.entity.index');
+            Route::post('/{entity}', [EntityImportController::class, 'store'])->where('entity', $importEntities)->name('imports.entity.store');
+            Route::post('/{entity}/profiles', [EntityImportController::class, 'storeProfile'])->where('entity', $importEntities)->name('imports.entity.profiles.store');
+            Route::get('/{entity}/batches/{entityImportBatch}', [EntityImportController::class, 'show'])->where('entity', $importEntities)->name('imports.entity.show');
+            Route::post('/{entity}/batches/{entityImportBatch}/confirm', [EntityImportController::class, 'confirm'])->where('entity', $importEntities)->name('imports.entity.confirm');
+            Route::post('/{entity}/batches/{entityImportBatch}/undo', [EntityImportController::class, 'undo'])->where('entity', $importEntities)->name('imports.entity.undo');
+        });
+
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
         Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
         Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
@@ -190,6 +206,16 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/accounts/closings', [BookController::class, 'closings'])->name('accounts.closings');
         });
         Route::post('/accounts/closings', [BookController::class, 'close'])->middleware('can:accounts.manage')->name('accounts.closings.store');
+
+        Route::middleware('can:reports.view')->group(function () {
+            Route::get('/reports/pl', [ReportController::class, 'profitAndLoss'])->name('reports.pl');
+            Route::get('/reports/month-locks', [MonthLockController::class, 'index'])->name('reports.month-locks');
+        });
+        Route::post('/reports/month-locks', [MonthLockController::class, 'store'])->middleware('can:reports.manage')->name('reports.month-locks.store');
+        Route::delete('/reports/month-locks/{year}/{month}', [MonthLockController::class, 'destroy'])
+            ->middleware('can:reports.manage')
+            ->whereNumber(['year', 'month'])
+            ->name('reports.month-locks.destroy');
 
         Route::middleware('can:users.view')->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');

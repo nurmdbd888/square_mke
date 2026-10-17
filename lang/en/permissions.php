@@ -9,6 +9,7 @@ return [
         'master' => 'Master data',
         'documents' => 'Purchases and sales',
         'accounts' => 'Payments and accounts',
+        'reports' => 'Reports and month lock',
     ],
     'names' => [
         'health.view' => 'See system health',
@@ -39,5 +40,7 @@ return [
         'payments.manage' => 'Create, edit, post and void receipts and payments',
         'accounts.view' => 'See receivables, payables and cash/bank books',
         'accounts.manage' => 'Record daily closings',
+        'reports.view' => 'See P&L and dashboard metrics',
+        'reports.manage' => 'Lock months and manage reports',
     ],
 ];

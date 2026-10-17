@@ -7,7 +7,11 @@ use App\Models\CustomField;
 use App\Models\DailyClosing;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\EntityImportBatch;
+use App\Models\EntityImportRow;
 use App\Models\ExpenseCategory;
+use App\Models\ImportMappingProfile;
+use App\Models\MonthLock;
 use App\Models\OpeningBalance;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
@@ -104,6 +108,10 @@ class AppServiceProvider extends ServiceProvider
             'payment_allocation' => PaymentAllocation::class,
             'daily_closing' => DailyClosing::class,
             'expense_category' => ExpenseCategory::class,
+            'month_lock' => MonthLock::class,
+            'import_mapping_profile' => ImportMappingProfile::class,
+            'entity_import_batch' => EntityImportBatch::class,
+            'entity_import_row' => EntityImportRow::class,
         ]);
 
         // The owner can never be locked out by the permission matrix.

@@ -24,6 +24,7 @@ class PermissionMatrixTest extends TestCase
                 'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
                 'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
                 'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                'reports.view', 'reports.manage',
             ],
             Role::findByName('accountant')->permissions->pluck('name')->all(),
         );
@@ -40,6 +41,7 @@ class PermissionMatrixTest extends TestCase
                 'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
                 'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
                 'payments.view', 'payments.manage', 'accounts.view',
+                'reports.view',
             ],
             Role::findByName('data_entry')->permissions->pluck('name')->all(),
         );
@@ -47,6 +49,7 @@ class PermissionMatrixTest extends TestCase
             [
                 'settings.view', 'products.view', 'retailers.view', 'purchases.view', 'sales.view', 'stock.view',
                 'returns.view', 'claims.view', 'payments.view', 'accounts.view',
+                'reports.view',
             ],
             Role::findByName('viewer')->permissions->pluck('name')->all(),
         );
@@ -84,6 +87,7 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
                     'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                    'reports.view', 'reports.manage',
                 ],
                 'sr' => ['settings.view'],
                 'data_entry' => [
@@ -91,10 +95,12 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
                     'payments.view', 'payments.manage', 'accounts.view',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                    'reports.view',
                 ],
                 'viewer' => [
                     'settings.view', 'products.view', 'retailers.view', 'purchases.view', 'sales.view', 'stock.view',
                     'payments.view', 'accounts.view', 'returns.view', 'claims.view',
+                    'reports.view',
                 ],
             ],
         ])->assertRedirect(route('roles.index'))->assertSessionHas('status', 'Permissions saved.');
@@ -106,11 +112,17 @@ class PermissionMatrixTest extends TestCase
                 'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
                 'payments.view', 'payments.manage', 'accounts.view',
                 'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                'reports.view',
             ],
             Role::findByName('data_entry')->permissions->pluck('name')->all(),
         );
 
-        $log = AuditLog::query()->where('event', 'role.permissions_changed')->latest('id')->sole();
+        $srRole = Role::findByName('sr');
+        $log = AuditLog::query()
+            ->where('event', 'role.permissions_changed')
+            ->where('auditable_type', 'role')
+            ->where('auditable_id', $srRole->id)
+            ->sole();
         $this->assertSame('role', $log->auditable_type);
         $this->assertEqualsCanonicalizing(
             ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'returns.view', 'returns.manage', 'payments.view', 'payments.manage'],
@@ -130,6 +142,7 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
                     'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                    'reports.view', 'reports.manage',
                 ],
                 'sr' => ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'payments.view', 'payments.manage', 'returns.view', 'returns.manage'],
                 'data_entry' => [
@@ -137,10 +150,12 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
                     'payments.view', 'payments.manage', 'accounts.view',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                    'reports.view',
                 ],
                 'viewer' => [
                     'settings.view', 'products.view', 'retailers.view', 'purchases.view', 'sales.view', 'stock.view',
                     'payments.view', 'accounts.view', 'returns.view', 'claims.view',
+                    'reports.view',
                 ],
             ],
         ])->assertSessionHas('status', 'Nothing changed.');

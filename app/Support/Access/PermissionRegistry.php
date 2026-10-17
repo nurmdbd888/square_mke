@@ -69,6 +69,10 @@ class PermissionRegistry
             'accounts.view' => ['accountant', 'data_entry', 'viewer'],
             'accounts.manage' => ['accountant'],
         ],
+        'reports' => [
+            'reports.view' => ['accountant', 'data_entry', 'viewer'],
+            'reports.manage' => ['accountant'],
+        ],
     ];
 
     /**
