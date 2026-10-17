@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\SmokeHeartbeat;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -13,11 +14,16 @@ use Tests\TestCase;
  */
 class MaintenanceActionsTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Artisan::call('db:wipe', ['--force' => true]);
+    }
+
     protected function tearDown(): void
     {
-        if (Schema::hasTable('migrations')) {
-            Artisan::call('migrate:reset', ['--force' => true]);
-        }
+        Artisan::call('db:wipe', ['--force' => true]);
+        RefreshDatabaseState::$migrated = false;
         parent::tearDown();
     }
 

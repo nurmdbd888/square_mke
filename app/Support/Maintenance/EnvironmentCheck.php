@@ -194,7 +194,7 @@ class EnvironmentCheck
                 $database['connected'] ? CheckResult::OK : CheckResult::FAIL,
                 $database['connected']
                     ? $database['connection'].' / '.$database['database']
-                    : (string) $database['error'].' (check DB_DATABASE, DB_USERNAME, DB_PASSWORD in .env)'),
+                    : (string) $database['error'].' (check DB_DATABASE, DB_USERNAME, DB_PASSWORD and DB_HOST in .env)'),
         ];
 
         if ($database['connected']) {

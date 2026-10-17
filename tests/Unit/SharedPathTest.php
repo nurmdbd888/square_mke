@@ -18,8 +18,17 @@ class SharedPathTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec('rm -rf '.escapeshellarg($this->root));
+        self::removeDirectory($this->root);
         parent::tearDown();
+    }
+
+    private static function removeDirectory(string $dir): void
+    {
+        foreach (array_diff(scandir($dir), ['.', '..']) as $item) {
+            $path = $dir.'/'.$item;
+            is_dir($path) ? self::removeDirectory($path) : unlink($path);
+        }
+        rmdir($dir);
     }
 
     public function test_no_sibling_shared_folder_keeps_laravel_defaults(): void

@@ -33,7 +33,7 @@ class EnvironmentCheckTest extends TestCase
         $this->assertSame(CheckResult::OK, $results['migrations']->status);
         $this->assertSame(CheckResult::OK, $results['dir_storage']->status);
         $this->assertSame(CheckResult::OK, $results['dir_bootstrap_cache']->status);
-        $this->assertSame('SQLite '.$this->app['db']->selectOne('select sqlite_version() as v')->v, $results['db_server']->detail);
+        $this->assertMatchesRegularExpression('/^(SQLite|MySQL|MariaDB) \d+\.\d+/', $results['db_server']->detail);
     }
 
     public function test_old_php_is_a_failure(): void

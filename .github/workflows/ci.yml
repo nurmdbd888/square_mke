@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to test
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The extensions the host confirmed, plus PHP built-ins (docs/DECISIONS.md #2, #3).
+  PHP_EXTENSIONS: none, bcmath, ctype, curl, dom, fileinfo, filter, gd, iconv, intl, json, mbstring, openssl, pdo, pdo_mysql, pdo_sqlite, phar, posix, session, simplexml, sqlite3, tokenizer, xml, xmlreader, xmlwriter, zip, zlib
+  # Typical shared-host php.ini: tests must pass without these.
+  DISABLED_FUNCTIONS: exec,shell_exec,system,passthru,proc_open,popen,pcntl_exec
+
+jobs:
+  sqlite:
+    name: Tests (SQLite) and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Validate composer.json
+        run: composer validate --no-check-publish
+
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Compiled CSS is up to date
+        run: |
+          ./scripts/build-css.sh
+          git diff --exit-code public/css/app.css || { echo "::error::public/css/app.css is stale. Run scripts/build-css.sh and commit it."; exit 1; }
+
+      - name: Tests
+        run: php -d disable_functions=${{ env.DISABLED_FUNCTIONS }} vendor/bin/phpunit
+
+  mysql:
+    name: Tests (${{ matrix.db.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db:
+          - { name: MySQL 8.0, image: 'mysql:8.0', type: MySQL, health: 'mysqladmin ping -h 127.0.0.1 -proot' }
+          - { name: MariaDB 10.6, image: 'mariadb:10.6', type: MariaDB, health: 'healthcheck.sh --connect --innodb_initialized' }
+          - { name: MariaDB 10.11, image: 'mariadb:10.11', type: MariaDB, health: 'healthcheck.sh --connect --innodb_initialized' }
+    services:
+      db:
+        image: ${{ matrix.db.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="${{ matrix.db.health }}"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      SDM_EXPECT_DB_SERVER: ${{ matrix.db.type }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Tests
+        run: php -d disable_functions=${{ env.DISABLED_FUNCTIONS }} vendor/bin/phpunit
