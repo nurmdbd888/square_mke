@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Retailer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class EntityImportTest extends TestCase
@@ -69,5 +70,31 @@ class EntityImportTest extends TestCase
         $batch = app(EntityImportService::class)->preview('retailers', $file, $owner)['batch'];
         app(EntityImportService::class)->confirm($batch, EntityImportBatch::MODE_UPDATE, $owner);
         $this->assertSame('Corner Shop Import', Retailer::query()->where('code', 'R-IMP')->value('name'));
+    }
+
+    #[DataProvider('listPagesWithImportActions')]
+    public function test_list_pages_expose_import_and_export(string $url): void
+    {
+        $this->actingAs($this->owner())
+            ->get($url)
+            ->assertOk()
+            ->assertSee(__('Import'), false)
+            ->assertSee(__('Export'), false);
+    }
+
+    /**
+     * @return list<array{0: string}>
+     */
+    public static function listPagesWithImportActions(): array
+    {
+        return [
+            ['/products'],
+            ['/retailers'],
+            ['/masters/suppliers'],
+            ['/masters/routes'],
+            ['/masters/sales-reps'],
+            ['/masters/vehicles'],
+            ['/masters/price-lists'],
+        ];
     }
 }
