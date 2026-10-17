@@ -84,7 +84,6 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
                     'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
-                    'reports.view', 'reports.manage', 'imports.manage',
                 ],
                 'sr' => ['settings.view'],
                 'data_entry' => [
@@ -92,12 +91,10 @@ class PermissionMatrixTest extends TestCase
                     'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
                     'payments.view', 'payments.manage', 'accounts.view',
                     'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
-                    'reports.view', 'imports.manage',
                 ],
                 'viewer' => [
                     'settings.view', 'products.view', 'retailers.view', 'purchases.view', 'sales.view', 'stock.view',
                     'payments.view', 'accounts.view', 'returns.view', 'claims.view',
-                    'reports.view',
                 ],
             ],
         ])->assertRedirect(route('roles.index'))->assertSessionHas('status', 'Permissions saved.');
@@ -109,7 +106,6 @@ class PermissionMatrixTest extends TestCase
                 'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
                 'payments.view', 'payments.manage', 'accounts.view',
                 'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
-                'reports.view', 'imports.manage',
             ],
             Role::findByName('data_entry')->permissions->pluck('name')->all(),
         );
