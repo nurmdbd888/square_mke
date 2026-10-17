@@ -1,0 +1,20 @@
+* text=auto eol=lf
+
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+*.png binary
+
+# Left out of release builds (git archive): the server only needs the app.
+/.github export-ignore
+/docs export-ignore
+/tests export-ignore
+/scripts export-ignore
+/.editorconfig export-ignore
+/.env.example export-ignore
+/phpunit.xml export-ignore
+/README.md export-ignore
+CHANGELOG.md export-ignore
+.styleci.yml export-ignore
