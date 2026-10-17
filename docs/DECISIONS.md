@@ -590,3 +590,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: browser-print Blade layouts for **A4 tax invoice**, **A4 challan** (purchase and sale), and **80 mm thermal** sale receipt, with firm name, distributor code, Bangla/English product names and inline **SVG QR** (BaconQrCode). Due reminders use a `ReminderChannel` contract with **log**, **HTTP SMS** and **WhatsApp Cloud** drivers; `sdm:send-due-reminders` runs daily from `Schedule::call` and respects `reminder_enabled`, `reminder_due_days` and open-invoice ageing. Offline SR sales: `manifest.webmanifest`, `sw.js` shell cache, IndexedDB drafts on the sale form, and `POST /sales/sync-draft` with **`Idempotency-Key`** stored in `sales_sync_keys`.
 - Reason: plan M9 acceptance (print, fake reminder driver, idempotent offline sync).
 - Change: print routes on document show, reminder settings group, PWA assets.
+
+**114. Invoice number vs receipt number** — 2026-10-17
+- Decision: sales and purchase document forms label the document field **Invoice number** (still stored in `documents.number`). Customer **receipt** forms label the payment field **Receipt number** with help text that it is not the sales invoice; supplier **payment** forms use **Payment number** (voucher/bank reference, not purchase invoice). Retailer receipts add a **Pay against invoice** dropdown listing posted sales with open balance (same rows as the allocation table); choosing one highlights the row and prefills **This payment** with the full remaining amount, while partial pay and multi-invoice splits stay in the table.
+- Reason: owner UX — collectors were confusing receipt voucher numbers with invoice numbers when collecting against due sales.
+- Change: `payments/_open_invoices`, receipt/payment form labels.
