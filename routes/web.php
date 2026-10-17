@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Documents\DocumentController;
+use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
@@ -116,6 +118,29 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
             Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
+        });
+
+        Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
+        Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
+        Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
+        Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->name('purchases.show');
+        Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->name('purchases.edit');
+        Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->name('purchases.update');
+        Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->name('purchases.post');
+        Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.manage')->name('purchases.destroy');
+
+        Route::get('/sales', [DocumentController::class, 'index'])->middleware('can:sales.view')->defaults('type', 'sale')->name('sales.index');
+        Route::get('/sales/create', [DocumentController::class, 'create'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.create');
+        Route::post('/sales', [DocumentController::class, 'store'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.store');
+        Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->name('sales.show');
+        Route::get('/sales/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:sales.manage')->name('sales.edit');
+        Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
+        Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
+        Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.manage')->name('sales.destroy');
+
+        Route::middleware('can:stock.view')->group(function () {
+            Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+            Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
         });
 
         Route::middleware('can:users.view')->group(function () {

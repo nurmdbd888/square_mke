@@ -39,6 +39,11 @@ class RoleAccessTest extends TestCase
         '/masters/price-lists/create' => ['owner', 'data_entry'],
         '/masters/opening-balances' => ['owner', 'accountant', 'data_entry'],
         '/masters/custom-fields' => ['owner', 'accountant', 'data_entry'],
+        '/purchases' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/purchases/create' => ['owner', 'accountant', 'data_entry'],
+        '/sales' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/sales/create' => ['owner', 'accountant', 'sr', 'data_entry'],
+        '/stock' => ['owner', 'accountant', 'data_entry', 'viewer'],
     ];
 
     /**
@@ -49,6 +54,9 @@ class RoleAccessTest extends TestCase
         'products.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         'retailers.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         'masters.index' => ['owner', 'accountant', 'data_entry'],
+        'purchases.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'sales.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'stock.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'users.index' => ['owner', 'accountant'],
         'roles.index' => ['owner'],
         'settings.index' => ['owner', 'accountant', 'viewer'],
@@ -115,6 +123,9 @@ class RoleAccessTest extends TestCase
         $this->actingAs($accountant)->post('/products', [])->assertForbidden();
         $this->actingAs($this->userWithRole('sr'))->post('/retailers', [])->assertForbidden();
         $this->actingAs($accountant)->post('/masters/suppliers', [])->assertForbidden();
+        $this->actingAs($viewer)->post('/purchases', [])->assertForbidden();
+        $this->actingAs($viewer)->post('/sales', [])->assertForbidden();
+        $this->actingAs($this->userWithRole('sr'))->get('/purchases')->assertForbidden();
         $log = AuditLogger::log('auth.failed');
         $this->actingAs($viewer)->get("/audit/{$log->id}")->assertForbidden();
     }

@@ -9,8 +9,8 @@ built for cPanel shared hosting at `mke.rockproviders.com` with no terminal on t
 - Every assumption and decision: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Server install for the owner: [DEPLOY.md](DEPLOY.md)
 
-Current milestone: **M2, master data** (products, retailers, suppliers, routes, sales reps, vehicles,
-price lists, opening balances and custom fields). M1 is live as v0.1.0.
+Current milestone: **M3, purchases, sales and stock costing** (documents, weighted-average ledger,
+golden test). M1 is live as v0.1.0; M2 master data is in review.
 
 ## Local setup
 

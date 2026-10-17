@@ -51,6 +51,19 @@ return [
         'keep_days' => 7,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Costing recompute
+    |--------------------------------------------------------------------------
+    |
+    | Rebuild the ledger of affected products inside the request when the
+    | estimated line count is at or below this limit. Larger work is queued
+    | for the minute cron (queue:work --stop-when-empty).
+    |
+    */
+
+    'recompute_inline_limit' => (int) env('SDM_RECOMPUTE_INLINE_LIMIT', 2000),
+
     'min_php' => '8.4.0',
 
     'required_extensions' => [

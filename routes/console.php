@@ -8,3 +8,14 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::call(fn () => Artisan::call('sdm:heartbeat'))
     ->name('sdm:heartbeat')
     ->everyMinute();
+
+// Drain the database queue in-process (shared hosts often disable proc_open).
+Schedule::call(fn () => Artisan::call('queue:work', [
+    'connection' => 'database',
+    '--stop-when-empty' => true,
+    '--max-time' => 50,
+    '--memory' => 96,
+]))
+    ->name('queue:work')
+    ->everyMinute()
+    ->withoutOverlapping(5);

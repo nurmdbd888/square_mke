@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\CustomField;
+use App\Models\Document;
+use App\Models\DocumentLine;
 use App\Models\OpeningBalance;
 use App\Models\PriceList;
 use App\Models\PriceListItem;
@@ -11,9 +13,11 @@ use App\Models\ProductAlias;
 use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
+use App\Models\StockLedgerEntry;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Settings\BusinessSettings;
 use App\Settings\CoreSettings;
 use App\Settings\SettingsRegistry;
 use App\Settings\SettingsStore;
@@ -42,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRegistry::class, function () {
             $registry = new SettingsRegistry;
             CoreSettings::register($registry);
+            BusinessSettings::register($registry);
 
             return $registry;
         });
@@ -74,6 +79,9 @@ class AppServiceProvider extends ServiceProvider
             'retailer' => Retailer::class,
             'opening_balance' => OpeningBalance::class,
             'custom_field' => CustomField::class,
+            'document' => Document::class,
+            'document_line' => DocumentLine::class,
+            'stock_ledger_entry' => StockLedgerEntry::class,
         ]);
 
         // The owner can never be locked out by the permission matrix.
