@@ -18,29 +18,36 @@ class SettingsTest extends TestCase
      */
     private function form(array $overrides = []): array
     {
-        return ['settings' => $overrides + [
-            'firm_name' => 'M/s Khaza Enterprise',
-            'distributor_code' => '4831',
-            'default_locale' => 'en',
-            'fiscal_year_start_month' => '7',
-            'require_2fa_roles' => [],
-            'vat_recoverable' => '1',
-            'sd_in_cost' => '1',
-            'costing_mode' => 'weighted_average',
-            'block_negative_stock' => '0',
-            'purchase_bonus_cost' => 'zero',
-            'near_expiry_days' => '60',
-            'count_commission' => '1',
-            'commission_pct' => '5',
-            'commission_vat_pct' => '0.62',
-            'commission_base' => 'sales',
-            'reminder_enabled' => '0',
-            'reminder_channel' => 'log',
-            'reminder_due_days' => '30',
-            'reminder_http_sms_url' => '',
-            'reminder_whatsapp_token' => '',
-            'reminder_whatsapp_phone_id' => '',
-        ]];
+        return [
+            'settings' => $overrides + [
+                'firm_name' => 'M/s Khaza Enterprise',
+                'distributor_code' => '4831',
+                'default_locale' => 'en',
+                'fiscal_year_start_month' => '7',
+                'require_2fa_roles' => [],
+                'weekly_holiday_weekdays' => ['2'],
+                'vat_recoverable' => '1',
+                'sd_in_cost' => '1',
+                'costing_mode' => 'weighted_average',
+                'block_negative_stock' => '0',
+                'purchase_bonus_cost' => 'zero',
+                'near_expiry_days' => '60',
+                'count_commission' => '1',
+                'commission_pct' => '5',
+                'commission_vat_pct' => '0.62',
+                'commission_base' => 'sales',
+                'reminder_enabled' => '0',
+                'reminder_channel' => 'log',
+                'reminder_due_days' => '30',
+                'reminder_http_sms_url' => '',
+                'reminder_whatsapp_token' => '',
+                'reminder_whatsapp_phone_id' => '',
+            ],
+            'settings_lines' => [
+                'calendar_working_dates' => '',
+                'calendar_extra_holiday_dates' => '',
+            ],
+        ];
     }
 
     private function defineDatedSetting(): void

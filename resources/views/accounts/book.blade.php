@@ -13,6 +13,7 @@
             <span class="label">{{ __('To') }}</span>
             <input type="date" name="to" value="{{ $to }}" class="input">
         </label>
+        @include('reports.partials.business-days-filter', ['businessDaysOnly' => $businessDaysOnly ?? false])
         <button class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 

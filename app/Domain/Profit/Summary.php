@@ -2,11 +2,14 @@
 
 namespace App\Domain\Profit;
 
+use App\Domain\Calendar\BusinessCalendar;
 use App\Domain\Money\Exact;
 use App\Models\Document;
 use App\Models\Payment;
 use App\Models\StockNote;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
@@ -31,11 +34,14 @@ final class Summary
      *     net_profit: string
      * }
      */
-    public function between(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): array
-    {
-        $figures = $this->salesBetween($from, $to);
-        $expenses = $this->expensesBetween($from, $to);
-        $stockLoss = $this->stockLossBetween($from, $to);
+    public function between(
+        CarbonInterface|string|null $from = null,
+        CarbonInterface|string|null $to = null,
+        bool $businessDaysOnly = false,
+    ): array {
+        $figures = $this->salesBetween($from, $to, $businessDaysOnly);
+        $expenses = $this->expensesBetween($from, $to, $businessDaysOnly);
+        $stockLoss = $this->stockLossBetween($from, $to, $businessDaysOnly);
         $net = Exact::of($figures['profit_before_expenses'])
             ->minus(Exact::of($expenses))
             ->minus(Exact::of($stockLoss));
@@ -60,8 +66,11 @@ final class Summary
      *     profit_before_expenses: string
      * }
      */
-    public function salesBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): array
-    {
+    public function salesBetween(
+        CarbonInterface|string|null $from = null,
+        CarbonInterface|string|null $to = null,
+        bool $businessDaysOnly = false,
+    ): array {
         $query = Document::query()
             ->where('type', Document::TYPE_SALE)
             ->where('status', Document::STATUS_POSTED);
@@ -72,6 +81,7 @@ final class Summary
         if ($to !== null) {
             $query->whereDate('doc_date', '<=', Carbon::parse($to)->toDateString());
         }
+        $this->applyBusinessDayFilter($query, 'doc_date', $from, $to, $businessDaysOnly);
 
         $revenue = Exact::of('0');
         $cogs = Exact::of('0');
@@ -104,8 +114,11 @@ final class Summary
         ];
     }
 
-    public function expensesBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): string
-    {
+    public function expensesBetween(
+        CarbonInterface|string|null $from = null,
+        CarbonInterface|string|null $to = null,
+        bool $businessDaysOnly = false,
+    ): string {
         $query = Payment::query()
             ->where('kind', Payment::KIND_PAYMENT)
             ->where('status', Payment::STATUS_POSTED)
@@ -117,6 +130,7 @@ final class Summary
         if ($to !== null) {
             $query->whereDate('payment_date', '<=', Carbon::parse($to)->toDateString());
         }
+        $this->applyBusinessDayFilter($query, 'payment_date', $from, $to, $businessDaysOnly);
 
         $total = Exact::of('0');
         foreach ($query->get(['amount']) as $payment) {
@@ -126,8 +140,11 @@ final class Summary
         return Exact::money($total);
     }
 
-    public function stockLossBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): string
-    {
+    public function stockLossBetween(
+        CarbonInterface|string|null $from = null,
+        CarbonInterface|string|null $to = null,
+        bool $businessDaysOnly = false,
+    ): string {
         $query = StockNote::query()
             ->where('status', StockNote::STATUS_POSTED)
             ->where('stock_loss_total', '>', 0);
@@ -138,6 +155,7 @@ final class Summary
         if ($to !== null) {
             $query->whereDate('doc_date', '<=', Carbon::parse($to)->toDateString());
         }
+        $this->applyBusinessDayFilter($query, 'doc_date', $from, $to, $businessDaysOnly);
 
         $total = Exact::of('0');
         foreach ($query->get(['stock_loss_total']) as $note) {
@@ -145,5 +163,24 @@ final class Summary
         }
 
         return Exact::money($total);
+    }
+
+    /**
+     * @param  Builder<Model>  $query
+     */
+    private function applyBusinessDayFilter($query, string $column, mixed $from, mixed $to, bool $businessDaysOnly): void
+    {
+        if (! $businessDaysOnly || $from === null || $to === null) {
+            return;
+        }
+
+        $days = app(BusinessCalendar::class)->businessDaysBetween($from, $to);
+        if ($days === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereIn($column, $days);
     }
 }

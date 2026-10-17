@@ -59,10 +59,22 @@ class SettingsController extends Controller
         $rules = [];
 
         foreach ($definitions as $key => $definition) {
+            if ($definition->type === SettingDefinition::DATE_LIST) {
+                $lines = $request->input("settings_lines.{$key}", '');
+                $dates = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) $lines) ?: [])));
+                $request->merge(["settings.{$key}" => $dates]);
+            }
+
             $rules["settings.{$key}"] = $definition->validationRules();
 
             if ($definition->type === SettingDefinition::ROLES) {
                 $rules["settings.{$key}.*"] = [Rule::in(array_keys($definition->options))];
+            }
+            if ($definition->type === SettingDefinition::WEEKDAYS) {
+                $rules["settings.{$key}.*"] = ['integer', Rule::in(array_map('intval', array_keys($definition->options)))];
+            }
+            if ($definition->type === SettingDefinition::DATE_LIST) {
+                $rules["settings.{$key}.*"] = ['required', 'date_format:Y-m-d', 'distinct'];
             }
         }
 
@@ -74,6 +86,8 @@ class SettingsController extends Controller
             $values[$key] = match ($definition->type) {
                 SettingDefinition::BOOLEAN => $request->boolean("settings.{$key}"),
                 SettingDefinition::ROLES => $data['settings'][$key] ?? [],
+                SettingDefinition::WEEKDAYS => $data['settings'][$key] ?? [],
+                SettingDefinition::DATE_LIST => $data['settings'][$key] ?? [],
                 default => $data['settings'][$key] ?? null,
             };
         }
