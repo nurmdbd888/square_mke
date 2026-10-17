@@ -1,6 +1,6 @@
 # Decisions and assumptions log
 
-Every assumption made for Square Dealer Manager. Newest entries go at the bottom; superseded entries stay, marked **Superseded by #n**. In the code repo this file is `docs/DECISIONS.md`.
+Every assumption made for Square Distributor Manager. Newest entries go at the bottom; superseded entries stay, marked **Superseded by #n**. In the code repo this file is `docs/DECISIONS.md`.
 
 Format: **#. Title** — date · Decision · Reason · How to change.
 

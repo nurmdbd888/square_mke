@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 
 @section('title', __('Maintenance'))
 
@@ -62,6 +62,8 @@
             @endif
         </section>
     @endif
+
+    @include('maintenance.partials.owner')
 
     <section class="mt-6 flex flex-wrap gap-3">
         @foreach ([

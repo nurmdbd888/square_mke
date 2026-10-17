@@ -1,4 +1,4 @@
-# Square Dealer Manager — Plan
+# Square Distributor Manager — Plan
 
 Stack: PHP 8.4 + Laravel on cPanel shared hosting, `mke.rockproviders.com`. Requirements: [SPEC.md](SPEC.md). Assumptions: [DECISIONS.md](DECISIONS.md).
 
@@ -11,7 +11,7 @@ Rules for every milestone: work on a branch, add tests, CI must pass (unit + MyS
 ### M0 — Deploy smoke test
 Deliverables
 - Laravel skeleton with shared-path bootstrap (`.env` and `storage/` from `~/mke/shared`), `deploy/shim/` fallback.
-- Home page: "Square Dealer Manager · M/s Khaza Enterprise", app version, DB status, last cron heartbeat.
+- Home page: "Square Distributor Manager · M/s Khaza Enterprise", app version, DB status, last cron heartbeat.
 - `/maintenance` (token-protected): env check (PHP version, extensions, writable folders, `.env` loaded, DB connection, `APP_KEY`, PHP binary path and ready-to-paste cron line), Generate APP_KEY, Run migrations.
 - One migration: `smoke_heartbeats`. One scheduled task writes a heartbeat row every minute.
 - GitHub Actions: `ci.yml` (tests) and `release.yml` (builds `mke-vX.Y.Z.zip` holding `app/` and `shared.example/`).
@@ -143,7 +143,7 @@ Acceptance
 ## 2. Repository structure
 
 ```
-square-dealer-manager/
+square-distributor-manager/
 ├── app/
 │   ├── Console/Commands/       # sdm:check, sdm:create-admin, sdm:backup, sdm:restore, sdm:recompute
 │   ├── Domain/                 # framework-light business logic, unit tested
@@ -240,7 +240,7 @@ You need: cPanel login, the release zip file we send you (or download from GitHu
 10. **Run the first migration.** Click **Run migrations**. You should see a message listing the tables created, including `smoke_heartbeats`.
 11. **Add the cron job.** Copy the line in the "Cron command" box. cPanel → *Cron Jobs* → Common Settings: **Once Per Minute** → paste the line into *Command* → *Add New Cron Job*.
 12. **Wait two minutes**, then reload the Maintenance page. "Last cron heartbeat" should say less than 2 minutes ago, in green.
-13. **Open the home page** `https://mke.rockproviders.com`. You should see "Square Dealer Manager · M/s Khaza Enterprise", a version number, "Database: OK" and "Cron: OK".
+13. **Open the home page** `https://mke.rockproviders.com`. You should see "Square Distributor Manager · M/s Khaza Enterprise", a version number, "Database: OK" and "Cron: OK".
 14. **Safety check.** Open `https://mke.rockproviders.com/.env`. It must show "Not Found" or "Forbidden", never your settings.
 15. **Send us** a screenshot of the Maintenance page and the home page. **We stop here until you confirm.**
 

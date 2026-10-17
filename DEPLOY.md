@@ -1,4 +1,4 @@
-# Putting Square Dealer Manager on mke.rockproviders.com
+# Putting Square Distributor Manager on mke.rockproviders.com
 
 This guide is for the owner of M/s Khaza Enterprise. You do not need a terminal,
 Composer or any programming. Everything happens in **cPanel** and your **web browser**.

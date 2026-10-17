@@ -1,6 +1,36 @@
 @import 'tailwindcss' source(none);
 
 @source '../views';
+@source '../../app';
+
+/* Self-hosted Bangla font (SIL Open Font License, public/fonts/OFL.txt). Only
+   Bengali characters use it; Latin text keeps the system font. */
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/noto-sans-bengali-400.woff2') format('woff2');
+    unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA, U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/noto-sans-bengali-600.woff2') format('woff2');
+    unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA, U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/noto-sans-bengali-700.woff2') format('woff2');
+    unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA, U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
 
 @theme {
     --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', 'Hind Siliguri',
@@ -12,4 +42,61 @@
     --color-brand-500: #2b83e6;
     --color-brand-600: #1666cc;
     --color-brand-700: #1352a5;
+    --color-brand-800: #123f7c;
+    --color-brand-900: #0f2f5c;
 }
+
+/* Bangla script needs a little more line height to keep vowel signs clear. */
+:lang(bn) body {
+    line-height: 1.65;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50;
+}
+
+@utility btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+
+@utility btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-100;
+}
+
+@utility btn-danger {
+    @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50;
+}
+
+@utility input {
+    @apply mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 focus:outline-none;
+}
+
+@utility label {
+    @apply block text-sm font-medium text-slate-700;
+}
+
+@utility card {
+    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-xs;
+}
+
+@utility table-wrap {
+    @apply overflow-x-auto rounded-xl border border-slate-200 bg-white;
+}
+
+@utility data-table {
+    @apply min-w-full divide-y divide-slate-200 text-sm;
+
+    & th {
+        @apply bg-slate-50 px-4 py-2 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase;
+    }
+
+    & td {
+        @apply px-4 py-2 align-top text-slate-700;
+    }
+}
+
+

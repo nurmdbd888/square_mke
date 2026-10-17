@@ -1,4 +1,4 @@
-# Square Dealer Manager
+# Square Distributor Manager
 
 Purchases, sales, stock, dues and profit for **M/s Khaza Enterprise**, a distributor of
 Square Toiletries Ltd. (distributor code 4831). Laravel 13 on PHP 8.4, MySQL/MariaDB,

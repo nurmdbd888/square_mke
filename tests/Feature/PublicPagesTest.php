@@ -16,7 +16,7 @@ class HomePageTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('M/s Khaza Enterprise')
-            ->assertSee('Square Dealer Manager')
+            ->assertSee('Square Distributor Manager')
             ->assertSee('4831')
             ->assertSeeInOrder(['data-testid="version"', 'dev'], false)
             ->assertSeeInOrder(['data-testid="database"', 'Connected'], false)
@@ -45,7 +45,7 @@ class HomePageTest extends TestCase
             ->get('/')
             ->assertOk()
             ->assertSee('<html lang="bn">', false)
-            ->assertSee('স্কয়ার ডিলার ম্যানেজার');
+            ->assertSee('স্কয়ার ডিস্ট্রিবিউটর ম্যানেজার');
     }
 
     public function test_unknown_locale_cookie_falls_back_to_english(): void

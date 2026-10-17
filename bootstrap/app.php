@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountReady;
 use App\Http\Middleware\EnsureAppKey;
+use App\Http\Middleware\MaintenanceSession;
 use App\Http\Middleware\SetLocale;
 use App\Support\Maintenance\MaintenanceGate;
 use App\Support\SharedPath;
@@ -24,10 +26,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(EnsureAppKey::class);
         $middleware->encryptCookies(except: [SetLocale::COOKIE, MaintenanceGate::COOKIE]);
         $middleware->web(append: [SetLocale::class]);
+        $middleware->alias(['account.ready' => EnsureAccountReady::class]);
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('dashboard'));
 
-        // No cookie encryption, session or CSRF middleware: the Maintenance
-        // page must work before APP_KEY and the database exist.
+        // No CSRF middleware, and the session only when APP_KEY is valid:
+        // the Maintenance page must work before APP_KEY and the database exist.
         $middleware->group('maintenance', [
+            MaintenanceSession::class,
             SubstituteBindings::class,
             SetLocale::class,
         ]);

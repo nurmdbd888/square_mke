@@ -7,8 +7,8 @@ return [
     | Firm
     |--------------------------------------------------------------------------
     |
-    | Printed on every page, invoice, challan and report. From M1 these become
-    | editable settings stored in the database; these values are the defaults.
+    | Printed on every page, invoice, challan and report. These are only the
+    | defaults: the owner changes them in Settings (settings table).
     |
     */
 
@@ -32,6 +32,8 @@ return [
         'token' => (string) env('MAINTENANCE_TOKEN', ''),
         'token_min_length' => 20,
         'session_minutes' => 120,
+        // Lets the secret phrase alone reset an owner's password. Turn it off again after use.
+        'owner_recovery' => (bool) env('MAINTENANCE_OWNER_RECOVERY', false),
         'max_attempts' => 5,
         'decay_seconds' => 600,
         // Must not depend on the database: the page has to work before migrations.
