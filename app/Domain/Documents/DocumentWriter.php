@@ -176,6 +176,8 @@ final class DocumentWriter
 
         if ($document->isSale()) {
             $this->fillSaleTotals($document);
+            $document->collection_status = Document::COLLECTION_DUE;
+            $document->collection_confirmed_at = null;
         }
 
         $document->save();

@@ -55,6 +55,8 @@ class AuditLogTest extends TestCase
                 'reminder_whatsapp_token' => '',
                 'reminder_whatsapp_phone_id' => '',
                 'require_2fa_roles' => [],
+                'date_display_format' => 'd/m/Y',
+                'default_print_size' => 'a5',
                 'weekly_holiday_weekdays' => ['2'],
                 'backup_retention_days' => '14',
             ], 'settings_lines' => [

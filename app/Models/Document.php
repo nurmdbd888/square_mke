@@ -22,8 +22,15 @@ class Document extends Model
 
     public const STATUS_VOID = 'void';
 
+    public const COLLECTION_DUE = 'due';
+
+    public const COLLECTION_PARTIAL = 'partial';
+
+    public const COLLECTION_COMPLETED = 'completed';
+
     protected $fillable = [
         'type', 'number', 'supplier_id', 'retailer_id', 'doc_date', 'delivery_date', 'status',
+        'collection_status', 'collection_confirmed_at',
         'sales_rep_id', 'route_id', 'vehicle_id',
         'header_discount', 'slab_adjustment', 'combo_bonus_discount', 'rounding_adjustment',
         'subtotal', 'net_total', 'revenue', 'cogs', 'free_goods_cost',
@@ -56,6 +63,7 @@ class Document extends Model
             'commission_net' => 'decimal:2',
             'posted_at' => 'datetime',
             'voided_at' => 'datetime',
+            'collection_confirmed_at' => 'datetime',
         ];
     }
 

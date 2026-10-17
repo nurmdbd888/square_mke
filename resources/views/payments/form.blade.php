@@ -16,7 +16,7 @@
     <form method="POST"
           action="{{ $payment->exists ? route('payments.update', $payment) : route('payments.store') }}"
           enctype="multipart/form-data"
-          class="mt-6 space-y-6 @if ($isReceipt) max-w-xl @endif"
+          class="mt-6 space-y-6"
           @party-selected="partyId = $event.detail.id"
           x-data="{
               method: '{{ old('method', $payment->method ?? 'cash') }}',
@@ -122,12 +122,13 @@
                         name="retailer_id"
                         :label="__('Retailer')"
                         :parties="$retailers"
-                        :selected-id="$payment->retailer_id"
+                        :selected-id="old('retailer_id', $payment->retailer_id ?? request('retailer_id'))"
+                        data-testid="payment-retailer-picker"
                         hx-get="{{ route('payments.open-invoices') }}"
                         hx-target="#allocation-box"
                         hx-include="[name='retailer_id']"
                         hx-vals='{"party":"retailer"}'
-                        hx-trigger="change"
+                        hx-trigger="change from:input[name=retailer_id]"
                     />
                 </div>
                 <label class="block sm:col-span-2">
@@ -195,7 +196,6 @@
                     'showInvoicePicker' => $isReceipt,
                 ])
             </div>
-            <input type="hidden" name="party_id" :value="partyId" x-bind:value="partyId">
         </section>
 
         <div class="flex flex-wrap gap-2 pb-8">

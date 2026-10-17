@@ -79,13 +79,18 @@ class PaymentController extends Controller
             abort_unless(PaymentAccess::canManage($request->user()), 403);
         }
 
-        return view('payments.form', $this->formData(new Payment([
+        $payment = new Payment([
             'kind' => $kind,
             'status' => Payment::STATUS_DRAFT,
             'payment_date' => now()->toDateString(),
             'method' => 'cash',
             'amount' => '0',
-        ])));
+        ]);
+        if ($kind === Payment::KIND_RECEIPT && $request->filled('retailer_id')) {
+            $payment->retailer_id = (int) $request->query('retailer_id');
+        }
+
+        return view('payments.form', $this->formData($payment));
     }
 
     public function store(Request $request): RedirectResponse
@@ -95,10 +100,22 @@ class PaymentController extends Controller
         $payment = $this->writer->save($data['header'], $data['allocations'], $request->user());
         $this->storeAttachments($request, $payment);
 
+        $message = $payment->isPosted()
+            ? __('Payment :number was posted.', ['number' => $payment->number])
+            : __('Payment :number was saved as a draft.', ['number' => $payment->number]);
+
         return redirect()->route('payments.show', $payment)
-            ->with('status', $payment->isPosted()
-                ? __('Payment :number was posted.', ['number' => $payment->number])
-                : __('Payment :number was saved as a draft.', ['number' => $payment->number]));
+            ->with('status', $message)
+            ->with('print_receipt', $payment->isPosted() && $payment->isReceipt())
+            ->with('print_receipt_id', $payment->isPosted() && $payment->isReceipt() ? $payment->id : null);
+    }
+
+    public function print(Request $request, Payment $payment): View
+    {
+        abort_unless($payment->isPosted(), 404);
+        $payment->load(['allocations.document', 'retailer', 'supplier']);
+
+        return view('payments.print', ['payment' => $payment]);
     }
 
     public function show(Payment $payment): View

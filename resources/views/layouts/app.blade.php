@@ -10,6 +10,7 @@
         ['route' => 'stock.index', 'label' => __('Stock'), 'active' => 'stock.*', 'can' => 'stock.view'],
         ['route' => 'returns.index', 'label' => __('Returns'), 'active' => 'returns.*', 'can' => 'returns.view'],
         ['route' => 'claims.index', 'label' => __('Claims'), 'active' => 'claims.*', 'can' => 'claims.view'],
+        ['route' => 'collector.index', 'label' => __('Collections'), 'active' => 'collector.*', 'can' => 'payments.collect'],
         ['route' => 'payments.index', 'label' => __('Payments'), 'active' => 'payments.*', 'can' => 'payments.view'],
         ['route' => 'accounts.receivables', 'label' => __('Receivables'), 'active' => 'accounts.receivables', 'can' => 'accounts.view'],
         ['route' => 'accounts.payables', 'label' => __('Payables'), 'active' => 'accounts.payables', 'can' => 'accounts.view'],
@@ -43,7 +44,7 @@
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div class="flex items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-3">
-                <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" @click="menu = !menu; userMenuOpen = false"
+                <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 xl:hidden" @click="menu = !menu; userMenuOpen = false"
                         :aria-expanded="menu.toString()" aria-controls="sidebar" aria-label="{{ __('Menu') }}">
                     <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
@@ -115,11 +116,11 @@
         </div>
     </header>
 
-    <div class="lg:flex">
-        <div x-cloak x-show="menu" class="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" @click="menu = false"></div>
+    <div class="xl:flex">
+        <div x-cloak x-show="menu" class="fixed inset-0 z-40 bg-slate-900/40 xl:hidden" @click="menu = false"></div>
         <nav id="sidebar" aria-label="{{ __('Main menu') }}"
              :class="menu ? 'translate-x-0' : '-translate-x-full'"
-             class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 transition-transform lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:translate-x-0">
+             class="fixed inset-y-0 left-0 z-50 w-[min(100vw-3rem,18rem)] -translate-x-full overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 pt-[57px] shadow-lg transition-transform xl:sticky xl:top-[57px] xl:z-40 xl:h-[calc(100vh-57px)] xl:w-64 xl:translate-x-0 xl:pt-4 xl:shadow-none">
             <ul class="space-y-1">
                 @foreach ($nav as $item)
                     <li>

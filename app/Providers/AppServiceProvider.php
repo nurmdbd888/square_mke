@@ -43,6 +43,7 @@ use App\Settings\BackupSettings;
 use App\Settings\BusinessSettings;
 use App\Settings\CalendarSettings;
 use App\Settings\CoreSettings;
+use App\Settings\DisplaySettings;
 use App\Settings\ReminderSettings;
 use App\Settings\SettingsRegistry;
 use App\Settings\SettingsStore;
@@ -71,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRegistry::class, function () {
             $registry = new SettingsRegistry;
             CoreSettings::register($registry);
+            DisplaySettings::register($registry);
             CalendarSettings::register($registry);
             BackupSettings::register($registry);
             BusinessSettings::register($registry);
