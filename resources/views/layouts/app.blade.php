@@ -37,13 +37,13 @@
     <title>@yield('title', __('Square Distributor Manager')) · {{ $firmName }}</title>
     @include('layouts.partials.assets')
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800 antialiased" x-data="{ menu: false }">
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased" x-data="{ menu: false, userMenuOpen: false }">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded focus:bg-white focus:p-2">{{ __('Skip to content') }}</a>
 
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div class="flex items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-3">
-                <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" @click="menu = !menu"
+                <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" @click="menu = !menu; userMenuOpen = false"
                         :aria-expanded="menu.toString()" aria-controls="sidebar" aria-label="{{ __('Menu') }}">
                     <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
@@ -70,22 +70,44 @@
                     @endforeach
                 </div>
 
-                <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                    <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-100" @click="open = !open" :aria-expanded="open.toString()">
+                <div
+                    class="relative"
+                    data-testid="user-menu"
+                    @click.outside="userMenuOpen = false"
+                    @keydown.escape.window="userMenuOpen = false"
+                >
+                    <button
+                        type="button"
+                        class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-100"
+                        data-testid="user-menu-toggle"
+                        @click.stop="userMenuOpen = !userMenuOpen"
+                        :aria-expanded="userMenuOpen.toString()"
+                        aria-haspopup="menu"
+                        aria-controls="user-menu-panel"
+                    >
                         <span class="grid size-8 place-items-center rounded-full bg-slate-200 text-xs font-semibold uppercase text-slate-700">{{ mb_substr($user->name, 0, 1) }}</span>
                         <span class="hidden text-left leading-tight sm:block">
                             <span class="block font-medium text-slate-800">{{ $user->name }}</span>
                             <span class="block text-xs text-slate-500">{{ __('roles.'.$user->roleName()) }}</span>
                         </span>
                     </button>
-                    <div x-cloak x-show="open" x-transition class="absolute right-0 mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg">
-                        <a href="{{ route('profile') }}" class="block px-4 py-2 hover:bg-slate-50">{{ __('My profile') }}</a>
+                    <div
+                        id="user-menu-panel"
+                        role="menu"
+                        data-testid="user-menu-panel"
+                        x-cloak
+                        x-show="userMenuOpen"
+                        x-transition
+                        style="display: none"
+                        class="absolute right-0 z-50 mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg"
+                    >
+                        <a href="{{ route('profile') }}" role="menuitem" class="block px-4 py-2 hover:bg-slate-50" @click="userMenuOpen = false">{{ __('My profile') }}</a>
                         @if ($user->isOwner())
-                            <a href="{{ route('maintenance') }}" class="block px-4 py-2 hover:bg-slate-50">{{ __('Maintenance page') }}</a>
+                            <a href="{{ route('maintenance') }}" role="menuitem" class="block px-4 py-2 hover:bg-slate-50" @click="userMenuOpen = false">{{ __('Maintenance page') }}</a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button class="block w-full px-4 py-2 text-left text-red-700 hover:bg-red-50">{{ __('Sign out') }}</button>
+                            <button type="submit" role="menuitem" class="block w-full px-4 py-2 text-left text-red-700 hover:bg-red-50" @click="userMenuOpen = false">{{ __('Sign out') }}</button>
                         </form>
                     </div>
                 </div>
