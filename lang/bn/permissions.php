@@ -10,6 +10,8 @@ return [
         'documents' => 'ক্রয় ও বিক্রয়',
         'accounts' => 'পেমেন্ট ও হিসাব',
         'reports' => 'রিপোর্ট ও মাস লক',
+        'exports' => 'এক্সপোর্ট ও ডাউনলোড',
+        'integrations' => 'ইন্টিগ্রেশন',
     ],
     'names' => [
         'health.view' => 'সিস্টেমের অবস্থা দেখা',
@@ -42,5 +44,7 @@ return [
         'accounts.manage' => 'দৈনিক সমাপনী রেকর্ড করা',
         'reports.view' => 'P&L ও ড্যাশবোর্ড মেট্রিক্স দেখা',
         'reports.manage' => 'মাস লক ও রিপোর্ট পরিচালনা',
+        'exports.view' => 'টেবিল/রিপোর্ট এক্সপোর্ট ও ডাউনলোড',
+        'google.manage' => 'Google সংযোগ ও Sheet/Drive এক্সপোর্ট',
     ],
 ];

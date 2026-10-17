@@ -2,14 +2,20 @@
 
 namespace App\Providers;
 
+use App\Models\AppJob;
 use App\Models\Claim;
 use App\Models\CustomField;
 use App\Models\DailyClosing;
 use App\Models\Document;
+use App\Models\DocumentImportBatch;
+use App\Models\DocumentImportInvoice;
+use App\Models\DocumentImportLine;
 use App\Models\DocumentLine;
 use App\Models\EntityImportBatch;
 use App\Models\EntityImportRow;
 use App\Models\ExpenseCategory;
+use App\Models\GoogleConnection;
+use App\Models\GoogleSheetSubscription;
 use App\Models\ImportMappingProfile;
 use App\Models\MonthLock;
 use App\Models\OpeningBalance;
@@ -112,6 +118,12 @@ class AppServiceProvider extends ServiceProvider
             'import_mapping_profile' => ImportMappingProfile::class,
             'entity_import_batch' => EntityImportBatch::class,
             'entity_import_row' => EntityImportRow::class,
+            'app_job' => AppJob::class,
+            'google_connection' => GoogleConnection::class,
+            'google_sheet_subscription' => GoogleSheetSubscription::class,
+            'document_import_batch' => DocumentImportBatch::class,
+            'document_import_invoice' => DocumentImportInvoice::class,
+            'document_import_line' => DocumentImportLine::class,
         ]);
 
         // The owner can never be locked out by the permission matrix.

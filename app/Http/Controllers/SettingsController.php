@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Google\GoogleOAuthService;
+use App\Models\GoogleConnection;
 use App\Models\User;
 use App\Settings\SettingDefinition;
 use App\Settings\SettingsRegistry;
@@ -24,6 +26,8 @@ class SettingsController extends Controller
             'groups' => $this->registry->groups(),
             'store' => $this->store,
             'canManage' => $request->user()->can('settings.manage'),
+            'googleConnection' => GoogleConnection::current(),
+            'googleConfigured' => app(GoogleOAuthService::class)->isConfigured(),
         ]);
     }
 

@@ -11,7 +11,12 @@ use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StockController;
+use App\Http\Controllers\Export\ExportController;
+use App\Http\Controllers\Google\GoogleDriveController;
+use App\Http\Controllers\Google\GoogleOAuthController;
+use App\Http\Controllers\Google\GoogleSheetController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Import\DocumentImportController;
 use App\Http\Controllers\Import\EntityImportController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
@@ -130,6 +135,17 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
         });
 
+        Route::prefix('imports/invoices')->group(function () {
+            Route::get('/', [DocumentImportController::class, 'index'])->name('imports.invoices.index');
+            Route::get('/templates/{docType}/{layout}', [DocumentImportController::class, 'template'])->name('imports.invoices.template');
+            Route::post('/', [DocumentImportController::class, 'store'])->name('imports.invoices.store');
+            Route::post('/profiles', [DocumentImportController::class, 'storeProfile'])->name('imports.invoices.profiles.store');
+            Route::get('/batches/{documentImportBatch}', [DocumentImportController::class, 'show'])->name('imports.invoices.show');
+            Route::put('/batches/{documentImportBatch}/lines/{line}', [DocumentImportController::class, 'updateLine'])->name('imports.invoices.lines.update');
+            Route::post('/batches/{documentImportBatch}/confirm', [DocumentImportController::class, 'confirm'])->name('imports.invoices.confirm');
+            Route::post('/batches/{documentImportBatch}/undo', [DocumentImportController::class, 'undo'])->name('imports.invoices.undo');
+        });
+
         $importEntities = implode('|', EntityImportRegistry::ENTITIES);
         Route::prefix('imports')->group(function () use ($importEntities) {
             Route::get('/{entity}/template', [EntityImportController::class, 'template'])->where('entity', $importEntities)->name('imports.entity.template');
@@ -216,6 +232,20 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->middleware('can:reports.manage')
             ->whereNumber(['year', 'month'])
             ->name('reports.month-locks.destroy');
+
+        Route::middleware('can:exports.view')->group(function () {
+            Route::get('/downloads', [ExportController::class, 'downloads'])->name('exports.downloads');
+            Route::get('/downloads/{appJob}', [ExportController::class, 'download'])->name('exports.download');
+        });
+        Route::post('/exports/{key}', [ExportController::class, 'store'])->middleware('can:exports.view')->name('exports.store');
+
+        Route::middleware('can:google.manage')->group(function () {
+            Route::get('/google/connect', [GoogleOAuthController::class, 'connect'])->name('google.connect');
+            Route::get('/google/callback', [GoogleOAuthController::class, 'callback'])->name('google.callback');
+            Route::delete('/google/disconnect', [GoogleOAuthController::class, 'disconnect'])->name('google.disconnect');
+            Route::post('/google/drive-folder', [GoogleDriveController::class, 'folder'])->name('google.drive-folder');
+            Route::post('/google/sheets/{key}', [GoogleSheetController::class, 'store'])->name('google.sheets.store');
+        });
 
         Route::middleware('can:users.view')->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');
