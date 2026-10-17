@@ -15,9 +15,18 @@ final class AuditEvents
         'role.permissions_changed',
         'settings.updated', 'settings.deleted',
         'maintenance.generate_key', 'maintenance.migrate', 'maintenance.clear_caches', 'maintenance.owner_created', 'maintenance.owner_recovered',
+        'document.posted', 'document.posted_edited', 'document.voided',
+        'payment.posted', 'payment.posted_edited', 'payment.voided', 'payment.cleared',
+        'daily_closing.created',
     ];
 
-    public const TYPES = ['user', 'role', 'setting'];
+    public const TYPES = [
+        'user', 'role', 'setting',
+        'product', 'product_alias', 'supplier', 'sales_route', 'sales_rep', 'vehicle',
+        'price_list', 'price_list_item', 'retailer', 'opening_balance', 'custom_field',
+        'document', 'document_line', 'stock_ledger_entry',
+        'payment', 'payment_allocation', 'daily_closing', 'expense_category',
+    ];
 
     public static function label(string $event): string
     {

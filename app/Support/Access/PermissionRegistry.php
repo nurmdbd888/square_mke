@@ -42,6 +42,27 @@ class PermissionRegistry
         'audit' => [
             'audit.view' => ['accountant'],
         ],
+        'master' => [
+            'products.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'products.manage' => ['data_entry'],
+            'retailers.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'retailers.manage' => ['data_entry'],
+            'masters.view' => ['accountant', 'data_entry'],
+            'masters.manage' => ['data_entry'],
+        ],
+        'documents' => [
+            'purchases.view' => ['accountant', 'data_entry', 'viewer'],
+            'purchases.manage' => ['accountant', 'data_entry'],
+            'sales.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'sales.manage' => ['accountant', 'sr', 'data_entry'],
+            'stock.view' => ['accountant', 'data_entry', 'viewer'],
+        ],
+        'accounts' => [
+            'payments.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'payments.manage' => ['accountant', 'sr', 'data_entry'],
+            'accounts.view' => ['accountant', 'data_entry', 'viewer'],
+            'accounts.manage' => ['accountant'],
+        ],
     ];
 
     /**
