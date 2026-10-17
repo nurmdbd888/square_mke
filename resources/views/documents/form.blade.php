@@ -68,17 +68,12 @@
                 <span class="label">{{ __('Invoice number') }}</span>
                 <input type="text" name="number" value="{{ old('number', $document->number) }}" required maxlength="80" class="input font-mono">
             </label>
-            <label class="block">
-                <span class="label">{{ $isPurchase ? __('Supplier') : __('Retailer') }}</span>
-                <select name="{{ $isPurchase ? 'supplier_id' : 'retailer_id' }}" required class="input">
-                    <option value="">{{ __('Choose') }}</option>
-                    @foreach ($parties as $party)
-                        <option value="{{ $party->id }}" @selected((string) old($isPurchase ? 'supplier_id' : 'retailer_id', $isPurchase ? $document->supplier_id : $document->retailer_id) === (string) $party->id)>
-                            {{ $party->code ? $party->code.' · ' : '' }}{{ $party->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </label>
+            <x-party-code-picker
+                :name="$isPurchase ? 'supplier_id' : 'retailer_id'"
+                :label="$isPurchase ? __('Supplier') : __('Retailer')"
+                :parties="$parties"
+                :selected-id="$isPurchase ? $document->supplier_id : $document->retailer_id"
+            />
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
                 <input type="date" name="doc_date" value="{{ old('doc_date', $document->doc_date?->format('Y-m-d') ?? now()->toDateString()) }}" required class="input">
