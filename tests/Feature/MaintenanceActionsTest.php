@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\SmokeHeartbeat;
 use App\Models\User;
+use App\Support\Access\PermissionRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
@@ -119,7 +120,7 @@ class MaintenanceActionsTest extends TestCase
         ])->assertSee('Owner khaza was created.');
 
         $this->assertTrue(User::query()->where('username', 'khaza')->sole()->isOwner());
-        $this->assertSame(count(\App\Support\Access\PermissionRegistry::ROLES), Role::query()->count());
+        $this->assertSame(count(PermissionRegistry::ROLES), Role::query()->count());
     }
 
     public function test_clear_caches_button_runs(): void

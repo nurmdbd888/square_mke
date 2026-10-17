@@ -4,6 +4,7 @@ use App\Support\Access\PermissionRegistry;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role;
 
 return new class extends Migration
 {
@@ -25,12 +26,12 @@ return new class extends Migration
 
         app(PermissionRegistry::class)->sync();
 
-        $collector = \Spatie\Permission\Models\Role::findByName('collector');
+        $collector = Role::findByName('collector');
         foreach (['payments.view', 'payments.collect', 'retailers.view'] as $permission) {
             $collector->givePermissionTo($permission);
         }
 
-        \Spatie\Permission\Models\Role::findByName('sr')->givePermissionTo('payments.collect');
+        Role::findByName('sr')->givePermissionTo('payments.collect');
     }
 
     public function down(): void
