@@ -3,6 +3,15 @@
 @section('title', __('Dashboard'))
 
 @section('content')
+    @if (! empty($pendingMigrations))
+        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert" data-testid="pending-migrations">
+            <p class="font-semibold">{{ __('Database update needed') }}</p>
+            <p class="mt-1">{{ __('Run migrations on the Maintenance page first.') }} {{ __('Pending') }}: {{ count($pendingMigrations) }}</p>
+            @if (auth()->user()?->isOwner())
+                <p class="mt-2"><a href="{{ route('maintenance') }}" class="font-semibold underline">{{ __('Open the Maintenance page') }}</a></p>
+            @endif
+        </div>
+    @endif
     <section class="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-500 px-6 py-8 text-white shadow-sm sm:px-8">
         <p class="text-sm font-medium text-brand-100">{{ __('Welcome, :name', ['name' => auth()->user()->name]) }}</p>
         <h1 class="mt-1 text-2xl font-bold sm:text-3xl">{{ setting('firm_name') }}</h1>

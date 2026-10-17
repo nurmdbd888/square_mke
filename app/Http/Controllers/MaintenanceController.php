@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Throwable;
 
@@ -114,6 +115,7 @@ class MaintenanceController extends Controller
 
         $result = $this->artisan(__('Run migrations'), 'migrate', ['--force' => true]);
         $this->owners()->forget();
+        $this->forgetRuntimeCaches();
         AuditLogger::log('maintenance.migrate', null, null, ['success' => $result['success']]);
 
         return $this->dashboard($request, $result);
@@ -126,6 +128,7 @@ class MaintenanceController extends Controller
         }
 
         $result = $this->artisan(__('Clear caches'), 'optimize:clear');
+        $this->forgetRuntimeCaches();
         AuditLogger::log('maintenance.clear_caches', null, null, ['success' => $result['success']]);
 
         return $this->dashboard($request, $result);
@@ -288,6 +291,19 @@ class MaintenanceController extends Controller
             'formErrors' => new MessageBag($errors),
             'old' => $old,
         ]);
+    }
+
+    private function forgetRuntimeCaches(): void
+    {
+        try {
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
+        } catch (Throwable) {
+            // Permissions package may be unavailable before migrations.
+        }
+
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
     }
 
     private function owners(): OwnerAccess

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Money\Formatter;
+use App\Settings\SettingsRegistry;
 use App\Settings\SettingsStore;
 use Brick\Math\BigNumber;
 use Carbon\CarbonInterface;
@@ -9,7 +10,15 @@ use Illuminate\Support\Carbon;
 if (! function_exists('setting')) {
     function setting(string $key, CarbonInterface|string|null $on = null): mixed
     {
-        return app(SettingsStore::class)->get($key, $on);
+        try {
+            if (! app(SettingsRegistry::class)->has($key)) {
+                return null;
+            }
+
+            return app(SettingsStore::class)->get($key, $on);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }
 
@@ -45,7 +54,10 @@ if (! function_exists('format_app_date')) {
             $date = Carbon::parse($date);
         }
 
-        $format = (string) (setting('date_display_format') ?: 'd/m/Y');
+        $format = setting('date_display_format');
+        if (! is_string($format) || $format === '') {
+            $format = 'd/m/Y';
+        }
 
         return local_digits($date->format($format));
     }

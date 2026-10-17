@@ -5,6 +5,7 @@
     $isSale = $type === 'sale';
     $span = 6 + ($isSale ? 1 : 0) + ($canManage ? 1 : 0);
     $collection = app(\App\Domain\Payments\SaleCollectionStatus::class);
+    $collectionReady = $collection->columnsReady();
 @endphp
 @if ($canManage)
     <form method="POST" action="{{ route($bulkRoute) }}">
@@ -48,15 +49,22 @@
                             'bg-slate-100 text-slate-600' => $document->isVoid(),
                         ])>{{ __(ucfirst($document->status)) }}</span>
                         @if ($isSale && $document->isPosted() && $document->doc_date->lt(now()->subDays(30)))
-                            @php $rem = $collection->remainingAmount($document); @endphp
-                            @if ($rem->isPositive())
+                            @php
+                                try {
+                                    $rem = $collection->remainingAmount($document);
+                                    $isOverdue = $rem->isPositive();
+                                } catch (\Throwable) {
+                                    $isOverdue = false;
+                                }
+                            @endphp
+                            @if ($isOverdue)
                                 <span class="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800">{{ __('Overdue') }}</span>
                             @endif
                         @endif
                     </td>
                     @if ($isSale)
                         <td>
-                            @if ($document->isPosted())
+                            @if ($document->isPosted() && $collectionReady)
                                 <span @class([
                                     'rounded px-2 py-0.5 text-xs font-medium',
                                     'bg-red-50 text-red-800' => in_array($document->collection_status, [null, 'due'], true),

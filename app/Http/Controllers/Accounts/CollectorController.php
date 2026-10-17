@@ -10,7 +10,9 @@ use App\Support\Access\PaymentAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Throwable;
 
 class CollectorController extends Controller
 {
@@ -20,18 +22,28 @@ class CollectorController extends Controller
     {
         abort_unless(PaymentAccess::canCollectReceipts($request->user()), 403);
 
-        $pending = $this->collection->pendingForCollector(150);
-        $todayTotal = Payment::query()
-            ->where('kind', Payment::KIND_RECEIPT)
-            ->where('status', Payment::STATUS_POSTED)
-            ->whereDate('payment_date', Carbon::today())
-            ->when(! PaymentAccess::canManage($request->user()), fn ($q) => $q->where('created_by', $request->user()->id))
-            ->sum('amount');
+        $pending = collect();
+        $todayTotal = '0.00';
+        $warning = null;
+
+        try {
+            $pending = $this->collection->pendingForCollector(150);
+            $todayTotal = Payment::query()
+                ->where('kind', Payment::KIND_RECEIPT)
+                ->where('status', Payment::STATUS_POSTED)
+                ->whereDate('payment_date', Carbon::today())
+                ->when(! PaymentAccess::canManage($request->user()), fn ($q) => $q->where('created_by', $request->user()->id))
+                ->sum('amount');
+        } catch (Throwable $e) {
+            report($e);
+            $warning = __('Run migrations on the Maintenance page first.');
+        }
 
         return view('collector.index', [
-            'pending' => $pending,
+            'pending' => $pending instanceof Collection ? $pending : collect($pending),
             'todayTotal' => $todayTotal,
             'collection' => $this->collection,
+            'warning' => $warning,
         ]);
     }
 

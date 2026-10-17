@@ -64,6 +64,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -137,10 +138,28 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         // The owner can never be locked out by the permission matrix.
-        Gate::before(fn ($user) => $user instanceof User && $user->isOwner() ? true : null);
+        Gate::before(function ($user) {
+            try {
+                return $user instanceof User && $user->isOwner() ? true : null;
+            } catch (Throwable) {
+                return null;
+            }
+        });
 
-        Gate::define('payments.receipt-write', fn (User $user) => $user->can('payments.manage') || $user->can('payments.collect'));
-        Gate::define('payments.admin-write', fn (User $user) => $user->can('payments.manage'));
+        Gate::define('payments.receipt-write', function (User $user) {
+            try {
+                return $user->can('payments.manage') || $user->can('payments.collect');
+            } catch (Throwable) {
+                return false;
+            }
+        });
+        Gate::define('payments.admin-write', function (User $user) {
+            try {
+                return $user->can('payments.manage');
+            } catch (Throwable) {
+                return false;
+            }
+        });
 
         Password::defaults(fn () => Password::min(10)->max(128));
 
