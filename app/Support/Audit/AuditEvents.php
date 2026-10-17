@@ -17,7 +17,11 @@ final class AuditEvents
         'maintenance.generate_key', 'maintenance.migrate', 'maintenance.clear_caches', 'maintenance.owner_created', 'maintenance.owner_recovered',
     ];
 
-    public const TYPES = ['user', 'role', 'setting'];
+    public const TYPES = [
+        'user', 'role', 'setting',
+        'product', 'product_alias', 'supplier', 'sales_route', 'sales_rep', 'vehicle',
+        'price_list', 'price_list_item', 'retailer', 'opening_balance', 'custom_field',
+    ];
 
     public static function label(string $event): string
     {

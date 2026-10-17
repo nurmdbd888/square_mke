@@ -386,7 +386,7 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: brief says optional 2FA; works with Google or Microsoft Authenticator.
 - Change: Settings → Security.
 
-**73. Roles and permissions** — 2026-10-17
+**73. Roles and permissions** — 2026-10-17 · amended by #92
 - Decision: `spatie/laravel-permission` with five roles: `owner`, `accountant`, `sr`, `data_entry`, `viewer`. Each user has exactly one role. The owner passes every check (`Gate::before`), so the permission matrix cannot lock the owner out. Permissions are listed in `App\Support\Access\PermissionRegistry` and created by a migration (later milestones add theirs the same way). A permission's default roles are granted only when the permission is first created, so the owner's later edits in **Roles and permissions** survive updates. M1 defaults: accountant has `health.view`, `users.view`, `settings.view`, `audit.view`; viewer has `settings.view`; SR and data entry have none yet (their screens arrive with purchases and sales). `users.manage`, `roles.manage` and `settings.manage` are owner-only by default; a non-owner given `users.manage` still cannot create, edit, reset or deactivate an owner, or make anyone an owner. The last owner cannot be demoted or deactivated, and nobody can deactivate themselves.
 - Reason: plan M1; one role per user keeps the matrix readable for the owner.
 - Change: **Roles and permissions** page.
@@ -440,3 +440,48 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: the safety net (#66, #67) was merged after v0.0.0 but not tagged; it ships with M1 in v0.1.0, following the plan's `v0.N.0` rule. `DEPLOY.md` says "versions from v0.1.0" for the safety file and has one combined update section for v0.0.0 → v0.1.0.
 - Reason: one release for the owner to deploy.
 - Change: if a different tag is used, update those two places in `DEPLOY.md`.
+
+**84. Sample product codes and the 24-product seeder** — 2026-10-17
+- Decision: the sample file has no printed product codes, so the candidate ids (`P01`–`P17`, `S01`–`S07`) are stored in `products.code`. The seeder reads `database/seeders/data/products-seed.csv` (the same rows as `docs/samples/products-seed.csv`) and runs from a migration, so Maintenance → Run migrations loads the 24 products with no terminal. Running it again updates those codes in place. Each Bangla name is also saved as a product alias.
+- Reason: plan M2; the owner has no terminal.
+- Change: ship a new migration if the sample list changes. Do not overwrite a code the owner has since edited.
+
+**85. Buy price and exact buy price** — 2026-10-17
+- Decision: `buy_price` is the printed ex-VAT price (Chaka Ball Soap `23.83`). `buy_price_exact` keeps the unrounded figure (`23.8260`) for later costing. Both are `decimal(14,4)`. The product sell price is `decimal(14,4)` and is only a fallback when a price list has no row. Blank sample buy prices (the S-series, seen only on a sales invoice) stay null. A blank SD is stored as 0 and a blank VAT as 15, the column defaults. Money is never a float (`brick/math`).
+- Reason: the challan prints 23.83; the later golden test needs 23.8260.
+- Change: none.
+
+**86. Phone numbers** — 2026-10-17
+- Decision: retailer, supplier and sales-rep phones are stored as digits. A leading `880` is dropped when the rest is long enough, and a 10-digit number starting with 1 gains a leading 0. So `1711459077`, `8801711459077` and `+880 1711-459077` all become `01711459077`. Empty input is stored as null. Anything else is kept as its digits.
+- Reason: plan M2 phone normaliser.
+- Change: `App\Domain\Phone\Normalizer`.
+
+**87. Piece, dozen and carton** — 2026-10-17
+- Decision: `App\Domain\Units\Converter` turns a quantity into pieces. A dozen is 12. A carton uses the product's `units_per_carton`; a carton with no factor is refused. The result is a decimal string, scale 2, half up. The product unit defaults to `Pcs`.
+- Reason: plan M2.
+- Change: none.
+
+**88. Price lists are effective-dated sell prices** — 2026-10-17
+- Decision: a price list has rows of product, price and `effective_from`. The price on a date is the row with the latest `effective_from` on or before that date; the newest id wins a tie. If the list has no such row, the product's own sell price is used. Saving the same product and date again replaces that row. Lists are soft-deleted; the prices stay attached and come back when the list is restored.
+- Reason: plan M2, "price lookup returns the price valid on a given date".
+- Change: none.
+
+**89. Sales reps, routes, suppliers and vehicles are master records** — 2026-10-17
+- Decision: a sales rep is a row in `sales_reps` (name, phone, optional link to a user), not the SR role by itself. Routes live in the `routes` table as `App\Models\SalesRoute`, because a class named `Route` would clash with the router. Suppliers have a BIN. Vehicles are unique by registration. All four are soft-deleted and can be restored.
+- Reason: someone in the field may have no login, and a login may not be a sales rep.
+- Change: none.
+
+**90. Opening balances are stored, not posted** — 2026-10-17
+- Decision: opening stock, receivable, payable, cash and bank are rows in `opening_balances` (date, product or party, quantity, amount, note). M2 does not post them into stock or a ledger. The party is chosen by an exact code or name, so the form does not load every retailer into the page.
+- Reason: plan M2 lists opening balances; stock and the books arrive in later milestones.
+- Change: the posting milestone reads this table.
+
+**91. Custom fields** — 2026-10-17
+- Decision: `custom_fields` defines a key, label, type (text or number) and sort order for a product or a retailer. Values live in the row's `custom` JSON. A save keeps only keys that are still defined. Removing a definition does not delete answers already stored.
+- Reason: plan M2; the owner can add a question without a migration.
+- Change: Masters → Custom fields.
+
+**92. Master-data permissions, lists, column chooser and bulk edit** — 2026-10-17 · amends #73
+- Decision: new permissions, granted to the default roles only the first time the permission is created (#73). `products.view` and `retailers.view` go to the accountant, SR, data entry and viewer. `products.manage` and `retailers.manage` go to data entry. `masters.view` goes to the accountant and data entry. `masters.manage` goes to data entry. The owner still passes every check. Product and retailer lists show 50 rows, with search, an active / deactivated / all filter, and a column chooser remembered in the session. Bulk edit changes one field on at most 100 selected rows and writes one audit row per record. Deactivate is a soft delete; Restore brings the row back. The dashboard "What is ready" line now includes master data.
+- Reason: plan M2, including the list of 10,000 retailers.
+- Change: Roles and permissions.

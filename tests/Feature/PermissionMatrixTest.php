@@ -17,8 +17,11 @@ class PermissionMatrixTest extends TestCase
     {
         $this->assertEqualsCanonicalizing(PermissionRegistry::ROLES, Role::query()->pluck('name')->all());
         $this->assertEqualsCanonicalizing(PermissionRegistry::all(), Permission::query()->pluck('name')->all());
-        $this->assertEqualsCanonicalizing(['health.view', 'users.view', 'audit.view', 'settings.view'], Role::findByName('accountant')->permissions->pluck('name')->all());
-        $this->assertSame([], Role::findByName('sr')->permissions->pluck('name')->all());
+        $this->assertEqualsCanonicalizing(
+            ['health.view', 'users.view', 'audit.view', 'settings.view', 'products.view', 'retailers.view', 'masters.view'],
+            Role::findByName('accountant')->permissions->pluck('name')->all(),
+        );
+        $this->assertEqualsCanonicalizing(['products.view', 'retailers.view'], Role::findByName('sr')->permissions->pluck('name')->all());
     }
 
     public function test_sync_is_idempotent_and_keeps_the_owners_changes(): void
@@ -47,18 +50,22 @@ class PermissionMatrixTest extends TestCase
 
         $this->actingAs($owner)->put('/roles', [
             'permissions' => [
-                'accountant' => ['users.view', 'audit.view', 'settings.view', 'health.view'],
+                'accountant' => ['health.view', 'users.view', 'audit.view', 'settings.view', 'products.view', 'retailers.view', 'masters.view'],
                 'sr' => ['settings.view'],
-                'viewer' => ['settings.view'],
+                'data_entry' => ['products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage'],
+                'viewer' => ['settings.view', 'products.view', 'retailers.view'],
             ],
         ])->assertRedirect(route('roles.index'))->assertSessionHas('status', 'Permissions saved.');
 
         $this->assertSame(['settings.view'], Role::findByName('sr')->permissions->pluck('name')->all());
-        $this->assertSame([], Role::findByName('data_entry')->permissions->pluck('name')->all());
+        $this->assertEqualsCanonicalizing(
+            ['products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage'],
+            Role::findByName('data_entry')->permissions->pluck('name')->all(),
+        );
 
         $log = AuditLog::query()->where('event', 'role.permissions_changed')->sole();
         $this->assertSame('role', $log->auditable_type);
-        $this->assertSame(['permissions' => []], $log->old_values);
+        $this->assertSame(['permissions' => ['products.view', 'retailers.view']], $log->old_values);
         $this->assertSame(['permissions' => ['settings.view']], $log->new_values);
         $this->assertSame($owner->id, $log->user_id);
     }
@@ -67,8 +74,10 @@ class PermissionMatrixTest extends TestCase
     {
         $this->actingAs($this->owner())->put('/roles', [
             'permissions' => [
-                'accountant' => ['users.view', 'audit.view', 'settings.view', 'health.view'],
-                'viewer' => ['settings.view'],
+                'accountant' => ['health.view', 'users.view', 'audit.view', 'settings.view', 'products.view', 'retailers.view', 'masters.view'],
+                'sr' => ['products.view', 'retailers.view'],
+                'data_entry' => ['products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage'],
+                'viewer' => ['settings.view', 'products.view', 'retailers.view'],
             ],
         ])->assertSessionHas('status', 'Nothing changed.');
 

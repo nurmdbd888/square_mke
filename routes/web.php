@@ -6,6 +6,13 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Master\CustomFieldController;
+use App\Http\Controllers\Master\DirectoryController;
+use App\Http\Controllers\Master\MastersController;
+use App\Http\Controllers\Master\OpeningBalanceController;
+use App\Http\Controllers\Master\PriceListController;
+use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
@@ -42,6 +49,74 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::middleware('account.ready')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::get('/health', HealthController::class)->middleware('can:health.view')->name('health');
+
+        Route::middleware('can:products.view')->group(function () {
+            Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        });
+        Route::middleware('can:products.manage')->group(function () {
+            Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+            Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+            Route::post('/products/bulk', [ProductController::class, 'bulk'])->name('products.bulk');
+            Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->withTrashed()->name('products.edit');
+            Route::put('/products/{product}', [ProductController::class, 'update'])->withTrashed()->name('products.update');
+            Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+            Route::post('/products/{product}/restore', [ProductController::class, 'restore'])->withTrashed()->name('products.restore');
+        });
+
+        Route::middleware('can:retailers.view')->group(function () {
+            Route::get('/retailers', [RetailerController::class, 'index'])->name('retailers.index');
+        });
+        Route::middleware('can:retailers.manage')->group(function () {
+            Route::get('/retailers/create', [RetailerController::class, 'create'])->name('retailers.create');
+            Route::post('/retailers', [RetailerController::class, 'store'])->name('retailers.store');
+            Route::post('/retailers/bulk', [RetailerController::class, 'bulk'])->name('retailers.bulk');
+            Route::get('/retailers/{retailer}/edit', [RetailerController::class, 'edit'])->withTrashed()->name('retailers.edit');
+            Route::put('/retailers/{retailer}', [RetailerController::class, 'update'])->withTrashed()->name('retailers.update');
+            Route::delete('/retailers/{retailer}', [RetailerController::class, 'destroy'])->name('retailers.destroy');
+            Route::post('/retailers/{retailer}/restore', [RetailerController::class, 'restore'])->withTrashed()->name('retailers.restore');
+        });
+
+        $masterKinds = 'suppliers|routes|sales-reps|vehicles';
+
+        Route::middleware('can:masters.view')->group(function () use ($masterKinds) {
+            Route::get('/masters', [MastersController::class, 'index'])->name('masters.index');
+            Route::get('/masters/price-lists', [PriceListController::class, 'index'])->name('masters.price-lists.index');
+            Route::get('/masters/opening-balances', [OpeningBalanceController::class, 'index'])->name('masters.opening-balances.index');
+            Route::get('/masters/custom-fields', [CustomFieldController::class, 'index'])->name('masters.custom-fields.index');
+            Route::get('/masters/{kind}', [DirectoryController::class, 'index'])->where('kind', $masterKinds)->name('masters.directory.index');
+        });
+
+        // Registered before {priceList}, or "create" is treated as an id.
+        Route::get('/masters/price-lists/create', [PriceListController::class, 'create'])->middleware('can:masters.manage')->name('masters.price-lists.create');
+        Route::get('/masters/price-lists/{priceList}', [PriceListController::class, 'show'])->middleware('can:masters.view')->withTrashed()->name('masters.price-lists.show');
+
+        Route::middleware('can:masters.manage')->group(function () use ($masterKinds) {
+            Route::post('/masters/price-lists', [PriceListController::class, 'store'])->name('masters.price-lists.store');
+            Route::put('/masters/price-lists/{priceList}', [PriceListController::class, 'update'])->withTrashed()->name('masters.price-lists.update');
+            Route::delete('/masters/price-lists/{priceList}', [PriceListController::class, 'destroy'])->name('masters.price-lists.destroy');
+            Route::post('/masters/price-lists/{priceList}/restore', [PriceListController::class, 'restore'])->withTrashed()->name('masters.price-lists.restore');
+            Route::post('/masters/price-lists/{priceList}/items', [PriceListController::class, 'storeItem'])->name('masters.price-lists.items.store');
+            Route::delete('/masters/price-lists/{priceList}/items/{item}', [PriceListController::class, 'destroyItem'])->name('masters.price-lists.items.destroy');
+
+            Route::get('/masters/opening-balances/create', [OpeningBalanceController::class, 'create'])->name('masters.opening-balances.create');
+            Route::post('/masters/opening-balances', [OpeningBalanceController::class, 'store'])->name('masters.opening-balances.store');
+            Route::get('/masters/opening-balances/{openingBalance}/edit', [OpeningBalanceController::class, 'edit'])->name('masters.opening-balances.edit');
+            Route::put('/masters/opening-balances/{openingBalance}', [OpeningBalanceController::class, 'update'])->name('masters.opening-balances.update');
+            Route::delete('/masters/opening-balances/{openingBalance}', [OpeningBalanceController::class, 'destroy'])->name('masters.opening-balances.destroy');
+
+            Route::get('/masters/custom-fields/create', [CustomFieldController::class, 'create'])->name('masters.custom-fields.create');
+            Route::post('/masters/custom-fields', [CustomFieldController::class, 'store'])->name('masters.custom-fields.store');
+            Route::get('/masters/custom-fields/{customField}/edit', [CustomFieldController::class, 'edit'])->name('masters.custom-fields.edit');
+            Route::put('/masters/custom-fields/{customField}', [CustomFieldController::class, 'update'])->name('masters.custom-fields.update');
+            Route::delete('/masters/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('masters.custom-fields.destroy');
+
+            Route::get('/masters/{kind}/create', [DirectoryController::class, 'create'])->where('kind', $masterKinds)->name('masters.directory.create');
+            Route::post('/masters/{kind}', [DirectoryController::class, 'store'])->where('kind', $masterKinds)->name('masters.directory.store');
+            Route::get('/masters/{kind}/{id}/edit', [DirectoryController::class, 'edit'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.edit');
+            Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
+            Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
+            Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
+        });
 
         Route::middleware('can:users.view')->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');

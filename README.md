@@ -9,8 +9,8 @@ built for cPanel shared hosting at `mke.rockproviders.com` with no terminal on t
 - Every assumption and decision: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Server install for the owner: [DEPLOY.md](DEPLOY.md)
 
-Current milestone: **M1, setup, auth, roles, audit, i18n** (sign-in with optional 2FA, five roles and a permission
-matrix, user management, audit log, settings, English/Bangla). M0 (deploy smoke test) is live as v0.0.0.
+Current milestone: **M2, master data** (products, retailers, suppliers, routes, sales reps, vehicles,
+price lists, opening balances and custom fields). M1 is live as v0.1.0.
 
 ## Local setup
 

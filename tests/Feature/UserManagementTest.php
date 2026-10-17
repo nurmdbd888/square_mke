@@ -50,7 +50,7 @@ class UserManagementTest extends TestCase
         $this->assertSame('bn', $user->locale);
         $this->assertTrue(Hash::check('temporary-pass-1', $user->password));
 
-        $created = AuditLog::query()->where('event', 'created')->where('auditable_id', $user->id)->sole();
+        $created = AuditLog::query()->where('event', 'created')->where('auditable_type', 'user')->where('auditable_id', $user->id)->sole();
         $this->assertSame($this->owner->id, $created->user_id);
         $this->assertSame('rahim', $created->new_values['username']);
         $this->assertSame('[hidden]', $created->new_values['password']);
@@ -140,7 +140,7 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($this->owner)->delete("/users/{$user->id}")->assertRedirect(route('users.index'));
         $this->assertSoftDeleted($user);
-        $this->assertDatabaseHas('audit_logs', ['event' => 'deleted', 'auditable_id' => $user->id]);
+        $this->assertDatabaseHas('audit_logs', ['event' => 'deleted', 'auditable_type' => 'user', 'auditable_id' => $user->id]);
 
         $this->actingAs($this->owner)->get('/users')->assertDontSee('Gone Person');
         $this->actingAs($this->owner)->get('/users?status=inactive')->assertSee('Gone Person');
@@ -148,7 +148,7 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($this->owner)->post("/users/{$user->id}/restore")->assertRedirect(route('users.index'));
         $this->assertNotSoftDeleted($user);
-        $this->assertDatabaseHas('audit_logs', ['event' => 'restored', 'auditable_id' => $user->id]);
+        $this->assertDatabaseHas('audit_logs', ['event' => 'restored', 'auditable_type' => 'user', 'auditable_id' => $user->id]);
     }
 
     public function test_owner_resets_a_password_and_two_factor(): void

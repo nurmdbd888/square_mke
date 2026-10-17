@@ -21,7 +21,7 @@ class AuditLogTest extends TestCase
 
         $user->update(['name' => 'New Name', 'phone' => '0170']);
 
-        $log = AuditLog::query()->where('event', 'updated')->where('auditable_id', $user->id)->sole();
+        $log = AuditLog::query()->where('event', 'updated')->where('auditable_type', 'user')->where('auditable_id', $user->id)->sole();
         $this->assertSame('user', $log->auditable_type);
         $this->assertSame(['name' => 'Old Name'], $log->old_values);
         $this->assertSame(['name' => 'New Name'], $log->new_values);

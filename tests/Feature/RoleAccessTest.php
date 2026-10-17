@@ -28,6 +28,17 @@ class RoleAccessTest extends TestCase
         '/roles' => ['owner'],
         '/settings' => ['owner', 'accountant', 'viewer'],
         '/audit' => ['owner', 'accountant'],
+        '/products' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/products/create' => ['owner', 'data_entry'],
+        '/retailers' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/retailers/create' => ['owner', 'data_entry'],
+        '/masters' => ['owner', 'accountant', 'data_entry'],
+        '/masters/suppliers' => ['owner', 'accountant', 'data_entry'],
+        '/masters/suppliers/create' => ['owner', 'data_entry'],
+        '/masters/price-lists' => ['owner', 'accountant', 'data_entry'],
+        '/masters/price-lists/create' => ['owner', 'data_entry'],
+        '/masters/opening-balances' => ['owner', 'accountant', 'data_entry'],
+        '/masters/custom-fields' => ['owner', 'accountant', 'data_entry'],
     ];
 
     /**
@@ -35,6 +46,9 @@ class RoleAccessTest extends TestCase
      */
     private const NAV = [
         'dashboard' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'products.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'retailers.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'masters.index' => ['owner', 'accountant', 'data_entry'],
         'users.index' => ['owner', 'accountant'],
         'roles.index' => ['owner'],
         'settings.index' => ['owner', 'accountant', 'viewer'],
@@ -98,6 +112,9 @@ class RoleAccessTest extends TestCase
         $this->actingAs($accountant)->post('/users', [])->assertForbidden();
         $this->actingAs($accountant)->put('/roles', [])->assertForbidden();
         $this->actingAs($accountant)->put('/settings', [])->assertForbidden();
+        $this->actingAs($accountant)->post('/products', [])->assertForbidden();
+        $this->actingAs($this->userWithRole('sr'))->post('/retailers', [])->assertForbidden();
+        $this->actingAs($accountant)->post('/masters/suppliers', [])->assertForbidden();
         $log = AuditLogger::log('auth.failed');
         $this->actingAs($viewer)->get("/audit/{$log->id}")->assertForbidden();
     }

@@ -2,7 +2,18 @@
 
 namespace App\Providers;
 
+use App\Models\CustomField;
+use App\Models\OpeningBalance;
+use App\Models\PriceList;
+use App\Models\PriceListItem;
+use App\Models\Product;
+use App\Models\ProductAlias;
+use App\Models\Retailer;
+use App\Models\SalesRep;
+use App\Models\SalesRoute;
+use App\Models\Supplier;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Settings\CoreSettings;
 use App\Settings\SettingsRegistry;
 use App\Settings\SettingsStore;
@@ -52,6 +63,17 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'user' => User::class,
             'role' => Role::class,
+            'product' => Product::class,
+            'product_alias' => ProductAlias::class,
+            'supplier' => Supplier::class,
+            'sales_route' => SalesRoute::class,
+            'sales_rep' => SalesRep::class,
+            'vehicle' => Vehicle::class,
+            'price_list' => PriceList::class,
+            'price_list_item' => PriceListItem::class,
+            'retailer' => Retailer::class,
+            'opening_balance' => OpeningBalance::class,
+            'custom_field' => CustomField::class,
         ]);
 
         // The owner can never be locked out by the permission matrix.
