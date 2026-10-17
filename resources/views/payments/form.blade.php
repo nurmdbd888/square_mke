@@ -17,6 +17,7 @@
           action="{{ $payment->exists ? route('payments.update', $payment) : route('payments.store') }}"
           enctype="multipart/form-data"
           class="mt-6 space-y-6 @if ($isReceipt) max-w-xl @endif"
+          @party-selected="partyId = $event.detail.id"
           x-data="{
               method: '{{ old('method', $payment->method ?? 'cash') }}',
               partyId: '{{ old($isReceipt ? 'retailer_id' : 'supplier_id', $isReceipt ? $payment->retailer_id : $payment->supplier_id) }}',
@@ -116,22 +117,19 @@
                 <p class="mt-1 text-xs text-slate-500">{{ __('Can be less than invoice totals for a partial payment.') }}</p>
             </label>
             @if ($isReceipt)
-                <label class="block sm:col-span-2">
-                    <span class="label">{{ __('Retailer') }}</span>
-                    <select name="retailer_id" required class="input min-h-11" x-model="partyId"
-                            hx-get="{{ route('payments.open-invoices') }}"
-                            hx-target="#allocation-box"
-                            hx-include="[name='retailer_id']"
-                            hx-vals='{"party":"retailer"}'
-                            hx-trigger="change">
-                        <option value="">{{ __('Choose') }}</option>
-                        @foreach ($retailers as $retailer)
-                            <option value="{{ $retailer->id }}" @selected((string) old('retailer_id', $payment->retailer_id) === (string) $retailer->id)>
-                                {{ $retailer->code ? $retailer->code.' · ' : '' }}{{ $retailer->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
+                <div class="sm:col-span-2">
+                    <x-party-code-picker
+                        name="retailer_id"
+                        :label="__('Retailer')"
+                        :parties="$retailers"
+                        :selected-id="$payment->retailer_id"
+                        hx-get="{{ route('payments.open-invoices') }}"
+                        hx-target="#allocation-box"
+                        hx-include="[name='retailer_id']"
+                        hx-vals='{"party":"retailer"}'
+                        hx-trigger="change"
+                    />
+                </div>
                 <label class="block sm:col-span-2">
                     <span class="label">{{ __('Sales rep') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <select name="sales_rep_id" class="input min-h-11">
@@ -142,22 +140,18 @@
                     </select>
                 </label>
             @else
-                <label class="block">
-                    <span class="label">{{ __('Supplier') }} <span class="font-normal text-slate-500">({{ __('optional for expenses') }})</span></span>
-                    <select name="supplier_id" class="input min-h-11" x-model="partyId"
-                            hx-get="{{ route('payments.open-invoices') }}"
-                            hx-target="#allocation-box"
-                            hx-include="[name='supplier_id']"
-                            hx-vals='{"party":"supplier"}'
-                            hx-trigger="change">
-                        <option value="">{{ __('None') }}</option>
-                        @foreach ($suppliers as $supplier)
-                            <option value="{{ $supplier->id }}" @selected((string) old('supplier_id', $payment->supplier_id) === (string) $supplier->id)>
-                                {{ $supplier->code ? $supplier->code.' · ' : '' }}{{ $supplier->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
+                <x-party-code-picker
+                    name="supplier_id"
+                    :label="__('Supplier')"
+                    :parties="$suppliers"
+                    :selected-id="$payment->supplier_id"
+                    :required="false"
+                    hx-get="{{ route('payments.open-invoices') }}"
+                    hx-target="#allocation-box"
+                    hx-include="[name='supplier_id']"
+                    hx-vals='{"party":"supplier"}'
+                    hx-trigger="change"
+                />
                 <label class="block">
                     <span class="label">{{ __('Expense category') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <select name="expense_category_id" class="input min-h-11">
