@@ -1,0 +1,9 @@
+<?php
+
+return [
+    'groups' => [
+        'firm' => 'Firm',
+        'regional' => 'Language and calendar',
+        'security' => 'Security',
+    ],
+];

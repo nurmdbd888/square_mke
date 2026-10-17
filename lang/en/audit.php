@@ -1,0 +1,59 @@
+<?php
+
+return [
+    'events' => [
+        'created' => 'Created',
+        'updated' => 'Changed',
+        'deleted' => 'Deleted / deactivated',
+        'restored' => 'Restored',
+        'auth' => [
+            '*' => 'All sign-in actions',
+            'login' => 'Signed in',
+            'logout' => 'Signed out',
+            'failed' => 'Failed sign-in',
+            'lockout' => 'Sign-in blocked (too many attempts)',
+            'password_changed' => 'Changed own password',
+            'password_reset' => 'Reset password by e-mail link',
+        ],
+        'two_factor' => [
+            '*' => 'All two-factor actions',
+            'enabled' => 'Turned on two-factor sign-in',
+            'disabled' => 'Turned off two-factor sign-in',
+            'failed' => 'Wrong two-factor code',
+            'recovery_used' => 'Used a recovery code',
+            'recovery_regenerated' => 'Made new recovery codes',
+        ],
+        'user' => [
+            '*' => 'All user management',
+            'role_changed' => 'Role changed',
+            'password_reset_by_admin' => 'Password reset by an owner',
+            'two_factor_reset' => 'Two-factor turned off by an owner',
+        ],
+        'role' => [
+            'permissions_changed' => 'Role permissions changed',
+        ],
+        'settings' => [
+            '*' => 'All settings changes',
+            'updated' => 'Settings changed',
+            'deleted' => 'Future setting removed',
+        ],
+        'maintenance' => [
+            '*' => 'All Maintenance page actions',
+            'generate_key' => 'Generate APP_KEY',
+            'migrate' => 'Run migrations',
+            'clear_caches' => 'Clear caches',
+            'owner_created' => 'Owner account created',
+            'owner_recovered' => 'Owner password reset (recovery)',
+        ],
+    ],
+    'types' => [
+        'user' => 'User',
+        'role' => 'Role',
+        'setting' => 'Setting',
+    ],
+    'sources' => [
+        'web' => 'App',
+        'maintenance' => 'Maintenance page',
+        'console' => 'Cron / command line',
+    ],
+];
