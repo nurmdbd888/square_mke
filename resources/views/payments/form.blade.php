@@ -101,7 +101,7 @@
             </label>
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
-                <input type="date" name="payment_date" value="{{ old('payment_date', $payment->payment_date?->format('Y-m-d') ?? now()->toDateString()) }}" required class="input min-h-11">
+                <x-date-input name="payment_date" :value="$payment->payment_date?->format('Y-m-d') ?? now()->toDateString()" required class="min-h-11" />
             </label>
             <label class="block">
                 <span class="label">{{ __('Method') }}</span>
@@ -170,7 +170,7 @@
             @endif
             <label class="block" x-show="method === 'pdc' || method === 'cheque'" x-cloak>
                 <span class="label">{{ __('Due date') }}</span>
-                <input type="date" name="due_date" value="{{ old('due_date', $payment->due_date?->format('Y-m-d')) }}" class="input min-h-11">
+                <x-date-input name="due_date" :value="$payment->due_date?->format('Y-m-d')" class="min-h-11" />
             </label>
             <label class="block" x-show="method === 'cheque' || method === 'pdc' || method === 'bank'" x-cloak>
                 <span class="label">{{ __('Cheque / reference') }}</span>

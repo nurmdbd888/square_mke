@@ -43,7 +43,7 @@
                         @csrf
                         <label class="block">
                             <span class="label">{{ __('Cleared on') }}</span>
-                            <input type="date" name="cleared_on" value="{{ now()->toDateString() }}" class="input">
+                            <x-date-input name="cleared_on" :value="now()->toDateString()" />
                         </label>
                         <button class="btn-primary">{{ __('Mark cleared') }}</button>
                     </form>

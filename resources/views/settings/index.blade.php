@@ -105,7 +105,7 @@
                         <tbody class="divide-y divide-slate-100">
                             @foreach ($history as $row)
                                 <tr>
-                                    <td>{{ local_digits($row->effective_from->format('d-m-Y')) }}</td>
+                                    <td>{{ format_app_date($row->effective_from) }}</td>
                                     <td>{{ local_digits((string) json_decode($row->value, true)) }}</td>
                                     <td class="text-right">
                                         @if ($canManage && $row->effective_from->isFuture())
@@ -134,7 +134,7 @@
                     </label>
                     <label class="block">
                         <span class="label">{{ __('Applies from') }}</span>
-                        <input type="date" name="effective_from" value="{{ now()->toDateString() }}" required class="input">
+                        <x-date-input name="effective_from" :value="now()->toDateString()" required />
                     </label>
                     <button class="btn-primary">{{ __('Add') }}</button>
                 </form>
