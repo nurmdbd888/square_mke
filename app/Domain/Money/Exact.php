@@ -17,7 +17,18 @@ final class Exact
             return BigDecimal::of($fallback);
         }
 
-        return $value instanceof BigDecimal ? $value : BigDecimal::of((string) $value);
+        if ($value instanceof BigDecimal) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $value = str_replace([',', ' '], '', Formatter::toAsciiDigits(trim($value)));
+            if ($value === '') {
+                return BigDecimal::of($fallback);
+            }
+        }
+
+        return BigDecimal::of($value);
     }
 
     public static function money(BigNumber|int|string|null $value): string
