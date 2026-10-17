@@ -1,0 +1,34 @@
+# Square Dealer Manager safety net for ~/mke (sdm-root-htaccess)
+#
+# The subdomain's document root must be ~/mke/app/public (DEPLOY.md, Step 3).
+# If it points at ~/mke instead, this file keeps the site private and working:
+# no folder listings, nothing outside app/public is ever served, and every
+# request is handed to app/public. The Maintenance page warns while this is
+# in use. Replaced on every update; do not edit.
+#
+# Access is refused with mod_rewrite [F] rather than "Require all denied":
+# Require would be inherited by app/public, and some LiteSpeed builds only
+# honour the rewrite rules of an .htaccess file.
+
+Options -Indexes
+
+RewriteEngine On
+
+# AutoSSL / Let's Encrypt domain checks that cPanel writes into the document root
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^\.well-known/(acme-challenge|pki-validation)/[^/]+$ - [L]
+
+# Already inside app/public: that folder's own .htaccess takes over
+RewriteRule ^app/public(/|$) - [L]
+
+# Settings, logs, uploads, old versions (app-prev, app-new) and every dotfile
+RewriteRule ^(shared|shared\.example|app|app-[^/]+)(/|$) - [F,L]
+RewriteRule (^|/)\. - [F,L]
+
+# Trailing-slash redirects are done here: app/public's own rule would only see
+# the rewritten address and send visitors to /app/public/...
+RewriteCond %{DOCUMENT_ROOT}/app/public/$1 !-d
+RewriteRule ^(.+)/$ /$1 [L,R=301]
+
+# Everything else (zips, Git checkouts, the site itself) goes through app/public
+RewriteRule ^(.*)$ app/public/$1 [L]

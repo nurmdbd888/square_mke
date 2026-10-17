@@ -1,4 +1,4 @@
-Square Dealer Manager: the one cron job
+Square Distributor Manager: the one cron job
 ========================================
 
 cPanel > Cron Jobs > Add New Cron Job

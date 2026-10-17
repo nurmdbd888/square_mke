@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Square Dealer Manager'),
+    'name' => env('APP_NAME', 'Square Distributor Manager'),
 
     /*
     |--------------------------------------------------------------------------

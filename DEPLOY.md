@@ -1,4 +1,4 @@
-# Putting Square Dealer Manager on mke.rockproviders.com
+# Putting Square Distributor Manager on mke.rockproviders.com
 
 This guide is for the owner of M/s Khaza Enterprise. You do not need a terminal,
 Composer or any programming. Everything happens in **cPanel** and your **web browser**.
@@ -12,7 +12,8 @@ to write down every name and password you create.
 |---|---|
 | USER | your cPanel user name. It is shown in cPanel on the right ("Current User"), and File Manager shows your home folder as `/home/USER`. |
 | home folder | the top folder you see when File Manager opens (`/home/USER`). It is **not** `public_html`. |
-| release zip | a file named like `mke-v0.0.0.zip` that holds the finished app. |
+| release branch | the `release` branch of our GitHub project. It always holds the newest finished app; cPanel Git™ Version Control copies it to your server. |
+| release zip | a file named like `mke-v0.0.0.zip` that holds the same finished app, for uploading by hand. |
 
 **What the server will look like when you are done**
 
@@ -72,23 +73,10 @@ If cPanel refuses a folder outside `public_html`, stop and tell us. We will send
 
 ### Step 4. Put the app on the server
 
-There are two ways. **Way A (zip)** works on every cPanel. **Way B (Git)** saves time on
-every later update, but only works if your host allows it. If unsure, use Way A.
+Use the **Git way**: every later update is two clicks. Use the **zip way** only if your
+host does not allow Git deployment (you will see that in step 5 below).
 
-#### Way A — upload the zip (always works)
-
-1. Download the newest `mke-vX.Y.Z.zip` from
-   <https://github.com/nurmdbd888/square_mke/releases> (under **Assets**), or use the zip we send you.
-2. cPanel → **Files** → **File Manager**. You are in your home folder.
-3. If there is already a folder `mke` (Step 3 usually creates it), open it. Otherwise click **+ Folder**,
-   name it `mke`, then open it. An `app` folder made by cPanel in Step 3 can stay; the zip fills it in.
-4. Click **Upload**, choose the zip, wait for the green 100% bar, then click
-   **Go Back to "/home/USER/mke"**.
-5. Right-click the zip → **Extract** → **Extract Files** → **Close**. You now see `app` and `shared.example`.
-6. Right-click `shared.example` → **Rename** → `shared`.
-7. You can delete the zip now (right-click → **Delete**).
-
-#### Way B — cPanel Git Version Control (faster updates, if your host allows it)
+#### Git way — cPanel Git™ Version Control (main way)
 
 1. cPanel → **Files** → **Git™ Version Control** → **Create**.
 2. Keep **Clone a Repository** switched on.
@@ -97,19 +85,35 @@ every later update, but only works if your host allows it. If unsure, use Way A.
    - Repository Name: `square_mke`
 3. Click **Create** and wait until the clone finishes.
 4. Click **Manage** next to `square_mke`. In **Checked-Out Branch** choose **release** and click **Update**.
+   (Never choose `main`: it has no ready-made program files, so cPanel will refuse to deploy it.)
 5. Open the **Pull or Deploy** tab and click **Deploy HEAD Commit**.
-   This creates `/home/USER/mke/app` and `/home/USER/mke/shared` (with a `.env` file to fill in).
+   This creates `/home/USER/mke/app`, `/home/USER/mke/shared` (with a `.env` file to fill in)
+   and a hidden safety file `/home/USER/mke/.htaccess`.
 
 If there is no **Deploy HEAD Commit** button, or it is greyed out and says deployment is not
-available, your host does not allow it. Use Way A instead; nothing is broken.
+available, your host does not allow it. Use the zip way instead; nothing is broken.
+
+#### Zip way — upload the zip with File Manager (fallback)
+
+1. Download the newest `mke-vX.Y.Z.zip` from
+   <https://github.com/nurmdbd888/square_mke/releases> (under **Assets**), or use the zip we send you.
+2. cPanel → **Files** → **File Manager**. You are in your home folder.
+3. If there is already a folder `mke` (Step 3 usually creates it), open it. Otherwise click **+ Folder**,
+   name it `mke`, then open it. An `app` folder made by cPanel in Step 3 can stay; the zip fills it in.
+4. Click **Upload**, choose the zip, wait for the green 100% bar, then click
+   **Go Back to "/home/USER/mke"**.
+5. Right-click the zip → **Extract** → **Extract Files** → **Close**. You now see `app` and `shared.example`
+   (plus a hidden safety file `.htaccess`; leave it there).
+6. Right-click `shared.example` → **Rename** → `shared`.
+7. You can delete the zip now (right-click → **Delete**).
 
 ### Step 5. Fill in the settings file (.env)
 
 1. File Manager → top right **Settings** → tick **Show Hidden Files (dotfiles)** → **Save**.
 2. Open `mke/shared`.
-   - Way A: right-click `.env.example` → **Rename** → `.env`.
+   - Git way: `.env` is already there.
+   - Zip way: right-click `.env.example` → **Rename** → `.env`.
      (A spare copy of the example stays in `mke/app/deploy/shared.example/`.)
-   - Way B: `.env` is already there.
 3. Right-click `.env` → **Edit** → **Edit**. Fill in only these lines and leave everything else alone:
 
    ```
@@ -143,7 +147,11 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
    database connected should all be **OK** (green). If anything says **Fix** (red),
    take a screenshot and send it to us.
 5. Click **Run migrations**. The result box says **Finished successfully** and lists
-   `create_smoke_heartbeats_table … DONE`.
+   several lines such as `create_users_table … DONE` and `seed_roles_and_permissions … DONE`.
+6. A blue box **Create the owner account** appears below. Fill in your full name, a user name
+   (small letters, for example `khaza`), your e-mail (optional) and a password of at least
+   10 characters, twice. Click **Create owner account**. Write the user name and password in your notebook.
+   From now on the Maintenance page asks you to **sign in as owner** first and then for the secret phrase.
 
 ### Step 8. Add the cron job (the app's alarm clock)
 
@@ -158,16 +166,37 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
 
 ### Step 9. Check that everything works
 
-1. Open <https://mke.rockproviders.com>. You see **M/s Khaza Enterprise**, a version number,
-   **Database: Connected** and **Cron** with a green OK. Click **বাংলা** at the top: the page switches to Bangla.
+1. Open <https://mke.rockproviders.com>. You see the **Sign in** page with **M/s Khaza Enterprise**
+   and a version number at the bottom. Sign in with the owner account from Step 7.
+   The dashboard shows **Database: Connected** and **Cron** with a green OK.
+   Click **বাংলা** at the top: the page switches to Bangla (the app remembers your choice).
 2. Safety checks. Each of these must show **Forbidden** or **Not Found**, never your settings:
    - <https://mke.rockproviders.com/.env>
    - <https://mke.rockproviders.com/storage/>
    - <https://mke.rockproviders.com/../shared/.env>
+   - <https://mke.rockproviders.com/shared/> (must not show a list of files)
 3. Send us a screenshot of the Maintenance page and of the home page.
    **We stop here until you confirm.**
 
 If a step fails, do not retry randomly. Send a screenshot of the error and the step number.
+
+### Step 10. Make it yours (any time later)
+
+1. **Settings** (left menu): check the firm name and distributor code. Changes are recorded in the **Audit log**.
+2. **My profile** (your name, top right) → **Two-factor sign-in** → **Turn on**. Scan the QR code with
+   Google Authenticator or Microsoft Authenticator on your phone, type the 6-digit code, and
+   **write down the recovery codes** on paper. Recommended for the owner.
+3. **Users** → **Add user** for each staff member: name, user name, role, and a first password you give them.
+   They must choose their own password when they first sign in.
+
+   | Role | Can do in this version |
+   |---|---|
+   | Owner | Everything: users, permissions, settings, audit log, Maintenance page |
+   | Accountant | Dashboard, system health, see users, see settings, audit log |
+   | SR, Data entry | Dashboard (their work screens arrive with purchases and sales) |
+   | Viewer | Dashboard, see settings |
+
+   **Roles and permissions** lets you change what each role may do (the owner always keeps everything).
 
 ---
 
@@ -177,32 +206,88 @@ Before every update, save a copy of the database:
 cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left → **Export** tab →
 **Export** (Quick, SQL). Keep the downloaded `.sql` file. (From M10 the Maintenance page has a **Backup now** button.)
 
-### Update with Way A (zip)
+### This update: v0.0.0 → v0.1.0 (sign-in, users, Bangla, folder safety net)
+
+What is new: the site now starts with a **Sign in** page. You create the owner account
+(you) on the Maintenance page, then add your staff with their roles. Every change is
+recorded in the **Audit log**. The whole app works in English and Bangla. A safety net
+also hides your folders if the subdomain points at the wrong folder.
+
+Do these steps in order. It takes about 10 minutes.
+
+1. **Back up** the database in phpMyAdmin (see above). Nobody uses the app yet, but it is a good habit.
+2. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
+3. Click **Update from Remote** and wait. **HEAD Commit** must show **Release v0.1.0**.
+   If it still shows v0.0.0, we have not published v0.1.0 yet. Stop here.
+4. Click **Deploy HEAD Commit** and wait about a minute. v0.0.0 is kept in `mke/app-prev`.
+   The deploy also writes the hidden safety file `mke/.htaccess`.
+5. Open <https://mke.rockproviders.com/maintenance> and type your secret phrase.
+   (There is no owner account yet, so the phrase alone opens the page this one time.)
+   Opening the page also adds small safety files to `mke/shared` by itself; nothing to do.
+   - If an **amber box** says **"The subdomain points at the wrong folder"**, fix it now:
+     follow [the wrong document root section](#index-of--listing-or-404-on-maintenance-wrong-document-root),
+     then open the Maintenance page again.
+6. Click **Run migrations**. The result box says **Finished successfully** and lists lines such as
+   `create_users_table … DONE` and `seed_roles_and_permissions … DONE`.
+7. Click **Clear caches**.
+8. In the blue box **Create the owner account**, fill in your full name, a user name (small letters,
+   for example `khaza`), e-mail (optional) and a password of at least 10 characters, twice.
+   Click **Create owner account**. Write the user name and password in your notebook.
+9. Open <https://mke.rockproviders.com>. You see the **Sign in** page; the bottom line shows **Version v0.1.0**.
+   Sign in. The dashboard shows **Database: Connected** and **Cron** green.
+10. Open the Maintenance page again (your name, top right → **Maintenance page**). Because an owner
+    now exists, it only opens while you are signed in **and** know the secret phrase. Check that every
+    line is green, including **Web document root is the public folder**.
+11. Safety checks (each must show **Forbidden** or **Not Found**, never your files):
+    <https://mke.rockproviders.com/.env>, <https://mke.rockproviders.com/storage/>,
+    <https://mke.rockproviders.com/shared/>.
+12. Optional, in File Manager → `mke/shared/.env` (**Edit**, then **Save Changes**):
+    - The product is now called Square Distributor Manager. Replace the line
+      `APP_NAME="Square Dealer Manager"` with `APP_NAME="Square Distributor Manager"`.
+      Only the sender name of password-reset e-mails uses it; the pages already show the new name.
+    - For "Forgot your password?" e-mails, copy the `MAIL_…` lines from
+      `mke/app/deploy/shared.example/.env.example` and fill them in. Without them, staff who forget
+      their password ask you, and you reset it on the **Users** page.
+13. Do [Step 10](#step-10-make-it-yours-any-time-later): check Settings, turn on two-factor sign-in for yourself, add your staff.
+14. Send us a screenshot of the dashboard and of the Maintenance page.
+
+**Zip way (only if the Git way does not work on your host):** do steps 1–6 of
+"Update with the zip way" below with `mke-v0.1.0.zip`, then steps 5–14 above.
+
+If something goes wrong, go back with Part 3 (quick rollback) and send us a screenshot.
+
+### Update with the Git way (main way)
+
+1. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
+2. Click **Update from Remote** and wait. **HEAD Commit** now shows "Release vX.Y.Z" with the new number.
+   (If it still shows the old number, we have not published the new version yet. Stop here.)
+3. Click **Deploy HEAD Commit** and wait about a minute.
+   The previous version is moved to `mke/app-prev` automatically. Your settings (`shared`), your PHP
+   version setting and the safety file `mke/.htaccess` are kept.
+4. Maintenance page → **Run migrations** → **Clear caches**.
+5. Open the home page and check the version number changed.
+
+### Update with the zip way (fallback)
+
+Only if the Git way does not work on your host.
 
 1. Download the new `mke-vX.Y.Z.zip` from <https://github.com/nurmdbd888/square_mke/releases>.
 2. File Manager → open `mke`.
 3. If `app-prev` exists, right-click it → **Delete** (tick "Skip the trash" if offered).
 4. Right-click `app` → **Rename** → `app-prev`.
-5. **Upload** the zip into `mke`, then right-click it → **Extract**. A new `app` folder appears.
+5. **Upload** the zip into `mke`, then right-click it → **Extract**. A new `app` folder appears
+   (the hidden safety file `mke/.htaccess` is replaced too).
    Delete the new `shared.example` folder and the zip. **Never touch `shared`.**
 6. If you use **MultiPHP Manager**: open it and check `mke.rockproviders.com` still shows **PHP 8.4**;
    if not, choose 8.4 and **Apply** (replacing the folder can reset it).
 7. Maintenance page → **Run migrations** → **Clear caches**.
 8. Open the home page and check the version number changed.
 
-### Update with Way B (Git)
-
-1. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
-2. Click **Update from Remote**, wait, then click **Deploy HEAD Commit**.
-   (The previous version is moved to `mke/app-prev` automatically, and your PHP version setting is kept.)
-3. Maintenance page → **Run migrations** → **Clear caches**.
-4. Open the home page and check the version number changed.
-
 ---
 
 ## Part 3 — Going back to the previous version (rollback)
 
-### Quick rollback (works for both ways)
+### Quick rollback (works for the Git way and the zip way)
 
 1. File Manager → open `mke`.
 2. Right-click `app` → **Rename** → `app-bad`.
@@ -215,9 +300,9 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 
 ### Going back further (any older version)
 
-- Way A: download the older zip from the Releases page and follow "Update with Way A".
-- Way B: ask us to rebuild the older version (GitHub → **Actions** → **Release** → **Run workflow** →
-  enter the old version such as `v0.0.0`). Then do "Update with Way B".
+- Git way: ask us to republish the older version (GitHub → **Actions** → **Release** → **Run workflow** →
+  enter the old version such as `v0.0.0`). Then do "Update with the Git way".
+- Zip way: download the older zip from the Releases page and follow "Update with the zip way".
 
 ---
 
@@ -226,6 +311,7 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | What you see | What to do |
 |---|---|
 | "Setup is not finished yet" on the home page | Do Step 7 (Generate APP_KEY). |
+| Git way: **Deploy HEAD Commit** finished but the version did not change, or it reports an error | In **Manage** → **Basic Information**, **Checked-Out Branch** must be `release`. The deploy log is in File Manager → home folder → `.cpanel/logs/` (newest file with `git_deploy` in its name); send us the end of it. Lines starting with `[sdm-deploy]` come from our script. |
 | Maintenance page says "The Maintenance page is locked" | `MAINTENANCE_TOKEN` in `mke/shared/.env` is empty or shorter than 20 characters. Fix it and reload. |
 | "Too many attempts" | Wait 10 minutes, then type the phrase carefully. |
 | "Shared folder … not found" (amber) | The folder is not called exactly `shared`, or it is not next to `app` inside `mke`. Rename it. |
@@ -238,6 +324,54 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | Last cron heartbeat stays amber | Check the cron command was pasted completely (Step 8). To see the error, change `>> /dev/null 2>&1` at the end to `>> /home/USER/mke/shared/storage/logs/cron.log 2>&1`, wait two minutes, open that file, send it to us, then change it back. |
 | Cron PHP version amber | The cron uses a different PHP. Copy the command from the Maintenance page again (it shows the right path). |
 | Blank page or "500 error" | File Manager → `mke/shared/storage/logs/` → open the newest `laravel-….log` and send us the last part. |
+| "Index of /" page listing `app` and `shared`, **404 Not Found** on `/maintenance`, the site only works at `/app/public/`, or the Maintenance page says "The subdomain points at the wrong folder" | The subdomain's document root is wrong. See [the next section](#index-of--listing-or-404-on-maintenance-wrong-document-root). |
+| Sign-in page says "No owner account exists yet" | Maintenance page → **Run migrations**, then **Create the owner account** (Step 7). |
+| Sign-in page says "The database is not ready" | Open the Maintenance page and fix what is red (usually the `DB_…` lines in `.env`), then **Run migrations**. |
+| Maintenance page says "you must also be signed in to the app as an owner" | Click **Sign in as owner**, sign in, and you are sent back to the Maintenance page. |
+| "Too many sign-in attempts" | Wait one minute. After 5 wrong passwords for one user name, sign-in pauses for a minute. |
+| A staff member forgot the password | **Users** → click the user → **Reset password**. Give them the new password; they must change it when they sign in. |
+| A staff member lost the phone with the authenticator app | They can sign in with one of their recovery codes. Or **Users** → the user → **Turn off two-factor sign-in**. |
+| The owner forgot the password, or lost the phone and the recovery codes | See [Owner forgot the password](#owner-forgot-the-password). |
+| "Page expired" (419) after leaving a page open for hours | Reload the page and do it again. Forms expire after 2 hours without activity. |
+
+### "Index of /" listing, or 404 on /maintenance (wrong document root)
+
+The subdomain must point at `/home/USER/mke/app/public`. If it points at `/home/USER/mke`,
+visitors can see your folders. Versions from v0.1.0 put a safety file (`mke/.htaccess`) in place
+that hides the folders and keeps the site working, but the Maintenance page stays amber until
+you fix the setting. Fix it like this:
+
+1. cPanel → **Domains** → **Domains**. Find `mke.rockproviders.com` and click **Manage**.
+2. In **New Document Root**, the box after `/home/USER/` must say exactly `mke/app/public`
+   (no `/` at the start or end). Click **Update**.
+
+   Older cPanel without a **Manage** button: cPanel → **Domains** → **Subdomains**. In the list
+   at the bottom, find `mke.rockproviders.com`, click the pencil icon next to its **Document Root**,
+   type `mke/app/public` and click **Change**.
+3. cPanel → **MultiPHP Manager**: tick `mke.rockproviders.com`, choose **PHP 8.4**, click **Apply**.
+   (The PHP version is stored in the document root folder, so it must be set again after moving it.
+   If you use **Select PHP Version** instead, nothing to do.)
+4. Wait one minute, then open <https://mke.rockproviders.com/> in a private/incognito window.
+   You should see the home page. <https://mke.rockproviders.com/shared/> must **not** show a list of files.
+5. Open the Maintenance page: "Web document root is the public folder" is green.
+
+If cPanel will not save `mke/app/public`, tell us (Appendix B).
+
+### Owner forgot the password
+
+If another owner exists, they reset your password on the **Users** page. Otherwise:
+
+1. File Manager → `mke/shared/.env` → **Edit**. Find the line `MAINTENANCE_OWNER_RECOVERY=false`
+   (if it is not there, add it on a new line) and change it to `MAINTENANCE_OWNER_RECOVERY=true`. **Save Changes**.
+2. Open <https://mke.rockproviders.com/maintenance> and type the secret phrase. An amber box
+   **Owner recovery is on** appears. Type your owner user name and a new password twice, and click
+   **Reset an owner's password**. This also turns off two-factor sign-in for that owner.
+3. **Straight away**, change the line back to `MAINTENANCE_OWNER_RECOVERY=false` and save.
+   While it is `true`, anyone with the secret phrase can reset an owner's password.
+4. Sign in with the new password. Turn two-factor sign-in on again if you used it.
+
+Only someone who can open your cPanel can do this, so keep the cPanel password safe.
+The reset is recorded in the **Audit log**.
 
 ---
 
@@ -250,6 +384,9 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | Uploads and backups (later milestones) | `/home/USER/mke/shared/storage/app/private/`, `/home/USER/mke/shared/storage/backups/` |
 | Program files | `/home/USER/mke/app/` (never edit; updates replace it) |
 | Cron instructions | `/home/USER/mke/app/deploy/cron.txt` |
+| Safety file for a wrong document root | `/home/USER/mke/.htaccess` (hidden; updates replace it) |
+| Who changed what, and when | In the app: **Audit log** (owner and accountant) |
+| Bangla font | `/home/USER/mke/app/public/fonts/` (Noto Sans Bengali, free licence in `OFL.txt`; nothing to install) |
 
 **Never** delete `shared`, rename `.env`, or change `APP_KEY` once the app holds data:
 encrypted data would become unreadable.
@@ -259,7 +396,7 @@ encrypted data would become unreadable.
 Only use this if Step 3 fails. The subdomain then lives in a folder inside `public_html`,
 for example `public_html/mke` (whatever cPanel created).
 
-1. Do Steps 1, 2 and 4 (Way A) as normal, so `/home/USER/mke/app` and `/home/USER/mke/shared` exist.
+1. Do Steps 1, 2 and 4 (Git way or zip way) as normal, so `/home/USER/mke/app` and `/home/USER/mke/shared` exist.
 2. File Manager → open `mke/app/public` → **Select All** → **Copy** → to the subdomain's folder
    (for example `/home/USER/public_html/mke`).
 3. Open `mke/app/deploy/shim` → copy `index.php` and `.htaccess` into the subdomain's folder,
