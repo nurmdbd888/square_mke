@@ -4,7 +4,6 @@ namespace App\Domain\Payments;
 
 use App\Domain\Money\Exact;
 use App\Domain\Reports\MonthLockService;
-use App\Domain\Payments\SaleCollectionStatus;
 use App\Models\Document;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;

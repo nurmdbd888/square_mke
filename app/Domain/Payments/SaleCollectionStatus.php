@@ -3,12 +3,13 @@
 namespace App\Domain\Payments;
 
 use App\Domain\Money\Exact;
-use Brick\Math\BigDecimal;
 use App\Models\Document;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Models\User;
+use Brick\Math\BigDecimal;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -69,9 +70,9 @@ final class SaleCollectionStatus
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Document>
+     * @return Collection<int, Document>
      */
-    public function pendingForCollector(int $limit = 100): \Illuminate\Support\Collection
+    public function pendingForCollector(int $limit = 100): Collection
     {
         return Document::query()
             ->where('type', Document::TYPE_SALE)

@@ -4,6 +4,7 @@ use App\Domain\Money\Formatter;
 use App\Settings\SettingsStore;
 use Brick\Math\BigNumber;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 
 if (! function_exists('setting')) {
     function setting(string $key, CarbonInterface|string|null $on = null): mixed
@@ -34,14 +35,14 @@ if (! function_exists('local_digits')) {
 }
 
 if (! function_exists('format_app_date')) {
-    function format_app_date(CarbonInterface|\DateTimeInterface|string|null $date): string
+    function format_app_date(CarbonInterface|DateTimeInterface|string|null $date): string
     {
         if ($date === null || $date === '') {
             return '';
         }
 
         if (is_string($date)) {
-            $date = \Illuminate\Support\Carbon::parse($date);
+            $date = Carbon::parse($date);
         }
 
         $format = (string) setting('date_display_format', 'd/m/Y');
@@ -51,7 +52,7 @@ if (! function_exists('format_app_date')) {
 }
 
 if (! function_exists('local_date')) {
-    function local_date(CarbonInterface|\DateTimeInterface|string|null $date): string
+    function local_date(CarbonInterface|DateTimeInterface|string|null $date): string
     {
         return format_app_date($date);
     }

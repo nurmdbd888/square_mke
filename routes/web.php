@@ -2,9 +2,9 @@
 
 use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
+use App\Http\Controllers\Accounts\CollectorController;
 use App\Http\Controllers\Accounts\LedgerController;
 use App\Http\Controllers\Accounts\PaymentAttachmentController;
-use App\Http\Controllers\Accounts\CollectorController;
 use App\Http\Controllers\Accounts\PaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;

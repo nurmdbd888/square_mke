@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Domain\Documents\DocumentWriter;
-use App\Domain\Payments\SaleCollectionStatus;
 use App\Models\Document;
 use App\Models\Product;
 use App\Models\Retailer;
