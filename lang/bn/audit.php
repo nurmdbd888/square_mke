@@ -51,6 +51,16 @@ return [
             'posted_edited' => 'পোস্ট করা নথি সম্পাদনা',
             'voided' => 'নথি বাতিল',
         ],
+        'payment' => [
+            '*' => 'পেমেন্টের সব কার্যক্রম',
+            'posted' => 'পেমেন্ট পোস্ট করা হয়েছে',
+            'posted_edited' => 'পোস্ট করা পেমেন্ট সম্পাদনা',
+            'voided' => 'পেমেন্ট বাতিল',
+            'cleared' => 'পোস্ট-ডেটেড চেক ক্লিয়ার',
+        ],
+        'daily_closing' => [
+            'created' => 'দৈনিক সমাপনী রেকর্ড',
+        ],
     ],
     'types' => [
         'user' => 'ব্যবহারকারী',
@@ -70,6 +80,10 @@ return [
         'document' => 'নথি',
         'document_line' => 'নথির লাইন',
         'stock_ledger_entry' => 'স্টক খতিয়ান',
+        'payment' => 'পেমেন্ট',
+        'payment_allocation' => 'পেমেন্ট বরাদ্দ',
+        'daily_closing' => 'দৈনিক সমাপনী',
+        'expense_category' => 'খরচের শ্রেণি',
     ],
     'sources' => [
         'web' => 'অ্যাপ',

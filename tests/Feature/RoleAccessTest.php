@@ -44,6 +44,14 @@ class RoleAccessTest extends TestCase
         '/sales' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         '/sales/create' => ['owner', 'accountant', 'sr', 'data_entry'],
         '/stock' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/payments' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        '/payments/create?kind=receipt' => ['owner', 'accountant', 'sr', 'data_entry'],
+        '/accounts/receivables' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/accounts/payables' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/accounts/cash-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/accounts/bank-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/accounts/day-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        '/accounts/closings' => ['owner', 'accountant', 'data_entry', 'viewer'],
     ];
 
     /**
@@ -57,6 +65,13 @@ class RoleAccessTest extends TestCase
         'purchases.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'sales.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
         'stock.index' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'payments.index' => ['owner', 'accountant', 'sr', 'data_entry', 'viewer'],
+        'accounts.receivables' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'accounts.payables' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'accounts.cash-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'accounts.bank-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'accounts.day-book' => ['owner', 'accountant', 'data_entry', 'viewer'],
+        'accounts.closings' => ['owner', 'accountant', 'data_entry', 'viewer'],
         'users.index' => ['owner', 'accountant'],
         'roles.index' => ['owner'],
         'settings.index' => ['owner', 'accountant', 'viewer'],
@@ -126,6 +141,9 @@ class RoleAccessTest extends TestCase
         $this->actingAs($viewer)->post('/purchases', [])->assertForbidden();
         $this->actingAs($viewer)->post('/sales', [])->assertForbidden();
         $this->actingAs($this->userWithRole('sr'))->get('/purchases')->assertForbidden();
+        $this->actingAs($viewer)->post('/payments', [])->assertForbidden();
+        $this->actingAs($this->userWithRole('sr'))->get('/accounts/receivables')->assertForbidden();
+        $this->actingAs($this->userWithRole('data_entry'))->post('/accounts/closings', [])->assertForbidden();
         $log = AuditLogger::log('auth.failed');
         $this->actingAs($viewer)->get("/audit/{$log->id}")->assertForbidden();
     }
