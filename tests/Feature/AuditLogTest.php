@@ -33,7 +33,17 @@ class AuditLogTest extends TestCase
         $owner = $this->owner(['username' => 'boss']);
 
         $this->actingAs($owner)->withServerVariables(['REMOTE_ADDR' => '203.0.113.9', 'HTTP_USER_AGENT' => 'TestBrowser/1.0'])
-            ->put('/settings', ['settings' => ['firm_name' => 'Changed', 'distributor_code' => '4831', 'default_locale' => 'en', 'fiscal_year_start_month' => 7]]);
+            ->put('/settings', ['settings' => [
+                'firm_name' => 'Changed',
+                'distributor_code' => '4831',
+                'default_locale' => 'en',
+                'fiscal_year_start_month' => 7,
+                'vat_recoverable' => '1',
+                'sd_in_cost' => '1',
+                'costing_mode' => 'weighted_average',
+                'block_negative_stock' => '0',
+                'purchase_bonus_cost' => 'zero',
+            ]]);
 
         $log = AuditLog::query()->where('event', 'settings.updated')->sole();
         $this->assertSame('boss', $log->user_name);

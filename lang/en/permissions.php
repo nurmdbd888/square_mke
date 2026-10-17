@@ -7,6 +7,7 @@ return [
         'settings' => 'Settings',
         'audit' => 'Audit',
         'master' => 'Master data',
+        'documents' => 'Purchases and sales',
     ],
     'names' => [
         'health.view' => 'See system health',
@@ -22,5 +23,10 @@ return [
         'retailers.manage' => 'Add, edit and deactivate retailers',
         'masters.view' => 'See suppliers, routes and price lists',
         'masters.manage' => 'Add, edit and deactivate master records',
+        'purchases.view' => 'See purchase documents',
+        'purchases.manage' => 'Create, edit, post and void purchases',
+        'sales.view' => 'See sales documents',
+        'sales.manage' => 'Create, edit, post and void sales',
+        'stock.view' => 'See the stock ledger',
     ],
 ];

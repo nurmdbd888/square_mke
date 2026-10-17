@@ -45,6 +45,12 @@ return [
             'owner_created' => 'Owner account created',
             'owner_recovered' => 'Owner password reset (recovery)',
         ],
+        'document' => [
+            '*' => 'All document actions',
+            'posted' => 'Document posted',
+            'posted_edited' => 'Posted document edited',
+            'voided' => 'Document voided',
+        ],
     ],
     'types' => [
         'user' => 'User',
@@ -61,6 +67,9 @@ return [
         'retailer' => 'Retailer',
         'opening_balance' => 'Opening balance',
         'custom_field' => 'Custom field',
+        'document' => 'Document',
+        'document_line' => 'Document line',
+        'stock_ledger_entry' => 'Stock ledger entry',
     ],
     'sources' => [
         'web' => 'App',

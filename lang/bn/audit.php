@@ -45,6 +45,12 @@ return [
             'owner_created' => 'মালিকের অ্যাকাউন্ট তৈরি',
             'owner_recovered' => 'মালিকের পাসওয়ার্ড রিসেট (রিকভারি)',
         ],
+        'document' => [
+            '*' => 'নথির সব কার্যক্রম',
+            'posted' => 'নথি পোস্ট করা হয়েছে',
+            'posted_edited' => 'পোস্ট করা নথি সম্পাদনা',
+            'voided' => 'নথি বাতিল',
+        ],
     ],
     'types' => [
         'user' => 'ব্যবহারকারী',
@@ -61,6 +67,9 @@ return [
         'retailer' => 'খুচরা বিক্রেতা',
         'opening_balance' => 'প্রারম্ভিক ব্যালেন্স',
         'custom_field' => 'অতিরিক্ত ঘর',
+        'document' => 'নথি',
+        'document_line' => 'নথির লাইন',
+        'stock_ledger_entry' => 'স্টক খতিয়ান',
     ],
     'sources' => [
         'web' => 'অ্যাপ',

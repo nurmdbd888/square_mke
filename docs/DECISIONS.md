@@ -485,3 +485,28 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: new permissions, granted to the default roles only the first time the permission is created (#73). `products.view` and `retailers.view` go to the accountant, SR, data entry and viewer. `products.manage` and `retailers.manage` go to data entry. `masters.view` goes to the accountant and data entry. `masters.manage` goes to data entry. The owner still passes every check. Product and retailer lists show 50 rows, with search, an active / deactivated / all filter, and a column chooser remembered in the session. Bulk edit changes one field on at most 100 selected rows and writes one audit row per record. Deactivate is a soft delete; Restore brings the row back. The dashboard "What is ready" line now includes master data.
 - Reason: plan M2, including the list of 10,000 retailers.
 - Change: Roles and permissions.
+
+**93. Purchase and sales documents** — 2026-10-17
+- Decision: one `documents` table with `type` purchase or sale, statuses draft / posted / void. Lines hold qty, bonus qty, printed line value, discounts, SD and VAT amounts. Posted documents are voided, never hard-deleted. Soft-delete removes a draft. Duplicate key is number + party + net total among non-void rows.
+- Reason: plan M3; printed amounts are stored (#24).
+- Change: Purchases and Sales screens.
+
+**94. Weighted-average stock ledger** — 2026-10-17
+- Decision: `stock_ledger_entries` are rebuilt per product from the earliest affected date. Sort is `LedgerOrder` (#31). Issue cost uses #32. Purchase stock value uses printed line value ± discounts ± SD (`sd_in_cost`) ± VAT only when `vat_recoverable` is off (#25, #2). Purchase bonus qty enters at zero cost by default (#34). Oversell is allowed and costed at the last average (#33).
+- Reason: core rules 1–4 and the golden test.
+- Change: `App\Domain\Costing\Recompute`.
+
+**95. Sale revenue, free goods and commission** — 2026-10-17
+- Decision: sale revenue is qty × unit price − line and header discounts ± rounding (VAT-inclusive TP, no output VAT split). Bonus qty and combo-bonus lines are free-goods cost at issue cost, revenue 0. Commission uses effective-dated `commission_pct` / `commission_vat_pct` / `commission_base` / `count_commission` (#37). Profit before expenses = revenue − COGS − free goods + net commission.
+- Reason: core rules 3, 5, 6 and 7.
+- Change: `App\Domain\Profit`.
+
+**96. Inline vs queued recompute** — 2026-10-17
+- Decision: recompute runs in the request when the estimated posted-line count is ≤ `config('sdm.recompute_inline_limit')` (default 2000). Larger work dispatches `RecomputeProductsJob` on the database queue. The minute schedule now also runs `queue:work database --stop-when-empty` in-process. A cache flag shows “costing update pending” on stock pages until the queue is empty.
+- Reason: #36 and the 30 s shared-hosting limit.
+- Change: Settings and Stock screens.
+
+**97. Document permissions and nav** — 2026-10-17 · amends #92
+- Decision: `purchases.view` → accountant, data entry, viewer; `purchases.manage` → accountant, data entry; `sales.view` → accountant, SR, data entry, viewer; `sales.manage` → accountant, SR, data entry; `stock.view` → accountant, data entry, viewer. Nav adds Purchases, Sales and Stock. The dashboard ready line now includes purchases, sales and stock costing.
+- Reason: plan M3.
+- Change: Roles and permissions.
