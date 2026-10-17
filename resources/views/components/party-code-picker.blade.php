@@ -117,9 +117,12 @@
                         );
                         if (exact) {
                             this.applyParty(exact, false);
-                        } else {
+                        } else if (this.partyId !== '') {
                             this.partyId = '';
                             this.partyName = '';
+                            this.$nextTick(() => {
+                                this.$refs.hiddenInput?.dispatchEvent(new Event('change', { bubbles: true }));
+                            });
                         }
                     },
                     pick(party) {
