@@ -30,7 +30,7 @@
             </label>
             <label class="block">
                 <span class="label">{{ __('As of') }}</span>
-                <input type="date" name="as_of" value="{{ old('as_of', optional($row->as_of)->toDateString()) }}" required class="input">
+                <x-date-input name="as_of" :value="optional($row->as_of)->toDateString()" required />
             </label>
             <label class="block" x-show="kind === 'stock'" x-cloak>
                 <span class="label">{{ __('Product code or name') }}</span>

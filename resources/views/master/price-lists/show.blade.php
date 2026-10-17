@@ -85,7 +85,7 @@
                             </label>
                             <label class="block">
                                 <span class="label">{{ __('Effective from') }}</span>
-                                <input type="date" name="effective_from" value="{{ old('effective_from', now()->toDateString()) }}" required class="input">
+                                <x-date-input name="effective_from" :value="now()->toDateString()" required />
                             </label>
                             <button class="btn-primary w-fit">{{ __('Save price') }}</button>
                         </form>

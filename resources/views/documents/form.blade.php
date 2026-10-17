@@ -94,11 +94,11 @@
             />
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
-                <input type="date" name="doc_date" value="{{ old('doc_date', $document->doc_date?->format('Y-m-d') ?? now()->toDateString()) }}" required class="input">
+                <x-date-input name="doc_date" :value="$document->doc_date?->format('Y-m-d') ?? now()->toDateString()" required />
             </label>
             <label class="block">
                 <span class="label">{{ __('Delivery date') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
-                <input type="date" name="delivery_date" value="{{ old('delivery_date', $document->delivery_date?->format('Y-m-d')) }}" class="input">
+                <x-date-input name="delivery_date" :value="$document->delivery_date?->format('Y-m-d')" />
             </label>
             @unless ($isPurchase)
                 <label class="block">

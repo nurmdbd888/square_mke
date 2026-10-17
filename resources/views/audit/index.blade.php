@@ -49,11 +49,11 @@
         </label>
         <label class="block">
             <span class="label">{{ __('From date') }}</span>
-            <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="input">
+            <x-date-input name="from" :value="$filters['from'] ?? ''" />
         </label>
         <label class="block">
             <span class="label">{{ __('To date') }}</span>
-            <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="input">
+            <x-date-input name="to" :value="$filters['to'] ?? ''" />
         </label>
         <noscript><button class="btn-secondary">{{ __('Filter') }}</button></noscript>
     </form>

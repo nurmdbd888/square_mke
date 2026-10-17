@@ -11,7 +11,7 @@
             @csrf
             <label class="block">
                 <span class="label">{{ __('Close day') }}</span>
-                <input type="date" name="closed_on" value="{{ $previewDate }}" required class="input">
+                <x-date-input name="closed_on" :value="$previewDate" required />
             </label>
             <label class="block sm:col-span-2">
                 <span class="label">{{ __('Notes') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>

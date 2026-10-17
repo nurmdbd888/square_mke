@@ -17,7 +17,7 @@
         </label>
         <label class="block">
             <span class="label">{{ __('Date') }}</span>
-            <input type="date" name="doc_date" value="{{ old('doc_date', $claim->doc_date?->format('Y-m-d')) }}" required class="input">
+            <x-date-input name="doc_date" :value="$claim->doc_date?->format('Y-m-d')" required />
         </label>
         <label class="block">
             <span class="label">{{ __('Supplier') }}</span>

@@ -44,7 +44,7 @@
             </label>
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
-                <input type="date" name="doc_date" value="{{ old('doc_date', $note->doc_date?->format('Y-m-d') ?? now()->toDateString()) }}" required class="input">
+                <x-date-input name="doc_date" :value="$note->doc_date?->format('Y-m-d') ?? now()->toDateString()" required />
             </label>
             @if ($type === 'sales_return')
                 <x-party-code-picker

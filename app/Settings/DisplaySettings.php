@@ -24,7 +24,7 @@ final class DisplaySettings
             default: 'd/m/Y',
             group: 'regional',
             label: 'Date display format',
-            help: 'How dates appear in lists, printouts and read-only fields. Date pickers still use the calendar control.',
+            help: 'How dates appear everywhere: lists, printouts, and date fields. Type or pick dates in this format.',
             options: self::DATE_FORMATS,
         ));
 

@@ -7,11 +7,11 @@
     <form method="GET" class="mt-4 flex flex-wrap items-end gap-3">
         <label class="block">
             <span class="label">{{ __('From') }}</span>
-            <input type="date" name="from" value="{{ $from }}" class="input">
+            <x-date-input name="from" :value="$from" />
         </label>
         <label class="block">
             <span class="label">{{ __('To') }}</span>
-            <input type="date" name="to" value="{{ $to }}" class="input">
+            <x-date-input name="to" :value="$to" />
         </label>
         @include('reports.partials.business-days-filter', ['businessDaysOnly' => $businessDaysOnly ?? false])
         <button class="btn-secondary">{{ __('Filter') }}</button>
