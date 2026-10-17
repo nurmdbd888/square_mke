@@ -33,10 +33,28 @@
                       if (cell) cell.textContent = after.toFixed(2);
                   });
                   this.allocatedTotal = sum.toFixed(2);
+              },
+              pickInvoice(documentId) {
+                  if (!documentId) return;
+                  document.querySelectorAll('#allocation-box tr[data-invoice-id]').forEach(row => {
+                      row.classList.remove('bg-brand-50', 'ring-2', 'ring-brand-200');
+                  });
+                  const row = document.querySelector('#allocation-box tr[data-invoice-id="' + documentId + '"]');
+                  if (!row) return;
+                  row.classList.add('bg-brand-50', 'ring-2', 'ring-brand-200');
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                  const input = row.querySelector('.allocation-amount');
+                  if (input) {
+                      input.value = input.dataset.remaining || '0';
+                      input.focus();
+                  }
+                  this.recalc();
+                  this.$dispatch('allocation-changed');
               }
           }"
           x-init="recalc()"
-          @allocation-changed.window="recalc()">
+          @allocation-changed.window="recalc()"
+          @htmx:after-swap.window="if ($event.detail.target?.id === 'allocation-box') recalc()">
         @csrf
         @if ($payment->exists)
             @method('PUT')
@@ -70,8 +88,15 @@
 
         <section class="card grid gap-4 sm:grid-cols-2">
             <label class="block sm:col-span-2">
-                <span class="label">{{ __('Number') }}</span>
-                <input type="text" name="number" value="{{ old('number', $payment->number) }}" required maxlength="80" class="input font-mono min-h-11">
+                <span class="label">{{ $isReceipt ? __('Receipt number') : __('Payment number') }}</span>
+                <input type="text" name="number" value="{{ old('number', $payment->number) }}" required maxlength="80" class="input font-mono min-h-11" data-testid="payment-number">
+                <p class="mt-1 text-xs text-slate-500">
+                    @if ($isReceipt)
+                        {{ __('Your receipt or collection voucher number — not the sales invoice number.') }}
+                    @else
+                        {{ __('Your payment voucher or bank reference — not a supplier purchase invoice number.') }}
+                    @endif
+                </p>
             </label>
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
@@ -173,6 +198,7 @@
                     'invoices' => $openInvoices,
                     'partyBalance' => $partyBalance,
                     'existingAllocations' => $existingAllocations ?? collect(),
+                    'showInvoicePicker' => $isReceipt,
                 ])
             </div>
             <input type="hidden" name="party_id" :value="partyId" x-bind:value="partyId">

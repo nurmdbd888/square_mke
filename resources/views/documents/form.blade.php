@@ -65,7 +65,7 @@
 
         <section class="card grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label class="block">
-                <span class="label">{{ __('Number') }}</span>
+                <span class="label">{{ __('Invoice number') }}</span>
                 <input type="text" name="number" value="{{ old('number', $document->number) }}" required maxlength="80" class="input font-mono">
             </label>
             <label class="block">

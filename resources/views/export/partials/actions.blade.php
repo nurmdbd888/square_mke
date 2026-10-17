@@ -3,7 +3,7 @@
     $query = request()->query();
 @endphp
 @if ($exportKey)
-    <details class="relative">
+    <details class="relative" data-testid="list-export-menu">
         <summary class="btn-secondary cursor-pointer list-none">{{ __('Export') }}</summary>
         <div class="absolute right-0 z-20 mt-1 min-w-[12rem] rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
             @foreach (['csv', 'xlsx', 'pdf'] as $format)
