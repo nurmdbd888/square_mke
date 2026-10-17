@@ -565,3 +565,13 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: `month_locks` blocks posting and edits in a locked calendar month for every role. Locking requires `reports.manage`; only the owner may unlock (audited as `month_lock.unlocked`). Document, payment and stock-note writers call `MonthLockService::assertWritable()` on the document/payment date. `reports.view` → accountant, data entry, viewer; `reports.manage` → accountant. Dashboard metrics and P&L require `reports.view`.
 - Reason: plan M6 and spec §6.
 - Change: Reports nav, month locks screen, validation on writers.
+
+**109. Export engine and Downloads** — 2026-10-17
+- Decision: table/report exports use `ExportRegistry` sources with current filters and chosen columns. Formats: CSV and XLSX via OpenSpout streaming, PDF via dompdf (English print layout). Exports above `export_inline_limit` (500 rows estimate) dispatch `RunTableExportJob`; finished files and status live in `app_jobs` and **Downloads**. Initial wired keys: `products`, `retailers`, `reports_pl`.
+- Reason: plan M7 acceptance (filtered rows, queued large exports).
+- Change: Export menu on lists/reports, `/downloads`.
+
+**110. Google OAuth and scheduled Sheets** — 2026-10-17
+- Decision: one firm `google_connections` row; OAuth scopes `drive.file`, `spreadsheets`, `documents`; refresh/access tokens use Laravel `encrypted` cast. Settings shows Connect/Disconnect and optional Drive folder id. Reports can push to a new or existing Sheet; `google_sheet_subscriptions` refresh daily via `RefreshGoogleSheetJob` from the minute schedule. Client credentials from `GOOGLE_*` env (redirect `/google/callback`).
+- Reason: plan M7 and spec §7.
+- Change: Settings → Google integration, `google/apiclient` (trimmed services).

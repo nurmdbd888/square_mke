@@ -73,6 +73,12 @@ class PermissionRegistry
             'reports.view' => ['accountant', 'data_entry', 'viewer'],
             'reports.manage' => ['accountant'],
         ],
+        'exports' => [
+            'exports.view' => ['accountant', 'data_entry', 'viewer'],
+        ],
+        'integrations' => [
+            'google.manage' => ['accountant'],
+        ],
     ];
 
     /**

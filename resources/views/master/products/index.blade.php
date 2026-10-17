@@ -7,6 +7,7 @@
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Products') }}</h1>
         <div class="flex flex-wrap items-center gap-2">
             @include('import.partials.list-actions', ['entity' => 'products'])
+            @include('export.partials.actions', ['exportKey' => 'products'])
             @can('products.manage')
                 <a href="{{ route('products.create') }}" class="btn-primary">{{ __('Add product') }}</a>
             @endcan

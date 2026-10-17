@@ -10,6 +10,8 @@ return [
         'documents' => 'Purchases and sales',
         'accounts' => 'Payments and accounts',
         'reports' => 'Reports and month lock',
+        'exports' => 'Exports and downloads',
+        'integrations' => 'Integrations',
     ],
     'names' => [
         'health.view' => 'See system health',
@@ -42,5 +44,7 @@ return [
         'accounts.manage' => 'Record daily closings',
         'reports.view' => 'See P&L and dashboard metrics',
         'reports.manage' => 'Lock months and manage reports',
+        'exports.view' => 'Export tables and reports, use Downloads',
+        'google.manage' => 'Connect Google and export to Sheets or Drive',
     ],
 ];

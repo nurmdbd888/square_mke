@@ -124,4 +124,33 @@
             @endif
         </section>
     @endforeach
+
+    <section class="card mt-6" data-testid="google-integration">
+        <h2 class="font-semibold text-slate-900">{{ __('Google integration') }}</h2>
+        <p class="mt-1 text-sm text-slate-600">{{ __('Connect Google to export reports to Sheets and save files to Drive (drive.file scope).') }}</p>
+        @if (! $googleConfigured)
+            <p class="mt-2 text-sm text-amber-800">{{ __('Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the server to enable OAuth.') }}</p>
+        @elseif ($googleConnection)
+            <p class="mt-2 text-sm">{{ __('Connected as :email', ['email' => $googleConnection->google_email]) }}</p>
+            @can('google.manage')
+                <form method="POST" action="{{ route('google.drive-folder') }}" class="mt-3 flex flex-wrap items-end gap-2">
+                    @csrf
+                    <label class="block">
+                        <span class="label">{{ __('Drive folder ID') }}</span>
+                        <input type="text" name="drive_folder_id" value="{{ $googleConnection->drive_folder_id }}" class="input max-w-md" placeholder="{{ __('Optional folder for exports') }}">
+                    </label>
+                    <button class="btn-secondary">{{ __('Save folder') }}</button>
+                </form>
+                <form method="POST" action="{{ route('google.disconnect') }}" class="mt-3">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn-danger">{{ __('Disconnect Google') }}</button>
+                </form>
+            @endcan
+        @else
+            @can('google.manage')
+                <a href="{{ route('google.connect') }}" class="btn-primary mt-3 inline-flex">{{ __('Connect Google') }}</a>
+            @endcan
+        @endif
+    </section>
 @endsection
