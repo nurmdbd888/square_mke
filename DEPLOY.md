@@ -147,7 +147,11 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
    database connected should all be **OK** (green). If anything says **Fix** (red),
    take a screenshot and send it to us.
 5. Click **Run migrations**. The result box says **Finished successfully** and lists
-   `create_smoke_heartbeats_table … DONE`.
+   several lines such as `create_users_table … DONE` and `seed_roles_and_permissions … DONE`.
+6. A blue box **Create the owner account** appears below. Fill in your full name, a user name
+   (small letters, for example `khaza`), your e-mail (optional) and a password of at least
+   10 characters, twice. Click **Create owner account**. Write the user name and password in your notebook.
+   From now on the Maintenance page asks you to **sign in as owner** first and then for the secret phrase.
 
 ### Step 8. Add the cron job (the app's alarm clock)
 
@@ -162,8 +166,10 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
 
 ### Step 9. Check that everything works
 
-1. Open <https://mke.rockproviders.com>. You see **M/s Khaza Enterprise**, a version number,
-   **Database: Connected** and **Cron** with a green OK. Click **বাংলা** at the top: the page switches to Bangla.
+1. Open <https://mke.rockproviders.com>. You see the **Sign in** page with **M/s Khaza Enterprise**
+   and a version number at the bottom. Sign in with the owner account from Step 7.
+   The dashboard shows **Database: Connected** and **Cron** with a green OK.
+   Click **বাংলা** at the top: the page switches to Bangla (the app remembers your choice).
 2. Safety checks. Each of these must show **Forbidden** or **Not Found**, never your settings:
    - <https://mke.rockproviders.com/.env>
    - <https://mke.rockproviders.com/storage/>
@@ -174,6 +180,24 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
 
 If a step fails, do not retry randomly. Send a screenshot of the error and the step number.
 
+### Step 10. Make it yours (any time later)
+
+1. **Settings** (left menu): check the firm name and distributor code. Changes are recorded in the **Audit log**.
+2. **My profile** (your name, top right) → **Two-factor sign-in** → **Turn on**. Scan the QR code with
+   Google Authenticator or Microsoft Authenticator on your phone, type the 6-digit code, and
+   **write down the recovery codes** on paper. Recommended for the owner.
+3. **Users** → **Add user** for each staff member: name, user name, role, and a first password you give them.
+   They must choose their own password when they first sign in.
+
+   | Role | Can do in this version |
+   |---|---|
+   | Owner | Everything: users, permissions, settings, audit log, Maintenance page |
+   | Accountant | Dashboard, system health, see users, see settings, audit log |
+   | SR, Data entry | Dashboard (their work screens arrive with purchases and sales) |
+   | Viewer | Dashboard, see settings |
+
+   **Roles and permissions** lets you change what each role may do (the owner always keeps everything).
+
 ---
 
 ## Part 2 — Updates (each new version)
@@ -181,6 +205,56 @@ If a step fails, do not retry randomly. Send a screenshot of the error and the s
 Before every update, save a copy of the database:
 cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left → **Export** tab →
 **Export** (Quick, SQL). Keep the downloaded `.sql` file. (From M10 the Maintenance page has a **Backup now** button.)
+
+### This update: v0.0.0 → v0.1.0 (sign-in, users, Bangla, folder safety net)
+
+What is new: the site now starts with a **Sign in** page. You create the owner account
+(you) on the Maintenance page, then add your staff with their roles. Every change is
+recorded in the **Audit log**. The whole app works in English and Bangla. A safety net
+also hides your folders if the subdomain points at the wrong folder.
+
+Do these steps in order. It takes about 10 minutes.
+
+1. **Back up** the database in phpMyAdmin (see above). Nobody uses the app yet, but it is a good habit.
+2. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
+3. Click **Update from Remote** and wait. **HEAD Commit** must show **Release v0.1.0**.
+   If it still shows v0.0.0, we have not published v0.1.0 yet. Stop here.
+4. Click **Deploy HEAD Commit** and wait about a minute. v0.0.0 is kept in `mke/app-prev`.
+   The deploy also writes the hidden safety file `mke/.htaccess`.
+5. Open <https://mke.rockproviders.com/maintenance> and type your secret phrase.
+   (There is no owner account yet, so the phrase alone opens the page this one time.)
+   Opening the page also adds small safety files to `mke/shared` by itself; nothing to do.
+   - If an **amber box** says **"The subdomain points at the wrong folder"**, fix it now:
+     follow [the wrong document root section](#index-of--listing-or-404-on-maintenance-wrong-document-root),
+     then open the Maintenance page again.
+6. Click **Run migrations**. The result box says **Finished successfully** and lists lines such as
+   `create_users_table … DONE` and `seed_roles_and_permissions … DONE`.
+7. Click **Clear caches**.
+8. In the blue box **Create the owner account**, fill in your full name, a user name (small letters,
+   for example `khaza`), e-mail (optional) and a password of at least 10 characters, twice.
+   Click **Create owner account**. Write the user name and password in your notebook.
+9. Open <https://mke.rockproviders.com>. You see the **Sign in** page; the bottom line shows **Version v0.1.0**.
+   Sign in. The dashboard shows **Database: Connected** and **Cron** green.
+10. Open the Maintenance page again (your name, top right → **Maintenance page**). Because an owner
+    now exists, it only opens while you are signed in **and** know the secret phrase. Check that every
+    line is green, including **Web document root is the public folder**.
+11. Safety checks (each must show **Forbidden** or **Not Found**, never your files):
+    <https://mke.rockproviders.com/.env>, <https://mke.rockproviders.com/storage/>,
+    <https://mke.rockproviders.com/shared/>.
+12. Optional, in File Manager → `mke/shared/.env` (**Edit**, then **Save Changes**):
+    - The product is now called Square Distributor Manager. Replace the line
+      `APP_NAME="Square Dealer Manager"` with `APP_NAME="Square Distributor Manager"`.
+      Only the sender name of password-reset e-mails uses it; the pages already show the new name.
+    - For "Forgot your password?" e-mails, copy the `MAIL_…` lines from
+      `mke/app/deploy/shared.example/.env.example` and fill them in. Without them, staff who forget
+      their password ask you, and you reset it on the **Users** page.
+13. Do [Step 10](#step-10-make-it-yours-any-time-later): check Settings, turn on two-factor sign-in for yourself, add your staff.
+14. Send us a screenshot of the dashboard and of the Maintenance page.
+
+**Zip way (only if the Git way does not work on your host):** do steps 1–6 of
+"Update with the zip way" below with `mke-v0.1.0.zip`, then steps 5–14 above.
+
+If something goes wrong, go back with Part 3 (quick rollback) and send us a screenshot.
 
 ### Update with the Git way (main way)
 
@@ -251,11 +325,19 @@ Only if the Git way does not work on your host.
 | Cron PHP version amber | The cron uses a different PHP. Copy the command from the Maintenance page again (it shows the right path). |
 | Blank page or "500 error" | File Manager → `mke/shared/storage/logs/` → open the newest `laravel-….log` and send us the last part. |
 | "Index of /" page listing `app` and `shared`, **404 Not Found** on `/maintenance`, the site only works at `/app/public/`, or the Maintenance page says "The subdomain points at the wrong folder" | The subdomain's document root is wrong. See [the next section](#index-of--listing-or-404-on-maintenance-wrong-document-root). |
+| Sign-in page says "No owner account exists yet" | Maintenance page → **Run migrations**, then **Create the owner account** (Step 7). |
+| Sign-in page says "The database is not ready" | Open the Maintenance page and fix what is red (usually the `DB_…` lines in `.env`), then **Run migrations**. |
+| Maintenance page says "you must also be signed in to the app as an owner" | Click **Sign in as owner**, sign in, and you are sent back to the Maintenance page. |
+| "Too many sign-in attempts" | Wait one minute. After 5 wrong passwords for one user name, sign-in pauses for a minute. |
+| A staff member forgot the password | **Users** → click the user → **Reset password**. Give them the new password; they must change it when they sign in. |
+| A staff member lost the phone with the authenticator app | They can sign in with one of their recovery codes. Or **Users** → the user → **Turn off two-factor sign-in**. |
+| The owner forgot the password, or lost the phone and the recovery codes | See [Owner forgot the password](#owner-forgot-the-password). |
+| "Page expired" (419) after leaving a page open for hours | Reload the page and do it again. Forms expire after 2 hours without activity. |
 
 ### "Index of /" listing, or 404 on /maintenance (wrong document root)
 
 The subdomain must point at `/home/USER/mke/app/public`. If it points at `/home/USER/mke`,
-visitors can see your folders. Versions from v0.0.1 put a safety file (`mke/.htaccess`) in place
+visitors can see your folders. Versions from v0.1.0 put a safety file (`mke/.htaccess`) in place
 that hides the folders and keeps the site working, but the Maintenance page stays amber until
 you fix the setting. Fix it like this:
 
@@ -275,6 +357,22 @@ you fix the setting. Fix it like this:
 
 If cPanel will not save `mke/app/public`, tell us (Appendix B).
 
+### Owner forgot the password
+
+If another owner exists, they reset your password on the **Users** page. Otherwise:
+
+1. File Manager → `mke/shared/.env` → **Edit**. Find the line `MAINTENANCE_OWNER_RECOVERY=false`
+   (if it is not there, add it on a new line) and change it to `MAINTENANCE_OWNER_RECOVERY=true`. **Save Changes**.
+2. Open <https://mke.rockproviders.com/maintenance> and type the secret phrase. An amber box
+   **Owner recovery is on** appears. Type your owner user name and a new password twice, and click
+   **Reset an owner's password**. This also turns off two-factor sign-in for that owner.
+3. **Straight away**, change the line back to `MAINTENANCE_OWNER_RECOVERY=false` and save.
+   While it is `true`, anyone with the secret phrase can reset an owner's password.
+4. Sign in with the new password. Turn two-factor sign-in on again if you used it.
+
+Only someone who can open your cPanel can do this, so keep the cPanel password safe.
+The reset is recorded in the **Audit log**.
+
 ---
 
 ## Appendix A — Where things are
@@ -287,6 +385,8 @@ If cPanel will not save `mke/app/public`, tell us (Appendix B).
 | Program files | `/home/USER/mke/app/` (never edit; updates replace it) |
 | Cron instructions | `/home/USER/mke/app/deploy/cron.txt` |
 | Safety file for a wrong document root | `/home/USER/mke/.htaccess` (hidden; updates replace it) |
+| Who changed what, and when | In the app: **Audit log** (owner and accountant) |
+| Bangla font | `/home/USER/mke/app/public/fonts/` (Noto Sans Bengali, free licence in `OFL.txt`; nothing to install) |
 
 **Never** delete `shared`, rename `.env`, or change `APP_KEY` once the app holds data:
 encrypted data would become unreadable.

@@ -2,7 +2,7 @@
 
 Stack: PHP 8.4 + Laravel on cPanel shared hosting, `mke.rockproviders.com`. Requirements: [SPEC.md](SPEC.md). Assumptions: [DECISIONS.md](DECISIONS.md).
 
-Rules for every milestone: work on a branch, add tests, CI must pass (unit + MySQL feature tests), update `docs/DECISIONS.md`, merge, tag a release (`v0.N.0`), and the owner deploys the release zip. **M0 stops for owner confirmation before M1 starts.**
+Rules for every milestone: work on a branch, add tests, CI must pass (unit + MySQL feature tests), update `docs/DECISIONS.md`, merge, tag a release (`v0.N.0`), and the owner deploys it (cPanel Git on the `release` branch, the zip as fallback; see `DEPLOY.md` and DECISIONS #67). **M0 stops for owner confirmation before M1 starts.**
 
 ---
 
