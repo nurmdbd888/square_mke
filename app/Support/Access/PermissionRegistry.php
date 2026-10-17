@@ -57,6 +57,12 @@ class PermissionRegistry
             'sales.manage' => ['accountant', 'sr', 'data_entry'],
             'stock.view' => ['accountant', 'data_entry', 'viewer'],
         ],
+        'accounts' => [
+            'payments.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'payments.manage' => ['accountant', 'sr', 'data_entry'],
+            'accounts.view' => ['accountant', 'data_entry', 'viewer'],
+            'accounts.manage' => ['accountant'],
+        ],
     ];
 
     /**

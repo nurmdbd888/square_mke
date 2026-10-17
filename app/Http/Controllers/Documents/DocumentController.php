@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Documents;
 
 use App\Domain\Documents\DocumentWriter;
+use App\Domain\Payments\CreditLimit;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Product;
@@ -20,7 +21,10 @@ use Illuminate\View\View;
 
 class DocumentController extends Controller
 {
-    public function __construct(private readonly DocumentWriter $writer) {}
+    public function __construct(
+        private readonly DocumentWriter $writer,
+        private readonly CreditLimit $creditLimit,
+    ) {}
 
     public function index(Request $request, string $type): View
     {
@@ -87,11 +91,13 @@ class DocumentController extends Controller
         $document = $this->writer->save($type, $data['header'], $data['lines'], $request->user());
         $this->storeAttachments($request, $document);
 
-        return redirect()
+        $redirect = redirect()
             ->route($type === Document::TYPE_PURCHASE ? 'purchases.show' : 'sales.show', $document)
             ->with('status', $document->isPosted()
                 ? __('Document :number was posted.', ['number' => $document->number])
                 : __('Document :number was saved as a draft.', ['number' => $document->number]));
+
+        return $this->withCreditWarning($redirect, $document);
     }
 
     public function show(Request $request, Document $document): View
@@ -127,9 +133,11 @@ class DocumentController extends Controller
         $document = $this->writer->save($document->type, $data['header'], $data['lines'], $request->user(), $document);
         $this->storeAttachments($request, $document);
 
-        return redirect()
+        $redirect = redirect()
             ->route($document->isPurchase() ? 'purchases.show' : 'sales.show', $document)
             ->with('status', __('Saved.'));
+
+        return $this->withCreditWarning($redirect, $document);
     }
 
     public function destroy(Request $request, Document $document): RedirectResponse
@@ -153,9 +161,34 @@ class DocumentController extends Controller
         $document->load('lines');
         $this->writer->post($document, $request->user());
 
-        return redirect()
+        $redirect = redirect()
             ->route($document->isPurchase() ? 'purchases.show' : 'sales.show', $document)
             ->with('status', __('Document :number was posted.', ['number' => $document->number]));
+
+        return $this->withCreditWarning($redirect, $document->fresh());
+    }
+
+    private function withCreditWarning(RedirectResponse $redirect, Document $document): RedirectResponse
+    {
+        if (! $document->isSale() || ! $document->isPosted() || ! $document->retailer_id) {
+            return $redirect;
+        }
+
+        $retailer = Retailer::query()->find($document->retailer_id);
+        if ($retailer === null) {
+            return $redirect;
+        }
+
+        // Outstanding already includes this posted sale; check with additional 0.
+        $check = $this->creditLimit->check($retailer, '0');
+        if ($check !== null && $check['over']) {
+            $redirect->with('warning', __('This retailer is over the credit limit of :limit (outstanding :outstanding).', [
+                'limit' => $check['limit'],
+                'outstanding' => $check['outstanding'],
+            ]));
+        }
+
+        return $redirect;
     }
 
     /**
