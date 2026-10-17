@@ -117,7 +117,9 @@
                 <p class="mt-1 text-xs text-slate-500">{{ __('Can be less than invoice totals for a partial payment.') }}</p>
             </label>
             @if ($isReceipt)
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-2" data-party-hx>
+                    {{-- Included only by HTMX (hx-include); harmless if also posted on save. --}}
+                    <input type="hidden" name="party" value="retailer">
                     <x-party-code-picker
                         name="retailer_id"
                         :label="__('Retailer')"
@@ -126,9 +128,9 @@
                         data-testid="payment-retailer-picker"
                         hx-get="{{ route('payments.open-invoices') }}"
                         hx-target="#allocation-box"
-                        hx-include="[name='retailer_id']"
-                        hx-vals='{"party":"retailer"}'
-                        hx-trigger="change from:input[name=retailer_id]"
+                        hx-swap="innerHTML"
+                        hx-include="closest [data-party-hx]"
+                        hx-trigger="change"
                     />
                 </div>
                 <label class="block sm:col-span-2">
@@ -141,18 +143,21 @@
                     </select>
                 </label>
             @else
-                <x-party-code-picker
-                    name="supplier_id"
-                    :label="__('Supplier')"
-                    :parties="$suppliers"
-                    :selected-id="$payment->supplier_id"
-                    :required="false"
-                    hx-get="{{ route('payments.open-invoices') }}"
-                    hx-target="#allocation-box"
-                    hx-include="[name='supplier_id']"
-                    hx-vals='{"party":"supplier"}'
-                    hx-trigger="change"
-                />
+                <div data-party-hx>
+                    <input type="hidden" name="party" value="supplier">
+                    <x-party-code-picker
+                        name="supplier_id"
+                        :label="__('Supplier')"
+                        :parties="$suppliers"
+                        :selected-id="$payment->supplier_id"
+                        :required="false"
+                        hx-get="{{ route('payments.open-invoices') }}"
+                        hx-target="#allocation-box"
+                        hx-swap="innerHTML"
+                        hx-include="closest [data-party-hx]"
+                        hx-trigger="change"
+                    />
+                </div>
                 <label class="block">
                     <span class="label">{{ __('Expense category') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <select name="expense_category_id" class="input min-h-11">
