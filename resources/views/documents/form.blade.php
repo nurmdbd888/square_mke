@@ -24,10 +24,27 @@
             'sd_amount' => $l->sd_amount,
             'vat_amount' => $l->vat_amount,
         ])->all();
-        if ($oldLines === []) {
-            $oldLines = [['product_id' => '', 'kind' => 'normal', 'qty' => '', 'bonus_qty' => '0', 'unit_price' => '', 'line_discount' => '0', 'line_value' => '', 'sd_pct' => '0', 'vat_pct' => '15', 'sd_amount' => '0', 'vat_amount' => '0']];
-        }
     }
+    $productCatalog = $products->map(function ($product) {
+        $searchParts = array_filter([
+            $product->code,
+            $product->name_en,
+            $product->name_bn,
+            ...$product->aliases->pluck('name')->all(),
+        ]);
+
+        return [
+            'id' => $product->id,
+            'code' => (string) ($product->code ?? ''),
+            'name' => (string) $product->name_en,
+            'name_bn' => (string) ($product->name_bn ?? ''),
+            'searchText' => mb_strtolower(implode(' ', $searchParts)),
+            'buy' => (string) ($product->buy_price ?? ''),
+            'sell' => (string) ($product->sell_price ?? ''),
+            'sd' => (string) ($product->sd_pct ?? '0'),
+            'vat' => (string) ($product->vat_pct ?? '15'),
+        ];
+    })->values();
 @endphp
 
 @section('title', $title)
@@ -48,7 +65,7 @@
         action="{{ $action }}"
         enctype="multipart/form-data"
         class="mt-6 space-y-6"
-        x-data="documentForm({{ Js::from(array_values($oldLines)) }})"
+        x-data="documentForm({{ Js::from(array_values($oldLines)) }}, {{ Js::from($productCatalog) }})"
         @unless($isPurchase)
             data-offline-sales
             data-sync-url="{{ route('sales.sync-draft') }}"
@@ -117,77 +134,137 @@
             </label>
         </section>
 
-        <section class="card">
-            <div class="flex items-center justify-between gap-3">
-                <h2 class="font-semibold text-slate-900">{{ __('Lines') }}</h2>
-                <button type="button" class="btn-secondary" @click="addLine()">{{ __('Add line') }}</button>
-            </div>
-            <div class="mt-4 space-y-4">
-                <template x-for="(line, index) in lines" :key="index">
-                    <div class="grid gap-3 rounded-lg border border-slate-200 p-3 lg:grid-cols-6">
-                        <label class="block lg:col-span-2">
-                            <span class="label">{{ __('Product') }}</span>
-                            <select :name="`lines[${index}][product_id]`" x-model="line.product_id" required class="input" @change="fillProduct(index)">
-                                <option value="">{{ __('Choose') }}</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}"
-                                            data-buy="{{ $product->buy_price }}"
-                                            data-sell="{{ $product->sell_price }}"
-                                            data-sd="{{ $product->sd_pct }}"
-                                            data-vat="{{ $product->vat_pct }}">
-                                        {{ $product->code ? $product->code.' · ' : '' }}{{ $product->name_en }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Kind') }}</span>
-                            <select :name="`lines[${index}][kind]`" x-model="line.kind" class="input">
-                                <option value="normal">{{ __('Normal') }}</option>
-                                <option value="combo_bonus">{{ __('Combo bonus') }}</option>
-                            </select>
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Qty') }}</span>
-                            <input type="text" :name="`lines[${index}][qty]`" x-model="line.qty" required inputmode="decimal" class="input" @change="recalc(index)">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Bonus qty') }}</span>
-                            <input type="text" :name="`lines[${index}][bonus_qty]`" x-model="line.bonus_qty" inputmode="decimal" class="input">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Unit price') }}</span>
-                            <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input" @change="recalc(index)">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Line discount') }}</span>
-                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input" @change="recalc(index)">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('Line value') }}</span>
-                            <input type="text" :name="`lines[${index}][line_value]`" x-model="line.line_value" inputmode="decimal" class="input">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('SD %') }}</span>
-                            <input type="text" :name="`lines[${index}][sd_pct]`" x-model="line.sd_pct" inputmode="decimal" class="input">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('VAT %') }}</span>
-                            <input type="text" :name="`lines[${index}][vat_pct]`" x-model="line.vat_pct" inputmode="decimal" class="input">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('SD amount') }}</span>
-                            <input type="text" :name="`lines[${index}][sd_amount]`" x-model="line.sd_amount" inputmode="decimal" class="input">
-                        </label>
-                        <label class="block">
-                            <span class="label">{{ __('VAT amount') }}</span>
-                            <input type="text" :name="`lines[${index}][vat_amount]`" x-model="line.vat_amount" inputmode="decimal" class="input">
-                        </label>
-                        <div class="flex items-end lg:col-span-6">
-                            <button type="button" class="text-sm text-red-700 underline" @click="removeLine(index)" x-show="lines.length > 1">{{ __('Remove line') }}</button>
-                        </div>
+        <section class="card" data-testid="document-lines">
+            <h2 class="font-semibold text-slate-900">{{ __('Products on this invoice') }}</h2>
+            <p class="mt-1 text-sm text-slate-600">{{ __('Search on the left, click a product to add it. Change quantity and price on the right.') }}</p>
+
+            <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
+                <div class="relative rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <label class="block">
+                        <span class="label">{{ __('Search product') }}</span>
+                        <input
+                            type="search"
+                            class="input"
+                            placeholder="{{ __('Code, English or Bangla name') }}"
+                            x-model="productQuery"
+                            @input="productOpen = true; productHighlight = 0"
+                            @focus="productOpen = filteredProducts.length > 0"
+                            @keydown.down.prevent="highlightNextProduct()"
+                            @keydown.up.prevent="highlightPrevProduct()"
+                            @keydown.enter.prevent="addHighlightedProduct()"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <ul
+                        x-cloak
+                        x-show="productOpen && filteredProducts.length"
+                        @click.outside="productOpen = false"
+                        class="absolute left-3 right-3 top-[4.5rem] z-10 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg"
+                    >
+                        <template x-for="(product, pIndex) in filteredProducts.slice(0, 40)" :key="product.id">
+                            <li>
+                                <button
+                                    type="button"
+                                    class="block w-full px-3 py-2 text-left"
+                                    :class="productHighlight === pIndex ? 'bg-brand-50' : 'hover:bg-slate-50'"
+                                    @mouseenter="productHighlight = pIndex"
+                                    @click="addProduct(product)"
+                                >
+                                    <span class="font-mono text-xs text-slate-500" x-text="product.code || '—'"></span>
+                                    <span class="mt-0.5 block font-medium text-slate-900" x-text="product.name"></span>
+                                    <span class="block text-xs text-slate-600" x-show="product.name_bn" x-text="product.name_bn"></span>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
+                    <p class="mt-2 text-xs text-slate-500">{{ __('Click a product to add it to the invoice.') }}</p>
+                </div>
+
+                <div class="min-w-0">
+                    <div class="table-wrap">
+                        <table class="data-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Product') }}</th>
+                                    <th class="w-20">{{ __('Qty') }}</th>
+                                    <th class="w-24">{{ __('Price') }}</th>
+                                    <th class="w-20">{{ __('Disc.') }}</th>
+                                    <th class="w-24 text-right">{{ __('Total') }}</th>
+                                    <th class="w-16"><span class="sr-only">{{ __('Actions') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(line, index) in lines" :key="index">
+                                    <tr class="align-top">
+                                        <td>
+                                            <input type="hidden" :name="`lines[${index}][product_id]`" x-model="line.product_id">
+                                            <input type="hidden" :name="`lines[${index}][kind]`" x-model="line.kind">
+                                            <input type="hidden" :name="`lines[${index}][bonus_qty]`" x-model="line.bonus_qty">
+                                            <input type="hidden" :name="`lines[${index}][sd_pct]`" x-model="line.sd_pct">
+                                            <input type="hidden" :name="`lines[${index}][vat_pct]`" x-model="line.vat_pct">
+                                            <input type="hidden" :name="`lines[${index}][sd_amount]`" x-model="line.sd_amount">
+                                            <input type="hidden" :name="`lines[${index}][vat_amount]`" x-model="line.vat_amount">
+                                            <span class="font-medium text-slate-900" x-text="productLabel(line.product_id)"></span>
+                                            <button type="button" class="mt-1 block text-xs text-brand-700 underline" @click="line.showTax = !line.showTax" x-text="line.showTax ? '{{ __('Hide tax & bonus') }}' : '{{ __('Tax & bonus') }}'"></button>
+                                        </td>
+                                        <td>
+                                            <input type="text" :name="`lines[${index}][qty]`" x-model="line.qty" required inputmode="decimal" class="input py-1.5 text-sm" @input="recalc(index)">
+                                        </td>
+                                        <td>
+                                            <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input py-1.5 text-sm font-mono" @input="recalc(index)">
+                                        </td>
+                                        <td>
+                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input py-1.5 text-sm font-mono" @input="recalc(index)">
+                                        </td>
+                                        <td class="text-right font-mono">
+                                            <input type="hidden" :name="`lines[${index}][line_value]`" x-model="line.line_value">
+                                            <span x-text="line.line_value || '0.00'"></span>
+                                        </td>
+                                        <td class="text-right">
+                                            <button type="button" class="text-xs text-red-700 underline" @click="removeLine(index)">{{ __('Remove') }}</button>
+                                        </td>
+                                    </tr>
+                                    <tr x-show="line.showTax" x-cloak class="bg-slate-50">
+                                        <td colspan="6" class="py-2">
+                                            <div class="flex flex-wrap gap-3 text-xs">
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('Kind') }}</span>
+                                                    <select x-model="line.kind" class="input py-1 text-xs">
+                                                        <option value="normal">{{ __('Normal') }}</option>
+                                                        <option value="combo_bonus">{{ __('Combo bonus') }}</option>
+                                                    </select>
+                                                </label>
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('Bonus qty') }}</span>
+                                                    <input type="text" x-model="line.bonus_qty" class="input w-16 py-1 text-xs font-mono">
+                                                </label>
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('SD %') }}</span>
+                                                    <input type="text" x-model="line.sd_pct" class="input w-16 py-1 text-xs font-mono">
+                                                </label>
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('VAT %') }}</span>
+                                                    <input type="text" x-model="line.vat_pct" class="input w-16 py-1 text-xs font-mono">
+                                                </label>
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('SD amount') }}</span>
+                                                    <input type="text" x-model="line.sd_amount" class="input w-20 py-1 text-xs font-mono">
+                                                </label>
+                                                <label class="flex items-center gap-1">
+                                                    <span>{{ __('VAT amount') }}</span>
+                                                    <input type="text" x-model="line.vat_amount" class="input w-20 py-1 text-xs font-mono">
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="lines.length === 0">
+                                    <td colspan="6" class="py-8 text-center text-slate-500">{{ __('No products yet. Search on the left and click to add.') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </template>
+                </div>
             </div>
         </section>
 
@@ -221,32 +298,101 @@
     </form>
 
     <script>
-        function documentForm(initial) {
+        function documentForm(initial, catalog) {
             const isPurchase = @json($isPurchase);
+            const lines = (initial || []).map((line) => ({
+                showTax: false,
+                kind: 'normal',
+                bonus_qty: '0',
+                line_discount: '0',
+                sd_pct: '0',
+                vat_pct: '15',
+                sd_amount: '0',
+                vat_amount: '0',
+                ...line,
+            }));
+
             return {
-                lines: initial,
-                addLine() {
-                    this.lines.push({ product_id: '', kind: 'normal', qty: '', bonus_qty: '0', unit_price: '', line_discount: '0', line_value: '', sd_pct: '0', vat_pct: '15', sd_amount: '0', vat_amount: '0' });
+                lines,
+                catalog: catalog || [],
+                productQuery: '',
+                productOpen: false,
+                productHighlight: 0,
+                get filteredProducts() {
+                    const q = this.productQuery.trim().toLocaleLowerCase();
+                    if (q === '') {
+                        return this.catalog.slice(0, 40);
+                    }
+
+                    return this.catalog.filter((product) => {
+                        const haystack = product.searchText || '';
+                        const code = (product.code || '').toLocaleLowerCase();
+
+                        return haystack.includes(q) || code.includes(q);
+                    });
+                },
+                productLabel(productId) {
+                    const product = this.catalog.find((row) => String(row.id) === String(productId));
+                    if (!product) {
+                        return '—';
+                    }
+
+                    return (product.code ? product.code + ' · ' : '') + product.name;
+                },
+                addProduct(product) {
+                    const index = this.lines.findIndex((line) => String(line.product_id) === String(product.id));
+                    if (index >= 0) {
+                        const qty = parseFloat(this.lines[index].qty || '0');
+                        this.lines[index].qty = String((Number.isFinite(qty) ? qty : 0) + 1);
+                        this.recalc(index);
+                    } else {
+                        this.lines.push({
+                            product_id: String(product.id),
+                            kind: 'normal',
+                            qty: '1',
+                            bonus_qty: '0',
+                            unit_price: isPurchase ? (product.buy || '') : (product.sell || product.buy || ''),
+                            line_discount: '0',
+                            line_value: '',
+                            sd_pct: product.sd || '0',
+                            vat_pct: product.vat || '15',
+                            sd_amount: '0',
+                            vat_amount: '0',
+                            showTax: false,
+                        });
+                        this.recalc(this.lines.length - 1);
+                    }
+                    this.productQuery = '';
+                    this.productOpen = false;
+                },
+                addHighlightedProduct() {
+                    const list = this.filteredProducts.slice(0, 40);
+                    if (list.length === 0) {
+                        return;
+                    }
+                    this.addProduct(list[this.productHighlight] ?? list[0]);
+                },
+                highlightNextProduct() {
+                    const max = Math.min(this.filteredProducts.length, 40) - 1;
+                    this.productHighlight = Math.min(this.productHighlight + 1, Math.max(max, 0));
+                },
+                highlightPrevProduct() {
+                    this.productHighlight = Math.max(this.productHighlight - 1, 0);
                 },
                 removeLine(index) {
-                    if (this.lines.length > 1) this.lines.splice(index, 1);
-                },
-                fillProduct(index) {
-                    const select = document.querySelector(`select[name="lines[${index}][product_id]"]`);
-                    const option = select?.selectedOptions?.[0];
-                    if (!option) return;
-                    const line = this.lines[index];
-                    line.unit_price = isPurchase ? (option.dataset.buy || '') : (option.dataset.sell || option.dataset.buy || '');
-                    line.sd_pct = option.dataset.sd || '0';
-                    line.vat_pct = option.dataset.vat || '15';
-                    this.recalc(index);
+                    this.lines.splice(index, 1);
                 },
                 recalc(index) {
                     const line = this.lines[index];
+                    if (!line) {
+                        return;
+                    }
                     const qty = parseFloat(line.qty || '0');
                     const price = parseFloat(line.unit_price || '0');
                     const discount = parseFloat(line.line_discount || '0');
-                    if (!Number.isFinite(qty) || !Number.isFinite(price)) return;
+                    if (!Number.isFinite(qty) || !Number.isFinite(price)) {
+                        return;
+                    }
                     const value = Math.round((qty * price - discount) * 100) / 100;
                     line.line_value = value.toFixed(2);
                 },
