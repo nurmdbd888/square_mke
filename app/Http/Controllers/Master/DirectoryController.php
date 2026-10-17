@@ -8,6 +8,7 @@ use App\Models\SalesRoute;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Bulk\BulkSelection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -112,6 +113,44 @@ class DirectoryController extends Controller
         $row->restore();
 
         return redirect()->route('masters.directory.index', $kind)->with('status', $this->restored($kind, $row));
+    }
+
+    public function bulk(Request $request, string $kind): RedirectResponse
+    {
+        $meta = $this->meta($kind);
+        $allowed = array_keys($this->bulkFields($kind));
+        $data = $request->validate([
+            'field' => ['required', Rule::in($allowed)],
+            'value' => ['nullable', 'string', 'max:255'],
+        ]);
+        $ids = BulkSelection::ids($request);
+        $value = $data['value'] === '' ? null : $data['value'];
+
+        if ($data['field'] === 'user_id' && $value !== null) {
+            $request->validate(['value' => ['integer', Rule::exists('users', 'id')]]);
+        }
+
+        $meta['model']::withTrashed()
+            ->whereIn('id', $ids)
+            ->limit(100)
+            ->get()
+            ->each(fn (Model $row) => $row->update([$data['field'] => $value]));
+
+        return redirect()->route('masters.directory.index', $kind)->with('status', __('Saved.'));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function bulkFields(string $kind): array
+    {
+        return match ($kind) {
+            'suppliers' => ['phone' => __('Phone'), 'bin' => __('BIN')],
+            'routes' => ['code' => __('Code')],
+            'sales-reps' => ['phone' => __('Phone'), 'user_id' => __('Linked user')],
+            'vehicles' => ['type' => __('Vehicle type')],
+            default => abort(404),
+        };
     }
 
     /**

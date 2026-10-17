@@ -87,6 +87,33 @@ class ClaimController extends Controller
             ->with('status', __('Claim :number was updated.', ['number' => $claim->number]));
     }
 
+    public function bulk(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->can('claims.manage'), 403);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'max:100'],
+            'ids.*' => ['integer'],
+            'field' => ['required', Rule::in(['status'])],
+            'value' => ['required', Rule::in(Claim::STATUSES)],
+        ]);
+
+        $updated = 0;
+        Claim::query()
+            ->whereIn('id', $data['ids'])
+            ->limit(100)
+            ->get()
+            ->each(function (Claim $claim) use ($data, &$updated) {
+                if (in_array($claim->status, [Claim::STATUS_SETTLED, Claim::STATUS_REJECTED], true)) {
+                    return;
+                }
+                $claim->update(['status' => $data['value']]);
+                $updated++;
+            });
+
+        return redirect()->route('claims.index')->with('status', __('Updated :count claims.', ['count' => $updated]));
+    }
+
     /**
      * @return array<string, mixed>
      */

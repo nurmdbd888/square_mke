@@ -131,6 +131,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::delete('/masters/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('masters.custom-fields.destroy');
 
             Route::get('/masters/{kind}/create', [DirectoryController::class, 'create'])->where('kind', $masterKinds)->name('masters.directory.create');
+            Route::post('/masters/{kind}/bulk', [DirectoryController::class, 'bulk'])->where('kind', $masterKinds)->name('masters.directory.bulk');
             Route::post('/masters/{kind}', [DirectoryController::class, 'store'])->where('kind', $masterKinds)->name('masters.directory.store');
             Route::get('/masters/{kind}/{id}/edit', [DirectoryController::class, 'edit'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.edit');
             Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
@@ -167,6 +168,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->name('purchases.show');
         Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->name('purchases.edit');
         Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->name('purchases.update');
+        Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.bulk');
         Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->name('purchases.post');
         Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.manage')->name('purchases.destroy');
 
@@ -176,6 +178,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->name('sales.show');
         Route::get('/sales/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:sales.manage')->name('sales.edit');
         Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
+        Route::post('/sales/bulk', [DocumentController::class, 'bulk'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.bulk');
         Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
         Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.manage')->name('sales.destroy');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
@@ -198,6 +201,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/returns/{stockNote}', [StockNoteController::class, 'show'])->middleware('can:returns.view')->name('returns.show');
         Route::get('/returns/{stockNote}/edit', [StockNoteController::class, 'edit'])->middleware('can:returns.manage')->name('returns.edit');
         Route::put('/returns/{stockNote}', [StockNoteController::class, 'update'])->middleware('can:returns.manage')->name('returns.update');
+        Route::post('/returns/bulk', [StockNoteController::class, 'bulk'])->middleware('can:returns.manage')->name('returns.bulk');
         Route::post('/returns/{stockNote}/post', [StockNoteController::class, 'post'])->middleware('can:returns.manage')->name('returns.post');
         Route::delete('/returns/{stockNote}', [StockNoteController::class, 'destroy'])->middleware('can:returns.manage')->name('returns.destroy');
 
@@ -207,8 +211,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/claims/{claim}', [ClaimController::class, 'show'])->middleware('can:claims.view')->name('claims.show');
         Route::get('/claims/{claim}/edit', [ClaimController::class, 'edit'])->middleware('can:claims.manage')->name('claims.edit');
         Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
+        Route::post('/claims/bulk', [ClaimController::class, 'bulk'])->middleware('can:claims.manage')->name('claims.bulk');
 
         Route::get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
+        Route::post('/payments/bulk', [PaymentController::class, 'bulk'])->name('payments.bulk');
         Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.receipt-write')->name('payments.open-invoices');
         Route::get('/payments/create', [PaymentController::class, 'create'])->middleware('can:payments.receipt-write')->name('payments.create');
         Route::post('/payments', [PaymentController::class, 'store'])->middleware('can:payments.receipt-write')->name('payments.store');
@@ -264,6 +270,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
         Route::middleware('can:users.manage')->group(function () {
             Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+            Route::post('/users/bulk', [UserController::class, 'bulk'])->name('users.bulk');
             Route::post('/users', [UserController::class, 'store'])->name('users.store');
             Route::get('/users/{user}/edit', [UserController::class, 'edit'])->withTrashed()->name('users.edit');
             Route::put('/users/{user}', [UserController::class, 'update'])->withTrashed()->name('users.update');

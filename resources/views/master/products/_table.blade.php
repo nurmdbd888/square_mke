@@ -11,7 +11,7 @@
         <thead>
             <tr>
                 @if ($manage)
-                    <th scope="col"><span class="sr-only">{{ __('Select') }}</span></th>
+                    <th scope="col"><x-bulk-select-all /></th>
                 @endif
                 <th scope="col">{{ __('Name') }}</th>
                 @foreach (['code' => __('Code'), 'brand' => __('Brand'), 'pack' => __('Pack'), 'buy' => __('Buy price'), 'sell' => __('Sell price'), 'sd' => __('SD %'), 'vat' => __('VAT %')] as $key => $label)
