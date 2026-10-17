@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Access\PermissionRegistry;
 use App\Support\Audit\AuditLogger;
 use App\Support\Auth\TwoFactor;
+use App\Support\Bulk\BulkSelection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UserController extends Controller
 {
@@ -124,6 +126,43 @@ class UserController extends Controller
         AuditLogger::log('user.two_factor_reset', $user);
 
         return redirect()->route('users.edit', $user)->with('status', __('Two-factor sign-in was turned off for :name.', ['name' => $user->username]));
+    }
+
+    public function bulk(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'field' => ['required', Rule::in(['role'])],
+            'value' => ['required', Rule::in(PermissionRegistry::ROLES)],
+        ]);
+        $ids = BulkSelection::ids($request);
+        $updated = 0;
+
+        User::withTrashed()
+            ->whereIn('id', $ids)
+            ->limit(100)
+            ->get()
+            ->each(function (User $user) use ($request, $data, &$updated) {
+                try {
+                    $this->onlyOwnersTouchOwners($request, $user, $data['value']);
+                } catch (HttpException) {
+                    return;
+                }
+
+                $oldRole = $user->roleName();
+                if ($oldRole === $data['value']) {
+                    return;
+                }
+
+                if ($oldRole === PermissionRegistry::OWNER && $data['value'] !== PermissionRegistry::OWNER && $this->ownerCount() <= 1) {
+                    return;
+                }
+
+                $user->syncRoles([$data['value']]);
+                AuditLogger::log('user.role_changed', $user, ['role' => $oldRole], ['role' => $data['value']]);
+                $updated++;
+            });
+
+        return redirect()->route('users.index')->with('status', __('Updated :count users.', ['count' => $updated]));
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
