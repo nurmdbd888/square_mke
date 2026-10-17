@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Documents;
 
+use App\Domain\Stock\StockAlerts;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockLedgerEntry;
@@ -10,6 +11,8 @@ use Illuminate\View\View;
 
 class StockController extends Controller
 {
+    public function __construct(private readonly StockAlerts $alerts) {}
+
     public function index(Request $request): View
     {
         $filters = $request->validate([
@@ -42,6 +45,9 @@ class StockController extends Controller
             'latest' => $latest,
             'filters' => $filters,
             'pending' => (bool) cache()->get('sdm.costing_pending'),
+            'lowStock' => $this->alerts->lowStock(),
+            'nearExpiry' => $this->alerts->nearExpiry(),
+            'canCompare' => $request->user()->can('stock.compare'),
         ]);
     }
 

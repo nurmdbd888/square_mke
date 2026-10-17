@@ -61,6 +61,20 @@ return [
         'daily_closing' => [
             'created' => 'দৈনিক সমাপনী রেকর্ড',
         ],
+        'stock_note' => [
+            '*' => 'স্টক নোটের সব কার্যক্রম',
+            'posted' => 'স্টক নোট পোস্ট',
+            'posted_edited' => 'পোস্ট করা স্টক নোট সম্পাদনা',
+            'voided' => 'স্টক নোট বাতিল',
+        ],
+        'claim' => [
+            'status_changed' => 'দাবির অবস্থা পরিবর্তন',
+        ],
+        'month_lock' => [
+            '*' => 'সব মাস লক কাজ',
+            'locked' => 'মাস লক করা হয়েছে',
+            'unlocked' => 'মাস আনলক করা হয়েছে',
+        ],
     ],
     'types' => [
         'user' => 'ব্যবহারকারী',
@@ -84,6 +98,14 @@ return [
         'payment_allocation' => 'পেমেন্ট বরাদ্দ',
         'daily_closing' => 'দৈনিক সমাপনী',
         'expense_category' => 'খরচের শ্রেণি',
+        'stock_note' => 'স্টক নোট',
+        'stock_note_line' => 'স্টক নোট লাইন',
+        'claim' => 'দাবি',
+        'stock_comparison' => 'স্টক তুলনা',
+        'month_lock' => 'মাস লক',
+        'import_mapping_profile' => 'ইমপোর্ট ম্যাপিং প্রোফাইল',
+        'master_import_batch' => 'মাস্টার ইমপোর্ট ব্যাচ',
+        'master_import_row' => 'মাস্টার ইমপোর্ট সারি',
     ],
     'sources' => [
         'web' => 'অ্যাপ',

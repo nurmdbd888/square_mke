@@ -61,6 +61,20 @@ return [
         'daily_closing' => [
             'created' => 'Daily closing recorded',
         ],
+        'stock_note' => [
+            '*' => 'All stock note actions',
+            'posted' => 'Stock note posted',
+            'posted_edited' => 'Posted stock note edited',
+            'voided' => 'Stock note voided',
+        ],
+        'claim' => [
+            'status_changed' => 'Claim status changed',
+        ],
+        'month_lock' => [
+            '*' => 'All month lock actions',
+            'locked' => 'Month locked',
+            'unlocked' => 'Month unlocked',
+        ],
     ],
     'types' => [
         'user' => 'User',
@@ -84,6 +98,14 @@ return [
         'payment_allocation' => 'Payment allocation',
         'daily_closing' => 'Daily closing',
         'expense_category' => 'Expense category',
+        'stock_note' => 'Stock note',
+        'stock_note_line' => 'Stock note line',
+        'claim' => 'Claim',
+        'stock_comparison' => 'Stock comparison',
+        'month_lock' => 'Month lock',
+        'import_mapping_profile' => 'Import mapping profile',
+        'master_import_batch' => 'Master import batch',
+        'master_import_row' => 'Master import row',
     ],
     'sources' => [
         'web' => 'App',

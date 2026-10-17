@@ -64,6 +64,8 @@ return [
 
     'recompute_inline_limit' => (int) env('SDM_RECOMPUTE_INLINE_LIMIT', 2000),
 
+    'entity_import_inline_limit' => (int) env('SDM_ENTITY_IMPORT_INLINE_LIMIT', 500),
+
     'min_php' => '8.4.0',
 
     'required_extensions' => [

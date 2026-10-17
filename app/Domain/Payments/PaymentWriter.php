@@ -3,6 +3,7 @@
 namespace App\Domain\Payments;
 
 use App\Domain\Money\Exact;
+use App\Domain\Reports\MonthLockService;
 use App\Models\Document;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
@@ -17,7 +18,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class PaymentWriter
 {
-    public function __construct(private readonly PartyBalance $balances) {}
+    public function __construct(
+        private readonly PartyBalance $balances,
+        private readonly MonthLockService $monthLocks,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $header
@@ -25,6 +29,8 @@ final class PaymentWriter
      */
     public function save(array $header, array $allocations = [], ?User $by = null, ?Payment $existing = null): Payment
     {
+        $this->monthLocks->assertWritable($header['payment_date'] ?? $existing?->payment_date ?? now());
+
         return DB::transaction(function () use ($header, $allocations, $by, $existing) {
             $payment = $existing ?? new Payment(['status' => Payment::STATUS_DRAFT]);
 

@@ -6,9 +6,13 @@
     <a href="{{ route('masters.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to masters') }}</a>
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Price lists') }}</h1>
-        @can('masters.manage')
-            <a href="{{ route('masters.price-lists.create') }}" class="btn-primary">{{ __('Add price list') }}</a>
-        @endcan
+        <div class="flex flex-wrap items-center gap-2">
+            @include('import.partials.list-actions', ['entity' => 'price_lists'])
+            @can('masters.manage')
+                <a href="{{ route('imports.entity.index', 'price_list_items') }}" class="btn-secondary">{{ __('Import prices') }}</a>
+                <a href="{{ route('masters.price-lists.create') }}" class="btn-primary">{{ __('Add price list') }}</a>
+            @endcan
+        </div>
     </div>
     <p class="mt-1 text-sm text-slate-600">{{ __('A list holds the sell price of each product from a date. The product sell price is used when a list has no row yet.') }}</p>
 

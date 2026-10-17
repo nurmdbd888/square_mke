@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Import\EntityImportRegistry;
 use App\Http\Controllers\Accounts\BookController;
 use App\Http\Controllers\Accounts\LedgerController;
 use App\Http\Controllers\Accounts\PaymentController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Import\EntityImportController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
 use App\Http\Controllers\Master\MastersController;
@@ -19,8 +21,13 @@ use App\Http\Controllers\Master\PriceListController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Reports\MonthLockController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Stock\ClaimController;
+use App\Http\Controllers\Stock\StockComparisonController;
+use App\Http\Controllers\Stock\StockNoteController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -123,6 +130,18 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
         });
 
+        $importEntities = implode('|', EntityImportRegistry::ENTITIES);
+        Route::prefix('imports')->group(function () use ($importEntities) {
+            Route::get('/{entity}/template', [EntityImportController::class, 'template'])->where('entity', $importEntities)->name('imports.entity.template');
+            Route::get('/{entity}/export', [EntityImportController::class, 'export'])->where('entity', $importEntities)->name('imports.entity.export');
+            Route::get('/{entity}', [EntityImportController::class, 'index'])->where('entity', $importEntities)->name('imports.entity.index');
+            Route::post('/{entity}', [EntityImportController::class, 'store'])->where('entity', $importEntities)->name('imports.entity.store');
+            Route::post('/{entity}/profiles', [EntityImportController::class, 'storeProfile'])->where('entity', $importEntities)->name('imports.entity.profiles.store');
+            Route::get('/{entity}/batches/{entityImportBatch}', [EntityImportController::class, 'show'])->where('entity', $importEntities)->name('imports.entity.show');
+            Route::post('/{entity}/batches/{entityImportBatch}/confirm', [EntityImportController::class, 'confirm'])->where('entity', $importEntities)->name('imports.entity.confirm');
+            Route::post('/{entity}/batches/{entityImportBatch}/undo', [EntityImportController::class, 'undo'])->where('entity', $importEntities)->name('imports.entity.undo');
+        });
+
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
         Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
         Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
@@ -143,8 +162,27 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
         Route::middleware('can:stock.view')->group(function () {
             Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+            Route::get('/stock/comparison', [StockComparisonController::class, 'index'])->middleware('can:stock.compare')->name('stock.comparison.index');
+            Route::get('/stock/comparison/{comparison}', [StockComparisonController::class, 'show'])->middleware('can:stock.compare')->name('stock.comparison.show');
             Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
         });
+        Route::post('/stock/comparison', [StockComparisonController::class, 'store'])->middleware('can:stock.compare')->name('stock.comparison.store');
+
+        Route::get('/returns', [StockNoteController::class, 'index'])->middleware('can:returns.view')->name('returns.index');
+        Route::get('/returns/create', [StockNoteController::class, 'create'])->middleware('can:returns.manage')->name('returns.create');
+        Route::post('/returns', [StockNoteController::class, 'store'])->middleware('can:returns.manage')->name('returns.store');
+        Route::get('/returns/{stockNote}', [StockNoteController::class, 'show'])->middleware('can:returns.view')->name('returns.show');
+        Route::get('/returns/{stockNote}/edit', [StockNoteController::class, 'edit'])->middleware('can:returns.manage')->name('returns.edit');
+        Route::put('/returns/{stockNote}', [StockNoteController::class, 'update'])->middleware('can:returns.manage')->name('returns.update');
+        Route::post('/returns/{stockNote}/post', [StockNoteController::class, 'post'])->middleware('can:returns.manage')->name('returns.post');
+        Route::delete('/returns/{stockNote}', [StockNoteController::class, 'destroy'])->middleware('can:returns.manage')->name('returns.destroy');
+
+        Route::get('/claims', [ClaimController::class, 'index'])->middleware('can:claims.view')->name('claims.index');
+        Route::get('/claims/create', [ClaimController::class, 'create'])->middleware('can:claims.manage')->name('claims.create');
+        Route::post('/claims', [ClaimController::class, 'store'])->middleware('can:claims.manage')->name('claims.store');
+        Route::get('/claims/{claim}', [ClaimController::class, 'show'])->middleware('can:claims.view')->name('claims.show');
+        Route::get('/claims/{claim}/edit', [ClaimController::class, 'edit'])->middleware('can:claims.manage')->name('claims.edit');
+        Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
 
         Route::get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
         Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.manage')->name('payments.open-invoices');
@@ -168,6 +206,16 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/accounts/closings', [BookController::class, 'closings'])->name('accounts.closings');
         });
         Route::post('/accounts/closings', [BookController::class, 'close'])->middleware('can:accounts.manage')->name('accounts.closings.store');
+
+        Route::middleware('can:reports.view')->group(function () {
+            Route::get('/reports/pl', [ReportController::class, 'profitAndLoss'])->name('reports.pl');
+            Route::get('/reports/month-locks', [MonthLockController::class, 'index'])->name('reports.month-locks');
+        });
+        Route::post('/reports/month-locks', [MonthLockController::class, 'store'])->middleware('can:reports.manage')->name('reports.month-locks.store');
+        Route::delete('/reports/month-locks/{year}/{month}', [MonthLockController::class, 'destroy'])
+            ->middleware('can:reports.manage')
+            ->whereNumber(['year', 'month'])
+            ->name('reports.month-locks.destroy');
 
         Route::middleware('can:users.view')->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');

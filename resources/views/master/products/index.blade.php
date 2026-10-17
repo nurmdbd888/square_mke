@@ -5,9 +5,12 @@
 @section('content')
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Products') }}</h1>
-        @can('products.manage')
-            <a href="{{ route('products.create') }}" class="btn-primary">{{ __('Add product') }}</a>
-        @endcan
+        <div class="flex flex-wrap items-center gap-2">
+            @include('import.partials.list-actions', ['entity' => 'products'])
+            @can('products.manage')
+                <a href="{{ route('products.create') }}" class="btn-primary">{{ __('Add product') }}</a>
+            @endcan
+        </div>
     </div>
 
     <form method="GET" action="{{ route('products.index') }}" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"

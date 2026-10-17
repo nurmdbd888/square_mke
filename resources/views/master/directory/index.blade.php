@@ -6,9 +6,23 @@
     <a href="{{ route('masters.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to masters') }}</a>
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ $meta['title'] }}</h1>
-        @can('masters.manage')
-            <a href="{{ route('masters.directory.create', $kind) }}" class="btn-primary">{{ $meta['add'] }}</a>
-        @endcan
+        @php
+            $importEntity = match ($kind) {
+                'suppliers' => 'suppliers',
+                'routes' => 'routes',
+                'sales-reps' => 'sales_reps',
+                'vehicles' => 'vehicles',
+                default => null,
+            };
+        @endphp
+        <div class="flex flex-wrap items-center gap-2">
+            @if ($importEntity)
+                @include('import.partials.list-actions', ['entity' => $importEntity])
+            @endif
+            @can('masters.manage')
+                <a href="{{ route('masters.directory.create', $kind) }}" class="btn-primary">{{ $meta['add'] }}</a>
+            @endcan
+        </div>
     </div>
 
     <form method="GET" action="{{ route('masters.directory.index', $kind) }}" class="mt-4 grid gap-3 sm:grid-cols-[1fr_10rem_auto]"
