@@ -54,12 +54,27 @@ if [ -d "$CUR/public" ]; then
     fi
 fi
 
+# Same safety net as the zip's ~/mke/.htaccess, in case the subdomain's
+# document root is ~/mke. A cPanel PHP handler block in it is kept.
+root_blocks=""
+if [ -f "$ROOT/.htaccess" ]; then
+    root_blocks="$(awk '/BEGIN cPanel-generated/{p=1} p{print} /END cPanel-generated/{p=0}' "$ROOT/.htaccess")"
+fi
+{
+    if [ -n "$root_blocks" ]; then printf '%s\n\n' "$root_blocks"; fi
+    cat "$NEW/deploy/root.htaccess"
+} > "$ROOT/.htaccess.tmp"
+mv "$ROOT/.htaccess.tmp" "$ROOT/.htaccess"
+
 if [ ! -d "$SHARED" ]; then
     cp -a "$NEW/deploy/shared.example" "$SHARED"
     log "Created $SHARED."
 fi
 (cd "$NEW/deploy/shared.example" && find storage -type d) | while read -r dir; do
     mkdir -p "$SHARED/$dir"
+done
+for f in .htaccess storage/.htaccess; do
+    if [ ! -f "$SHARED/$f" ]; then cp "$NEW/deploy/shared.example/$f" "$SHARED/$f"; fi
 done
 if [ ! -f "$SHARED/.env" ]; then
     cp "$SHARED/.env.example" "$SHARED/.env"

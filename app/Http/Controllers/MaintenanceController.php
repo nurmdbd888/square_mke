@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\Maintenance\AppKey;
 use App\Support\Maintenance\EnvironmentCheck;
+use App\Support\Maintenance\FolderGuard;
 use App\Support\Maintenance\MaintenanceGate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,6 +22,7 @@ class MaintenanceController extends Controller
     public function __construct(
         private readonly MaintenanceGate $gate,
         private readonly EnvironmentCheck $check,
+        private readonly FolderGuard $guard,
     ) {}
 
     public function show(Request $request): BaseResponse
@@ -140,6 +142,7 @@ class MaintenanceController extends Controller
      */
     private function dashboard(Request $request, ?array $action = null): Response
     {
+        $this->guard->ensure();
         $check = $this->check->run();
 
         return response()->view('maintenance.dashboard', $check + [

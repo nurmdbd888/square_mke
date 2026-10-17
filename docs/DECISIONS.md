@@ -348,3 +348,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: until M10's backup feature, `DEPLOY.md` asks the owner to export the database in phpMyAdmin before every update.
 - Reason: plan puts backups in M10.
 - Change: M10.
+
+**66. Safety net for a document root set to `~/mke`** — 2026-10-17
+- Decision: the zip ships `~/mke/.htaccess` (from `deploy/root.htaccess`; Way B's `deploy.sh` writes the same file and keeps any cPanel PHP handler block in it). It turns off folder listings, refuses `shared/`, `app/` (except `app/public`), `app-*` and dotfiles, lets AutoSSL challenges through, does trailing-slash redirects itself, and rewrites everything else to `app/public/`. `shared.example/`, `shared.example/storage/` and `storage/` carry a deny-all `.htaccess`, and the Maintenance page writes any that are missing (installs from v0.0.0). The document-root check stays amber, with a banner, until cPanel points at `app/public`.
+- Reason: the owner's subdomain was set to `~/mke`, which listed `app/` and `shared/` and made `shared/storage` (logs) downloadable. Access is refused with mod_rewrite `[F]`, not `Require`: `Require` in `~/mke` would be inherited by `app/public`, and some LiteSpeed builds only read rewrite rules from `.htaccess`. Tested on Apache 2.4 and OpenLiteSpeed with both document roots.
+- Change: none planned; the real fix is the cPanel setting (DEPLOY.md, "Problems and fixes").

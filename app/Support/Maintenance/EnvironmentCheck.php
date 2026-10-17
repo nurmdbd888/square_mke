@@ -19,6 +19,7 @@ class EnvironmentCheck
         private readonly MigrationStatus $migrations,
         private readonly AppKey $appKey,
         private readonly CronCommand $cron,
+        private readonly FolderGuard $guard,
     ) {}
 
     /**
@@ -168,18 +169,34 @@ class EnvironmentCheck
                 $writable ? $path : ($exists ? 'not writable: '.$path.' (File Manager > Permissions 755)' : 'missing: '.$path));
         }
 
+        $unprotected = $this->guard->unprotected();
+        $results[] = new CheckResult('folders', 'folder_guard', 'Private folders locked (.htaccess)',
+            $unprotected === [] ? CheckResult::OK : CheckResult::WARN,
+            $unprotected === [] ? implode(', ', $this->guard->folders())
+                : 'no .htaccess in '.implode(', ', $unprotected).': copy it there from '.base_path('deploy/shared.example'));
+
+        $results[] = $this->documentRoot();
+
+        return $results;
+    }
+
+    public function documentRoot(): CheckResult
+    {
         $docRoot = (string) ($_SERVER['DOCUMENT_ROOT'] ?? '');
 
         if ($docRoot === '') {
-            $results[] = new CheckResult('folders', 'docroot', 'Web document root', CheckResult::INFO, 'not a web request');
-        } else {
-            $matches = realpath($docRoot) === realpath(public_path());
-            $results[] = new CheckResult('folders', 'docroot', 'Web document root is the public folder',
-                $matches ? CheckResult::OK : CheckResult::WARN,
-                $matches ? $docRoot : $docRoot.' (expected '.public_path().')');
+            return new CheckResult('folders', 'docroot', 'Web document root', CheckResult::INFO, 'not a web request');
         }
 
-        return $results;
+        if (realpath($docRoot) === realpath(public_path())) {
+            return new CheckResult('folders', 'docroot', 'Web document root is the public folder', CheckResult::OK, $docRoot);
+        }
+
+        $viaSafetyNet = str_starts_with((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/app/public/');
+
+        return new CheckResult('folders', 'docroot', 'Web document root is the public folder', CheckResult::WARN,
+            $docRoot.' is wrong, it must be '.public_path().'. Change it in cPanel > Domains > Manage (DEPLOY.md, "Problems and fixes").'
+            .($viaSafetyNet ? ' Until then the site only works through '.dirname(base_path()).'/.htaccess.' : ''));
     }
 
     /**

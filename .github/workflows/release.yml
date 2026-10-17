@@ -71,6 +71,15 @@ jobs:
       - name: Build
         run: ./scripts/build-release.sh "${{ steps.version.outputs.version }}"
 
+      - name: Check the zip layout
+        run: |
+          listing="$(unzip -Z1 "build/mke-${{ steps.version.outputs.version }}.zip")"
+          for entry in .htaccess app/public/index.php app/vendor/autoload.php app/version.json \
+                       shared.example/.env.example shared.example/.htaccess shared.example/storage/.htaccess; do
+            grep -qx "$entry" <<<"$listing" || { echo "missing from zip: $entry"; exit 1; }
+          done
+          if grep -qE '(^|/)\.env$' <<<"$listing"; then echo "zip must not contain a .env"; exit 1; fi
+
       - name: Upload zip as a workflow artifact
         uses: actions/upload-artifact@v4
         with:

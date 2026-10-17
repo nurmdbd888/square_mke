@@ -84,7 +84,8 @@ every later update, but only works if your host allows it. If unsure, use Way A.
    name it `mke`, then open it. An `app` folder made by cPanel in Step 3 can stay; the zip fills it in.
 4. Click **Upload**, choose the zip, wait for the green 100% bar, then click
    **Go Back to "/home/USER/mke"**.
-5. Right-click the zip → **Extract** → **Extract Files** → **Close**. You now see `app` and `shared.example`.
+5. Right-click the zip → **Extract** → **Extract Files** → **Close**. You now see `app` and `shared.example`
+   (plus a hidden safety file `.htaccess`; leave it there).
 6. Right-click `shared.example` → **Rename** → `shared`.
 7. You can delete the zip now (right-click → **Delete**).
 
@@ -238,6 +239,30 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | Last cron heartbeat stays amber | Check the cron command was pasted completely (Step 8). To see the error, change `>> /dev/null 2>&1` at the end to `>> /home/USER/mke/shared/storage/logs/cron.log 2>&1`, wait two minutes, open that file, send it to us, then change it back. |
 | Cron PHP version amber | The cron uses a different PHP. Copy the command from the Maintenance page again (it shows the right path). |
 | Blank page or "500 error" | File Manager → `mke/shared/storage/logs/` → open the newest `laravel-….log` and send us the last part. |
+| "Index of /" page listing `app` and `shared`, **404 Not Found** on `/maintenance`, the site only works at `/app/public/`, or the Maintenance page says "The subdomain points at the wrong folder" | The subdomain's document root is wrong. See [the next section](#index-of--listing-or-404-on-maintenance-wrong-document-root). |
+
+### "Index of /" listing, or 404 on /maintenance (wrong document root)
+
+The subdomain must point at `/home/USER/mke/app/public`. If it points at `/home/USER/mke`,
+visitors can see your folders. Versions from v0.0.1 put a safety file (`mke/.htaccess`) in place
+that hides the folders and keeps the site working, but the Maintenance page stays amber until
+you fix the setting. Fix it like this:
+
+1. cPanel → **Domains** → **Domains**. Find `mke.rockproviders.com` and click **Manage**.
+2. In **New Document Root**, the box after `/home/USER/` must say exactly `mke/app/public`
+   (no `/` at the start or end). Click **Update**.
+
+   Older cPanel without a **Manage** button: cPanel → **Domains** → **Subdomains**. In the list
+   at the bottom, find `mke.rockproviders.com`, click the pencil icon next to its **Document Root**,
+   type `mke/app/public` and click **Change**.
+3. cPanel → **MultiPHP Manager**: tick `mke.rockproviders.com`, choose **PHP 8.4**, click **Apply**.
+   (The PHP version is stored in the document root folder, so it must be set again after moving it.
+   If you use **Select PHP Version** instead, nothing to do.)
+4. Wait one minute, then open <https://mke.rockproviders.com/> in a private/incognito window.
+   You should see the home page. <https://mke.rockproviders.com/shared/> must **not** show a list of files.
+5. Open the Maintenance page: "Web document root is the public folder" is green.
+
+If cPanel will not save `mke/app/public`, tell us (Appendix B).
 
 ---
 
@@ -250,6 +275,7 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | Uploads and backups (later milestones) | `/home/USER/mke/shared/storage/app/private/`, `/home/USER/mke/shared/storage/backups/` |
 | Program files | `/home/USER/mke/app/` (never edit; updates replace it) |
 | Cron instructions | `/home/USER/mke/app/deploy/cron.txt` |
+| Safety file for a wrong document root | `/home/USER/mke/.htaccess` (hidden; updates replace it) |
 
 **Never** delete `shared`, rename `.env`, or change `APP_KEY` once the app holds data:
 encrypted data would become unreadable.
