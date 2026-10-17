@@ -42,6 +42,13 @@
         </p>
     </section>
 
+    @if (collect($results)->contains(fn ($row) => $row->key === 'docroot' && $row->status === 'warn'))
+        <section class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="docroot-warning">
+            <p class="font-semibold">{{ __('The subdomain points at the wrong folder.') }}</p>
+            <p class="mt-1 text-sm">{{ __('In cPanel > Domains > Manage, set its document root to :path, then choose PHP 8.4 again in MultiPHP Manager. See DEPLOY.md, "Problems and fixes".', ['path' => $paths['public']]) }}</p>
+        </section>
+    @endif
+
     @if ($action)
         <section @class([
             'mt-4 rounded-xl border p-4',

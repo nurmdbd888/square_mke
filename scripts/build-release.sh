@@ -5,7 +5,7 @@
 #   scripts/build-release.sh <version>
 #
 # Output:
-#   build/mke-<version>.zip  app/ + shared.example/ (File Manager upload method)
+#   build/mke-<version>.zip  .htaccess + app/ + shared.example/ (File Manager upload method)
 #   build/release-tree/      contents of the "release" branch (cPanel Git method)
 set -euo pipefail
 
@@ -37,8 +37,9 @@ printf '{"version": "%s", "commit": "%s", "built_at": "%s"}\n' \
     "$VERSION" "$COMMIT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$APP/version.json"
 
 cp -a "$ROOT/deploy/shared.example" "$STAGE/shared.example"
+cp "$ROOT/deploy/root.htaccess" "$STAGE/.htaccess"
 
-(cd "$STAGE" && zip -qr -X "$BUILD/mke-$VERSION.zip" app shared.example)
+(cd "$STAGE" && zip -qr -X "$BUILD/mke-$VERSION.zip" .htaccess app shared.example)
 
 mkdir -p "$BUILD/release-tree"
 cp -a "$APP/." "$BUILD/release-tree/"

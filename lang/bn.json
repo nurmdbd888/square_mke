@@ -20,6 +20,7 @@
     "Folders": "ফোল্ডার",
     "Folders in use": "ব্যবহৃত ফোল্ডার",
     "Generate APP_KEY": "APP_KEY তৈরি করুন",
+    "In cPanel > Domains > Manage, set its document root to :path, then choose PHP 8.4 again in MultiPHP Manager. See DEPLOY.md, \"Problems and fixes\".": "cPanel > Domains > Manage-এ এর ডকুমেন্ট রুট :path করুন, তারপর MultiPHP Manager-এ আবার PHP 8.4 বেছে নিন। DEPLOY.md-এর \"Problems and fixes\" দেখুন।",
     "Info": "তথ্য",
     "Language": "ভাষা",
     "Last cron heartbeat": "শেষ ক্রন হার্টবিট",
@@ -51,6 +52,7 @@
     "The Maintenance page is locked": "রক্ষণাবেক্ষণ পেজ বন্ধ আছে",
     "The settings file :path cannot be written. Open it in File Manager and set this line:": "সেটিংস ফাইল :path-এ লেখা যাচ্ছে না। File Manager-এ খুলে এই লাইনটি বসান:",
     "The settings file :path does not exist. Create it first, then add this line:": "সেটিংস ফাইল :path নেই। আগে ফাইলটি তৈরি করুন, তারপর এই লাইনটি যোগ করুন:",
+    "The subdomain points at the wrong folder.": "সাবডোমেইনটি ভুল ফোল্ডারে যুক্ত করা আছে।",
     "Too many attempts. Wait 10 minutes and try again.": "অনেকবার চেষ্টা হয়েছে। ১০ মিনিট অপেক্ষা করে আবার চেষ্টা করুন।",
     "Type the secret phrase (MAINTENANCE_TOKEN) from your settings file.": "সেটিংস ফাইলের গোপন শব্দগুচ্ছ (MAINTENANCE_TOKEN) লিখুন।",
     "Version": "ভার্সন"

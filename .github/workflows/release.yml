@@ -24,6 +24,7 @@ on:
       - .github/workflows/release.yml
       - scripts/build-release.sh
       - scripts/publish-release-branch.sh
+      - scripts/test-deploy.sh
       - deploy/**
       - composer.json
       - composer.lock
@@ -70,6 +71,25 @@ jobs:
 
       - name: Build
         run: ./scripts/build-release.sh "${{ steps.version.outputs.version }}"
+
+      - name: Check the zip layout
+        run: |
+          listing="$(unzip -Z1 "build/mke-${{ steps.version.outputs.version }}.zip")"
+          for entry in .htaccess app/public/index.php app/vendor/autoload.php app/version.json \
+                       shared.example/.env.example shared.example/.htaccess shared.example/storage/.htaccess; do
+            grep -qx "$entry" <<<"$listing" || { echo "missing from zip: $entry"; exit 1; }
+          done
+          if grep -qE '(^|/)\.env$' <<<"$listing"; then echo "zip must not contain a .env"; exit 1; fi
+
+      - name: Check the release branch tree and its deploy
+        run: |
+          tree=build/release-tree
+          for f in .cpanel.yml deploy/cpanel/deploy.sh deploy/root.htaccess deploy/shared.example/.htaccess \
+                   deploy/shared.example/storage/.htaccess vendor/autoload.php public/index.php; do
+            [ -f "$tree/$f" ] || { echo "missing from release tree: $f"; exit 1; }
+          done
+          if [ -e "$tree/.env" ]; then echo "release tree must not contain a .env"; exit 1; fi
+          ./scripts/test-deploy.sh "$tree"
 
       - name: Upload zip as a workflow artifact
         uses: actions/upload-artifact@v4

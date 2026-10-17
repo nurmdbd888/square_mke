@@ -64,9 +64,12 @@ MariaDB 10.6 and 10.11, with `exec`/`proc_open` disabled as on shared hosting.
 
 The server never runs Composer or Node. GitHub Actions (`.github/workflows/release.yml`) builds:
 
-- `mke-vX.Y.Z.zip` attached to the GitHub Release: `app/` (with `vendor/`, compiled CSS,
-  `version.json`) and `shared.example/` (`.env.example` + storage skeleton).
-- the `release` branch: the same `app/` contents plus `.cpanel.yml`, for cPanel Git Version Control.
+- the `release` branch (the owner's main deploy path): `app/` contents (with `vendor/`, compiled CSS,
+  `version.json`) plus `.cpanel.yml`, for cPanel Git Version Control. `deploy/cpanel/deploy.sh` swaps
+  `app-new` → `app` → `app-prev`, keeps `~/mke/shared`, and writes the `~/mke/.htaccess` safety net
+  from `deploy/root.htaccess`.
+- `mke-vX.Y.Z.zip` attached to the GitHub Release (fallback): the same `app/`, `shared.example/`
+  (`.env.example`, storage skeleton, deny-all `.htaccess`) and the root `.htaccess` safety net.
 
 To release: merge to `main`, then push a tag (`git tag v0.0.0 && git push origin v0.0.0`), or run
 **Actions → Release → Run workflow** with a ref. Running it with an older tag is the rollback path for
