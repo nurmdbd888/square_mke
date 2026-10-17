@@ -17,6 +17,10 @@
             'value' => $queue ? __(':pending waiting, :failed failed', ['pending' => $queue['pending'], 'failed' => $queue['failed']]).($queue['oldest_seconds'] !== null ? ' · '.__('oldest :seconds s', ['seconds' => $queue['oldest_seconds']]) : '') : '—'],
         ['key' => 'disk', 'label' => __('Free disk space'), 'status' => 'info',
             'value' => $disk ? $disk['free'].($disk['total'] ? ' / '.$disk['total'] : '') : __('Not available on this server')],
+        ['key' => 'backup', 'label' => __('Last backup'), 'status' => ($backup['at'] ?? null) ? 'ok' : 'warn',
+            'value' => ($backup['at'] ?? null)
+                ? local_digits(\Illuminate\Support\Carbon::parse($backup['at'])->format('d-m-Y H:i')).' · '.($backup['basename'] ?? '').' ('.($backup['count'] ?? 0).' '.__('local').')'
+                : __('No backup recorded yet')],
     ];
 @endphp
 

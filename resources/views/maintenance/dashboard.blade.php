@@ -70,6 +70,7 @@
             ['route' => 'maintenance.generate-key', 'label' => __('Generate APP_KEY')],
             ['route' => 'maintenance.migrate', 'label' => __('Run migrations')],
             ['route' => 'maintenance.clear-caches', 'label' => __('Clear caches')],
+            ['route' => 'maintenance.backup', 'label' => __('Backup now')],
         ] as $button)
             <form method="POST" action="{{ route($button['route']) }}">
                 <input type="hidden" name="_maintenance_token" value="{{ $formToken }}">
@@ -77,6 +78,31 @@
             </form>
         @endforeach
         <a href="{{ route('maintenance') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ __('Check again') }}</a>
+    </section>
+
+    <section class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4" data-testid="restore-backup">
+        <h2 class="font-semibold text-amber-900">{{ __('Restore from backup') }}</h2>
+        <p class="mt-1 text-sm text-amber-800">{{ __('Overwrites the live database and private uploads. Take a backup first. Type RESTORE to confirm.') }}</p>
+        @if (count($backups ?? []) === 0)
+            <p class="mt-2 text-sm text-amber-900">{{ __('No local backup files yet. Press Backup now first.') }}</p>
+        @else
+            <form method="POST" action="{{ route('maintenance.restore') }}" class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                <input type="hidden" name="_maintenance_token" value="{{ $formToken }}">
+                <label class="block flex-1">
+                    <span class="text-sm font-medium text-amber-900">{{ __('Backup file') }}</span>
+                    <select name="basename" class="input mt-1" required>
+                        @foreach ($backups as $file)
+                            <option value="{{ $file }}">{{ $file }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-amber-900">{{ __('Type RESTORE') }}</span>
+                    <input type="text" name="confirm" class="input mt-1 font-mono" required autocomplete="off">
+                </label>
+                <button class="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">{{ __('Restore backup') }}</button>
+            </form>
+        @endif
     </section>
 
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-4">

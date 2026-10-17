@@ -54,6 +54,12 @@ class AuditLogTest extends TestCase
                 'reminder_http_sms_url' => '',
                 'reminder_whatsapp_token' => '',
                 'reminder_whatsapp_phone_id' => '',
+                'require_2fa_roles' => [],
+                'weekly_holiday_weekdays' => ['2'],
+                'backup_retention_days' => '14',
+            ], 'settings_lines' => [
+                'calendar_working_dates' => '',
+                'calendar_extra_holiday_dates' => '',
             ]]);
 
         $log = AuditLog::query()->where('event', 'settings.updated')->sole();

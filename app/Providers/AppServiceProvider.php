@@ -39,6 +39,7 @@ use App\Models\StockNoteLine;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Settings\BackupSettings;
 use App\Settings\BusinessSettings;
 use App\Settings\CalendarSettings;
 use App\Settings\CoreSettings;
@@ -71,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
             $registry = new SettingsRegistry;
             CoreSettings::register($registry);
             CalendarSettings::register($registry);
+            BackupSettings::register($registry);
             BusinessSettings::register($registry);
             ReminderSettings::register($registry);
 

@@ -19,6 +19,8 @@ Route::controller(MaintenanceController::class)->prefix('maintenance')->group(fu
     Route::post('/generate-key', 'generateKey')->name('maintenance.generate-key');
     Route::post('/migrate', 'migrate')->name('maintenance.migrate');
     Route::post('/clear-caches', 'clearCaches')->name('maintenance.clear-caches');
+    Route::post('/backup', 'backup')->name('maintenance.backup');
+    Route::post('/restore', 'restore')->name('maintenance.restore');
     Route::post('/create-owner', 'createOwner')->name('maintenance.create-owner');
     Route::post('/recover-owner', 'recoverOwner')->name('maintenance.recover-owner');
 });
