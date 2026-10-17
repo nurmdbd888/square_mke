@@ -898,5 +898,15 @@
     "The page you requested does not exist.": "আপনি যে পৃষ্ঠাটি খুঁজছেন তা নেই।",
     "Back to dashboard": "ড্যাশবোর্ডে ফিরুন",
     "Service unavailable": "সেবা সাময়িকভাবে বন্ধ",
-    "The app is temporarily down for maintenance. Try again in a few minutes.": "রক্ষণাবেক্ষণের জন্য অ্যাপ সাময়িক বন্ধ। কয়েক মিনিট পর আবার চেষ্টা করুন।"
+    "The app is temporarily down for maintenance. Try again in a few minutes.": "রক্ষণাবেক্ষণের জন্য অ্যাপ সাময়িক বন্ধ। কয়েক মিনিট পর আবার চেষ্টা করুন।",
+    "Click a product to add it to the invoice.": "ইনভয়েসে যোগ করতে একটি পণ্যে ক্লিক করুন।",
+    "Code, English or Bangla name": "কোড, ইংরেজি বা বাংলা নাম",
+    "Disc.": "ছাড়",
+    "Hide tax & bonus": "ট্যাক্স ও বোনাস লুকান",
+    "No products yet. Search on the left and click to add.": "এখনো কোনো পণ্য নেই। বাম দিকে খুঁজে ক্লিক করে যোগ করুন।",
+    "Party name": "পার্টির নাম",
+    "Products on this invoice": "এই ইনভয়েসের পণ্য",
+    "Search on the left, click a product to add it. Change quantity and price on the right.": "বাম দিকে খুঁজুন, পণ্যে ক্লিক করে যোগ করুন। ডান দিকে পরিমাণ ও মূল্য পরিবর্তন করুন।",
+    "Search product": "পণ্য খুঁজুন",
+    "Tax & bonus": "ট্যাক্স ও বোনাস"
 }
