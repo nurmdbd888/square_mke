@@ -44,4 +44,19 @@ class PartyCodePickerTest extends TestCase
             ->assertSee('চাকা সাবান', false)
             ->assertSee('name_bn', false);
     }
+
+    public function test_add_sale_form_has_brand_filter_for_products(): void
+    {
+        $owner = $this->owner();
+
+        $this->actingAs($owner)->get(route('sales.create'))
+            ->assertOk()
+            ->assertSee('data-testid="product-brand-filter"', false)
+            ->assertSee('brandFilter', false)
+            ->assertSee('Meril', false);
+
+        $this->actingAs($owner)->get(route('purchases.create'))
+            ->assertOk()
+            ->assertSee('data-testid="product-brand-filter"', false);
+    }
 }
