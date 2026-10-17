@@ -20,8 +20,12 @@
             <span class="label">{{ __('To') }}</span>
             <input type="date" name="to" value="{{ $to }}" class="input">
         </label>
+        @include('reports.partials.business-days-filter', ['businessDaysOnly' => $businessDaysOnly ?? false])
         <button class="btn-secondary">{{ __('Filter') }}</button>
     </form>
+    @if ($businessDaysOnly ?? false)
+        <p class="mt-2 text-sm text-brand-700" data-testid="business-days-active">{{ __('Totals include business days only (weekly holidays excluded).') }}</p>
+    @endif
 
     <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="pl-summary">
         @foreach ([

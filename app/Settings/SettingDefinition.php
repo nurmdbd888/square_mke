@@ -23,6 +23,10 @@ final class SettingDefinition
 
     public const ROLES = 'roles';
 
+    public const WEEKDAYS = 'weekdays';
+
+    public const DATE_LIST = 'date_list';
+
     /**
      * @param  array<string, string>  $options  value => label (English, translated in the view)
      * @param  list<mixed>  $rules  extra validation rules for one value
@@ -48,7 +52,7 @@ final class SettingDefinition
     {
         if ($value === null) {
             return match ($this->type) {
-                self::ROLES => [],
+                self::ROLES, self::WEEKDAYS, self::DATE_LIST => [],
                 self::STRING => in_array('nullable', $this->rules, true) ? '' : null,
                 default => null,
             };
@@ -58,6 +62,8 @@ final class SettingDefinition
             self::INTEGER => (int) $value,
             self::BOOLEAN => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             self::ROLES => array_values(array_map('strval', (array) $value)),
+            self::WEEKDAYS => array_values(array_unique(array_map('intval', array_filter((array) $value, fn ($v) => $v !== '' && $v !== null)))),
+            self::DATE_LIST => array_values(array_map('strval', (array) $value)),
             default => (string) $value,
         };
     }
@@ -78,6 +84,8 @@ final class SettingDefinition
             self::DECIMAL => ['required', 'decimal:0,4'],
             self::CHOICE => ['required', Rule::in(array_keys($this->options))],
             self::ROLES => ['array'],
+            self::WEEKDAYS => ['array'],
+            self::DATE_LIST => ['array'],
             default => [],
         };
 

@@ -600,3 +600,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: master list pages use **`master.partials.list-toolbar`**: one **Import** link and one **Export** control. When an entity is registered in `ExportRegistry` (products, retailers), Export is the M7 downloads menu (`export.partials.actions`); other importable entities keep a single CSV **Export** via `imports.entity.export`. Removed duplicate Export from `import.partials.list-actions` on pages that also included the M7 menu.
 - Reason: owner bug — Products showed Export | Import | Export | Add.
 - Change: products/retailers index, shared toolbar partial.
+
+**116. Weekly holiday calendar (Tuesday default)** — 2026-10-17
+- Decision: **`weekly_holiday_weekdays`** (ISO 1 = Monday … 7 = Sunday, default **`[2]` Tuesday** only) defines regular closed days; Saturday and Sunday are **not** excluded unless ticked. **`calendar_working_dates`** and **`calendar_extra_holiday_dates`** are plain date lists (one `yyyy-mm-dd` per line on **Settings**) that override weekly rules for specific days (for example a working Tuesday or a mid-week public holiday). **`App\Domain\Calendar\BusinessCalendar`** resolves `isBusinessDay()` and date lists for reporting. Dashboard, P&L, cash/bank/day books and P&L export accept **`business_days=1`** (“Exclude weekly holidays”) to filter movements and P&L lines to business days only; fiscal year stays July–June via **`fiscal_year_start_month`**.
+- Reason: owner weekly holiday is Tuesday, not Sat/Sun; need exception Tuesdays and report toggles.
+- Change: Settings **Business calendar** group, report filter checkbox, `BusinessCalendar` + tests.

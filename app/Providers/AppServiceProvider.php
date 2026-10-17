@@ -40,6 +40,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Settings\BusinessSettings;
+use App\Settings\CalendarSettings;
 use App\Settings\CoreSettings;
 use App\Settings\ReminderSettings;
 use App\Settings\SettingsRegistry;
@@ -69,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRegistry::class, function () {
             $registry = new SettingsRegistry;
             CoreSettings::register($registry);
+            CalendarSettings::register($registry);
             BusinessSettings::register($registry);
             ReminderSettings::register($registry);
 

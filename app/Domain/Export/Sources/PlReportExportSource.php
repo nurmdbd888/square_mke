@@ -23,7 +23,8 @@ final class PlReportExportSource implements ExportSource
     {
         $from = $filters['from'] ?? now()->startOfMonth()->toDateString();
         $to = $filters['to'] ?? now()->endOfMonth()->toDateString();
-        $figures = $this->summary->between($from, $to);
+        $businessDaysOnly = filter_var($filters['business_days'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $figures = $this->summary->between($from, $to, $businessDaysOnly);
 
         $headers = ['Line', 'Amount'];
         $lines = [

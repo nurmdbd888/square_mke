@@ -6,6 +6,7 @@ use App\Domain\Payments\Books;
 use App\Domain\Payments\DailyCloser;
 use App\Http\Controllers\Controller;
 use App\Models\DailyClosing;
+use App\Support\Http\BusinessDaysFilter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -29,13 +30,14 @@ class BookController extends Controller
 
     public function day(Request $request): View
     {
-        [$from, $to] = $this->range($request);
-        $book = $this->books->dayBook($from, $to);
+        [$from, $to, $businessDaysOnly] = $this->range($request);
+        $book = $this->books->dayBook($from, $to, $businessDaysOnly);
 
         return view('accounts.day-book', [
             'from' => $from,
             'to' => $to,
             'book' => $book,
+            'businessDaysOnly' => $businessDaysOnly,
             'canManage' => $request->user()->can('accounts.manage'),
         ]);
     }
@@ -66,10 +68,10 @@ class BookController extends Controller
 
     private function showBook(Request $request, string $type): View
     {
-        [$from, $to] = $this->range($request);
+        [$from, $to, $businessDaysOnly] = $this->range($request);
         $book = $type === 'cash'
-            ? $this->books->cashBook($from, $to)
-            : $this->books->bankBook($from, $to);
+            ? $this->books->cashBook($from, $to, $businessDaysOnly)
+            : $this->books->bankBook($from, $to, $businessDaysOnly);
 
         return view('accounts.book', [
             'type' => $type,
@@ -77,22 +79,24 @@ class BookController extends Controller
             'from' => $from,
             'to' => $to,
             'book' => $book,
+            'businessDaysOnly' => $businessDaysOnly,
         ]);
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * @return array{0: string, 1: string, 2: bool}
      */
     private function range(Request $request): array
     {
         $data = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
+            'business_days' => ['nullable', 'boolean'],
         ]);
 
         $to = $data['to'] ?? now()->toDateString();
         $from = $data['from'] ?? $to;
 
-        return [$from, $to];
+        return [$from, $to, BusinessDaysFilter::fromRequest($request)];
     }
 }

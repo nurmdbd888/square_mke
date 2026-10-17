@@ -2,6 +2,7 @@
 
 namespace App\Domain\Reports;
 
+use App\Domain\Calendar\BusinessCalendar;
 use App\Domain\Money\Exact;
 use App\Domain\Payments\PartyBalance;
 use App\Domain\Profit\Summary;
@@ -25,27 +26,29 @@ final class DashboardMetrics
     /**
      * @return array<string, mixed>
      */
-    public function snapshot(?Carbon $asOf = null): array
+    public function snapshot(?Carbon $asOf = null, bool $businessDaysOnly = false): array
     {
         $asOf ??= now();
         $today = $asOf->toDateString();
         $monthStart = $asOf->copy()->startOfMonth()->toDateString();
         $monthEnd = $asOf->copy()->endOfMonth()->toDateString();
 
-        $todayPl = $this->summary->between($today, $today);
-        $monthPl = $this->summary->between($monthStart, $monthEnd);
+        $todayPl = $this->summary->between($today, $today, $businessDaysOnly);
+        $monthPl = $this->summary->between($monthStart, $monthEnd, $businessDaysOnly);
 
-        $todaySales = Document::query()
+        $todaySalesQuery = Document::query()
             ->where('type', Document::TYPE_SALE)
             ->where('status', Document::STATUS_POSTED)
-            ->whereDate('doc_date', $today)
-            ->sum('net_total');
+            ->whereDate('doc_date', $today);
+        $this->applyBusinessDayFilter($todaySalesQuery, 'doc_date', $today, $today, $businessDaysOnly);
+        $todaySales = $todaySalesQuery->sum('net_total');
 
-        $monthSales = Document::query()
+        $monthSalesQuery = Document::query()
             ->where('type', Document::TYPE_SALE)
             ->where('status', Document::STATUS_POSTED)
-            ->whereBetween('doc_date', [$monthStart, $monthEnd])
-            ->sum('net_total');
+            ->whereBetween('doc_date', [$monthStart, $monthEnd]);
+        $this->applyBusinessDayFilter($monthSalesQuery, 'doc_date', $monthStart, $monthEnd, $businessDaysOnly);
+        $monthSales = $monthSalesQuery->sum('net_total');
 
         $revenue = Exact::of($monthPl['revenue']);
         $gross = Exact::of($monthPl['gross']);
@@ -61,8 +64,8 @@ final class DashboardMetrics
             'month_net_profit' => $monthPl['net_profit'],
             'stock_value' => $this->stockValue(),
             'receivables_due' => $this->receivablesDue($today),
-            'top_products' => $this->topProducts($monthStart, $monthEnd),
-            'top_retailers' => $this->topRetailers($monthStart, $monthEnd),
+            'top_products' => $this->topProducts($monthStart, $monthEnd, businessDaysOnly: $businessDaysOnly),
+            'top_retailers' => $this->topRetailers($monthStart, $monthEnd, businessDaysOnly: $businessDaysOnly),
             'today_profit_before_expenses' => $todayPl['profit_before_expenses'],
         ];
     }
@@ -97,14 +100,16 @@ final class DashboardMetrics
     /**
      * @return list<array{product: Product, revenue: string}>
      */
-    private function topProducts(string $from, string $to, int $limit = 5): array
+    private function topProducts(string $from, string $to, int $limit = 5, bool $businessDaysOnly = false): array
     {
-        $rows = DB::table('document_lines')
+        $query = DB::table('document_lines')
             ->join('documents', 'documents.id', '=', 'document_lines.document_id')
             ->join('products', 'products.id', '=', 'document_lines.product_id')
             ->where('documents.type', Document::TYPE_SALE)
             ->where('documents.status', Document::STATUS_POSTED)
-            ->whereBetween('documents.doc_date', [$from, $to])
+            ->whereBetween('documents.doc_date', [$from, $to]);
+        $this->applyBusinessDayFilter($query, 'documents.doc_date', $from, $to, $businessDaysOnly);
+        $rows = $query
             ->where('document_lines.kind', '!=', 'combo_bonus') // DocumentLine::KIND_COMBO_BONUS
             ->groupBy('document_lines.product_id', 'products.id', 'products.name_en', 'products.code')
             ->orderByDesc(DB::raw('SUM(document_lines.line_value)'))
@@ -125,13 +130,15 @@ final class DashboardMetrics
     /**
      * @return list<array{retailer: Retailer, revenue: string}>
      */
-    private function topRetailers(string $from, string $to, int $limit = 5): array
+    private function topRetailers(string $from, string $to, int $limit = 5, bool $businessDaysOnly = false): array
     {
-        $rows = DB::table('documents')
+        $query = DB::table('documents')
             ->join('retailers', 'retailers.id', '=', 'documents.retailer_id')
             ->where('documents.type', Document::TYPE_SALE)
             ->where('documents.status', Document::STATUS_POSTED)
-            ->whereBetween('documents.doc_date', [$from, $to])
+            ->whereBetween('documents.doc_date', [$from, $to]);
+        $this->applyBusinessDayFilter($query, 'documents.doc_date', $from, $to, $businessDaysOnly);
+        $rows = $query
             ->groupBy('retailers.id', 'retailers.name', 'retailers.code')
             ->orderByDesc(DB::raw('SUM(documents.revenue)'))
             ->limit($limit)
@@ -145,5 +152,24 @@ final class DashboardMetrics
             'retailer' => Retailer::query()->find($row->id),
             'revenue' => Exact::money(Exact::of($row->revenue)),
         ])->all();
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>|\Illuminate\Database\Query\Builder  $query
+     */
+    private function applyBusinessDayFilter($query, string $column, string $from, string $to, bool $businessDaysOnly): void
+    {
+        if (! $businessDaysOnly) {
+            return;
+        }
+
+        $days = app(BusinessCalendar::class)->businessDaysBetween($from, $to);
+        if ($days === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereIn($column, $days);
     }
 }

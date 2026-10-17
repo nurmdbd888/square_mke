@@ -14,8 +14,12 @@
             <span class="label">{{ __('To') }}</span>
             <input type="date" name="to" value="{{ $to }}" class="input">
         </label>
+        @include('reports.partials.business-days-filter', ['businessDaysOnly' => $businessDaysOnly ?? false])
         <button class="btn-secondary">{{ __('Filter') }}</button>
     </form>
+    @if ($businessDaysOnly ?? false)
+        <p class="mt-2 text-sm text-brand-700" data-testid="business-days-active">{{ __('Movements on weekly holidays are hidden unless marked as a working day in Settings.') }}</p>
+    @endif
 
     <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="day-book-totals">
         <div class="card"><p class="text-xs uppercase text-slate-500">{{ __('Cash in') }}</p><p class="mt-1 font-mono text-lg font-semibold">{{ format_money($book['cash']['in']) }}</p></div>

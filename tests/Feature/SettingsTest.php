@@ -18,12 +18,14 @@ class SettingsTest extends TestCase
      */
     private function form(array $overrides = []): array
     {
-        return ['settings' => $overrides + [
+        return [
+            'settings' => $overrides + [
             'firm_name' => 'M/s Khaza Enterprise',
             'distributor_code' => '4831',
             'default_locale' => 'en',
             'fiscal_year_start_month' => '7',
             'require_2fa_roles' => [],
+            'weekly_holiday_weekdays' => ['2'],
             'vat_recoverable' => '1',
             'sd_in_cost' => '1',
             'costing_mode' => 'weighted_average',
@@ -40,7 +42,12 @@ class SettingsTest extends TestCase
             'reminder_http_sms_url' => '',
             'reminder_whatsapp_token' => '',
             'reminder_whatsapp_phone_id' => '',
-        ]];
+            ],
+            'settings_lines' => [
+                'calendar_working_dates' => '',
+                'calendar_extra_holiday_dates' => '',
+            ],
+        ];
     }
 
     private function defineDatedSetting(): void

@@ -14,7 +14,14 @@
     </section>
 
     @if ($metrics)
-        <section class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="dashboard-metrics">
+        <form method="GET" class="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+            @include('reports.partials.business-days-filter', ['businessDaysOnly' => $businessDaysOnly ?? false])
+            <button class="btn-secondary text-sm">{{ __('Apply') }}</button>
+        </form>
+        @if ($businessDaysOnly ?? false)
+            <p class="mt-2 text-sm text-brand-700" data-testid="business-days-active">{{ __('Month KPIs exclude weekly holidays.') }}</p>
+        @endif
+        <section class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="dashboard-metrics">
             <div class="card">
                 <p class="text-xs font-medium uppercase text-slate-500">{{ __('Today sales') }}</p>
                 <p class="mt-1 font-mono text-lg font-semibold">{{ format_money($metrics['today_sales']) }}</p>
