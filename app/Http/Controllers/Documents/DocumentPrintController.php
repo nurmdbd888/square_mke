@@ -17,14 +17,14 @@ class DocumentPrintController extends Controller
         $this->authorizePrint($request, $document);
         abort_unless($document->isSale(), 404);
 
-        return $this->render($document, 'print.invoice-a4', __('Tax invoice'));
+        return $this->renderBranded($request, $document, __('Tax invoice'));
     }
 
     public function challanA4(Request $request, Document $document): View
     {
         $this->authorizePrint($request, $document);
 
-        return $this->render($document, 'print.challan-a4', __('Delivery challan'));
+        return $this->renderBranded($request, $document, __('Delivery challan'));
     }
 
     public function thermal80(Request $request, Document $document): View
@@ -45,6 +45,24 @@ class DocumentPrintController extends Controller
             'firmName' => setting('firm_name'),
             'distributorCode' => setting('distributor_code'),
             'qrSvg' => $this->qr->forDocument($document, $view === 'print.thermal-80mm' ? 96 : 120),
+        ]);
+    }
+
+    private function renderBranded(Request $request, Document $document, string $docTitle): View
+    {
+        $document->load(['lines.product', 'supplier', 'retailer', 'salesRep', 'route', 'vehicle']);
+        $size = $request->query('size', (string) setting('default_print_size', 'a5'));
+        if (! in_array($size, ['a5', 'a4'], true)) {
+            $size = 'a5';
+        }
+
+        return view('print.invoice-branded', [
+            'document' => $document,
+            'docTitle' => $docTitle,
+            'firmName' => setting('firm_name'),
+            'distributorCode' => setting('distributor_code'),
+            'printSize' => $size,
+            'qrSvg' => $this->qr->forDocument($document, $size === 'a4' ? 120 : 100),
         ]);
     }
 

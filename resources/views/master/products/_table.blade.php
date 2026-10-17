@@ -65,7 +65,7 @@
                     @endif
                     <td class="text-right">
                         @if ($manage)
-                            <a href="{{ route('products.edit', $row) }}" class="font-medium text-brand-700 underline">{{ __('Edit') }}</a>
+                            <x-row-actions :edit="route('products.edit', $row)" />
                         @endif
                     </td>
                 </tr>

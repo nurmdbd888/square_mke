@@ -208,9 +208,9 @@
                             <thead>
                                 <tr>
                                     <th>{{ __('Product') }}</th>
-                                    <th class="w-20">{{ __('Qty') }}</th>
-                                    <th class="w-24">{{ __('Price') }}</th>
-                                    <th class="w-20">{{ __('Disc.') }}</th>
+                                    <th class="min-w-[5.5rem]">{{ __('Qty') }}</th>
+                                    <th class="min-w-[6.5rem]">{{ __('Price') }}</th>
+                                    <th class="min-w-[5.5rem]">{{ __('Disc.') }}</th>
                                     <th class="w-24 text-right">{{ __('Total') }}</th>
                                     <th class="w-16"><span class="sr-only">{{ __('Actions') }}</span></th>
                                 </tr>
@@ -230,13 +230,13 @@
                                             <button type="button" class="mt-1 block text-xs text-brand-700 underline" @click="line.showTax = !line.showTax" x-text="line.showTax ? '{{ __('Hide tax & bonus') }}' : '{{ __('Tax & bonus') }}'"></button>
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][qty]`" x-model="line.qty" required inputmode="decimal" class="input py-1.5 text-sm" @input="recalc(index)">
+                                            <input type="text" :name="`lines[${index}][qty]`" x-model="line.qty" required inputmode="decimal" class="input-num py-1.5 text-sm" @input="recalc(index)">
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input py-1.5 text-sm font-mono" @input="recalc(index)">
+                                            <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" @input="recalc(index)">
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input py-1.5 text-sm font-mono" @input="recalc(index)">
+                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" @input="recalc(index)">
                                         </td>
                                         <td class="text-right font-mono">
                                             <input type="hidden" :name="`lines[${index}][line_value]`" x-model="line.line_value">

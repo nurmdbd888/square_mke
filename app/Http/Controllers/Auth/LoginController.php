@@ -67,7 +67,11 @@ class LoginController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('dashboard'));
+        $home = $user->hasRole('collector') && ! $user->isOwner()
+            ? route('collector.index')
+            : route('dashboard');
+
+        return redirect()->intended($home);
     }
 
     public function logout(Request $request): RedirectResponse

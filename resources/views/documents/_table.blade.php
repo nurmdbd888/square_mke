@@ -1,7 +1,10 @@
 @php
     $showRoute = $type === 'purchase' ? 'purchases.show' : 'sales.show';
+    $editRoute = $type === 'purchase' ? 'purchases.edit' : 'sales.edit';
     $bulkRoute = $type === 'purchase' ? 'purchases.bulk' : 'sales.bulk';
-    $span = 6 + ($canManage ? 1 : 0);
+    $isSale = $type === 'sale';
+    $span = 6 + ($isSale ? 1 : 0) + ($canManage ? 1 : 0);
+    $collection = app(\App\Domain\Payments\SaleCollectionStatus::class);
 @endphp
 @if ($canManage)
     <form method="POST" action="{{ route($bulkRoute) }}">
@@ -19,6 +22,9 @@
                 <th>{{ __('Party') }}</th>
                 <th class="text-right">{{ __('Total') }}</th>
                 <th>{{ __('Status') }}</th>
+                @if ($isSale)
+                    <th>{{ __('Collection') }}</th>
+                @endif
                 <th></th>
             </tr>
         </thead>
@@ -31,7 +37,7 @@
                         </td>
                     @endif
                     <td class="font-mono">{{ $document->number }}</td>
-                    <td>{{ local_digits($document->doc_date->format('d-m-Y')) }}</td>
+                    <td>{{ format_app_date($document->doc_date) }}</td>
                     <td>{{ $document->partyLabel() }}</td>
                     <td class="text-right font-mono">{{ format_money($document->net_total) }}</td>
                     <td>
@@ -41,8 +47,34 @@
                             'bg-emerald-50 text-emerald-800' => $document->isPosted(),
                             'bg-slate-100 text-slate-600' => $document->isVoid(),
                         ])>{{ __(ucfirst($document->status)) }}</span>
+                        @if ($isSale && $document->isPosted() && $document->doc_date->lt(now()->subDays(30)))
+                            @php $rem = $collection->remainingAmount($document); @endphp
+                            @if ($rem->isPositive())
+                                <span class="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800">{{ __('Overdue') }}</span>
+                            @endif
+                        @endif
                     </td>
-                    <td class="text-right"><a href="{{ route($showRoute, $document) }}" class="text-brand-700 underline">{{ __('Open') }}</a></td>
+                    @if ($isSale)
+                        <td>
+                            @if ($document->isPosted())
+                                <span @class([
+                                    'rounded px-2 py-0.5 text-xs font-medium',
+                                    'bg-red-50 text-red-800' => in_array($document->collection_status, [null, 'due'], true),
+                                    'bg-amber-50 text-amber-900' => $document->collection_status === 'partial',
+                                    'bg-emerald-50 text-emerald-800' => $document->collection_status === 'completed',
+                                ])>{{ $collection->label($document->collection_status) }}</span>
+                            @else
+                                —
+                            @endif
+                        </td>
+                    @endif
+                    <td class="text-right">
+                        <x-row-actions
+                            :view="route($showRoute, $document)"
+                            :view-label="__('Open')"
+                            :edit="$canManage ? route($editRoute, $document) : null"
+                        />
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="{{ $span }}" class="py-8 text-center text-slate-500">{{ __('No documents yet.') }}</td></tr>

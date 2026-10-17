@@ -19,6 +19,7 @@
 <div
     class="block"
     x-data="partyCodePicker({{ Js::from($items) }}, {{ Js::from($selected) }})"
+    x-init="if (partyId) { $nextTick(() => $refs.hiddenInput?.dispatchEvent(new Event('change', { bubbles: true }))); }"
     @keydown.escape.window="open = false"
 >
     <span class="label">{{ $label }}</span>
@@ -26,7 +27,8 @@
         type="hidden"
         name="{{ $name }}"
         x-ref="hiddenInput"
-        :value="partyId || ''"
+        x-model="partyId"
+        value="{{ $resolvedId ?? '' }}"
         @if ($required) required @endif
         {{ $attributes }}
     >
