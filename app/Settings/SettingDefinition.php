@@ -47,7 +47,11 @@ final class SettingDefinition
     public function cast(mixed $value): mixed
     {
         if ($value === null) {
-            return $this->type === self::ROLES ? [] : null;
+            return match ($this->type) {
+                self::ROLES => [],
+                self::STRING => in_array('nullable', $this->rules, true) ? '' : null,
+                default => null,
+            };
         }
 
         return match ($this->type) {
@@ -63,15 +67,24 @@ final class SettingDefinition
      */
     public function validationRules(): array
     {
+        $extra = $this->rules;
+        $nullable = in_array('nullable', $extra, true);
+        $extra = array_values(array_filter($extra, fn ($rule) => $rule !== 'nullable'));
+
         $base = match ($this->type) {
-            self::STRING => ['required', 'string', 'max:191'],
+            self::STRING => array_merge([$nullable ? 'nullable' : 'required', 'string', 'max:191'], $extra),
             self::INTEGER => ['required', 'integer'],
             self::BOOLEAN => ['boolean'],
             self::DECIMAL => ['required', 'decimal:0,4'],
             self::CHOICE => ['required', Rule::in(array_keys($this->options))],
             self::ROLES => ['array'],
+            default => [],
         };
 
-        return array_merge($base, $this->rules);
+        if ($this->type === self::STRING) {
+            return $base;
+        }
+
+        return array_merge($base, $extra);
     }
 }

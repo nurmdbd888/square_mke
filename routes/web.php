@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
+use App\Http\Controllers\Documents\DocumentPrintController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\Export\ExportController;
 use App\Http\Controllers\Google\GoogleDriveController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reports\MonthLockController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Sales\SalesDraftSyncController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Stock\ClaimController;
 use App\Http\Controllers\Stock\StockComparisonController;
@@ -176,6 +178,11 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
         Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
         Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.manage')->name('sales.destroy');
+        Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
+        Route::get('/sales/{document}/print/invoice', [DocumentPrintController::class, 'invoiceA4'])->middleware('can:sales.view')->name('sales.print.invoice');
+        Route::get('/sales/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:sales.view')->name('sales.print.challan');
+        Route::get('/sales/{document}/print/thermal', [DocumentPrintController::class, 'thermal80'])->middleware('can:sales.view')->name('sales.print.thermal');
+        Route::get('/purchases/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:purchases.view')->name('purchases.print.challan');
 
         Route::middleware('can:stock.view')->group(function () {
             Route::get('/stock', [StockController::class, 'index'])->name('stock.index');

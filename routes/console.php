@@ -31,3 +31,8 @@ Schedule::call(function () {
         ->pluck('id')
         ->each(fn (int $id) => RefreshGoogleSheetJob::dispatch($id));
 })->name('google:refresh-sheets')->everyMinute()->withoutOverlapping(5);
+
+Schedule::call(fn () => Artisan::call('sdm:send-due-reminders'))
+    ->name('sdm:send-due-reminders')
+    ->dailyAt('09:00')
+    ->withoutOverlapping(30);

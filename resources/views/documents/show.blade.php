@@ -26,8 +26,19 @@
                 ])>{{ __(ucfirst($document->status)) }}</span>
             </p>
         </div>
-        @if ($canManage && ! $document->isVoid())
+        @if (! $document->isVoid())
             <div class="flex flex-wrap gap-2">
+                @if ($document->isSale())
+                    <a href="{{ route('sales.print.invoice', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice') }}</a>
+                    <a href="{{ route('sales.print.challan', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
+                    <a href="{{ route('sales.print.thermal', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
+                @else
+                    <a href="{{ route('purchases.print.challan', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
+                @endif
+            </div>
+        @endif
+        @if ($canManage && ! $document->isVoid())
+            <div class="mt-2 flex flex-wrap gap-2">
                 <a href="{{ route($editRoute, $document) }}" class="btn-secondary">{{ __('Edit') }}</a>
                 @if ($document->isDraft())
                     <form method="POST" action="{{ route($postRoute, $document) }}">
