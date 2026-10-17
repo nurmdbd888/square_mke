@@ -8,6 +8,8 @@
         ['route' => 'purchases.index', 'label' => __('Purchases'), 'active' => 'purchases.*', 'can' => 'purchases.view'],
         ['route' => 'sales.index', 'label' => __('Sales'), 'active' => 'sales.*', 'can' => 'sales.view'],
         ['route' => 'stock.index', 'label' => __('Stock'), 'active' => 'stock.*', 'can' => 'stock.view'],
+        ['route' => 'returns.index', 'label' => __('Returns'), 'active' => 'returns.*', 'can' => 'returns.view'],
+        ['route' => 'claims.index', 'label' => __('Claims'), 'active' => 'claims.*', 'can' => 'claims.view'],
         ['route' => 'payments.index', 'label' => __('Payments'), 'active' => 'payments.*', 'can' => 'payments.view'],
         ['route' => 'accounts.receivables', 'label' => __('Receivables'), 'active' => 'accounts.receivables', 'can' => 'accounts.view'],
         ['route' => 'accounts.payables', 'label' => __('Payables'), 'active' => 'accounts.payables', 'can' => 'accounts.view'],

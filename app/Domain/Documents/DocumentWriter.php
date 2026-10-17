@@ -7,8 +7,10 @@ use App\Domain\Costing\PurchaseCost;
 use App\Domain\Costing\Recompute;
 use App\Domain\Money\Exact;
 use App\Domain\Profit\Commission;
+use App\Domain\Stock\BatchRegistry;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\Product;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Support\Carbon;
@@ -26,6 +28,7 @@ final class DocumentWriter
         private readonly PurchaseCost $purchaseCost,
         private readonly Commission $commission,
         private readonly Recompute $recompute,
+        private readonly BatchRegistry $batches,
     ) {}
 
     /**
@@ -96,10 +99,18 @@ final class DocumentWriter
             $document->lines()->delete();
 
             foreach ($lines as $i => $line) {
+                $product = Product::query()->find((int) $line['product_id']);
+                $batch = $product !== null
+                    ? $this->batches->forLine($product, $line['batch_no'] ?? null, $line['expiry_date'] ?? null)
+                    : null;
+
                 DocumentLine::query()->create([
                     'document_id' => $document->id,
                     'line_no' => $i + 1,
                     'product_id' => (int) $line['product_id'],
+                    'batch_no' => isset($line['batch_no']) ? (string) $line['batch_no'] : null,
+                    'expiry_date' => empty($line['expiry_date']) ? null : Carbon::parse($line['expiry_date'])->toDateString(),
+                    'product_batch_id' => $batch?->id ?? ($line['product_batch_id'] ?? null),
                     'kind' => ($line['kind'] ?? DocumentLine::KIND_NORMAL) === DocumentLine::KIND_COMBO_BONUS
                         ? DocumentLine::KIND_COMBO_BONUS
                         : DocumentLine::KIND_NORMAL,

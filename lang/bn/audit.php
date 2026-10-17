@@ -61,6 +61,15 @@ return [
         'daily_closing' => [
             'created' => 'দৈনিক সমাপনী রেকর্ড',
         ],
+        'stock_note' => [
+            '*' => 'স্টক নোটের সব কার্যক্রম',
+            'posted' => 'স্টক নোট পোস্ট',
+            'posted_edited' => 'পোস্ট করা স্টক নোট সম্পাদনা',
+            'voided' => 'স্টক নোট বাতিল',
+        ],
+        'claim' => [
+            'status_changed' => 'দাবির অবস্থা পরিবর্তন',
+        ],
     ],
     'types' => [
         'user' => 'ব্যবহারকারী',
@@ -84,6 +93,10 @@ return [
         'payment_allocation' => 'পেমেন্ট বরাদ্দ',
         'daily_closing' => 'দৈনিক সমাপনী',
         'expense_category' => 'খরচের শ্রেণি',
+        'stock_note' => 'স্টক নোট',
+        'stock_note_line' => 'স্টক নোট লাইন',
+        'claim' => 'দাবি',
+        'stock_comparison' => 'স্টক তুলনা',
     ],
     'sources' => [
         'web' => 'অ্যাপ',

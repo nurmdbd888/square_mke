@@ -29,6 +29,11 @@ class SettingsTest extends TestCase
             'costing_mode' => 'weighted_average',
             'block_negative_stock' => '0',
             'purchase_bonus_cost' => 'zero',
+            'near_expiry_days' => '60',
+            'count_commission' => '1',
+            'commission_pct' => '5',
+            'commission_vat_pct' => '0.62',
+            'commission_base' => 'sales',
         ]];
     }
 

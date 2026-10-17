@@ -56,6 +56,12 @@ class PermissionRegistry
             'sales.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
             'sales.manage' => ['accountant', 'sr', 'data_entry'],
             'stock.view' => ['accountant', 'data_entry', 'viewer'],
+            'stock.manage' => ['accountant', 'data_entry'],
+            'returns.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'returns.manage' => ['accountant', 'sr', 'data_entry'],
+            'claims.view' => ['accountant', 'data_entry', 'viewer'],
+            'claims.manage' => ['accountant', 'data_entry'],
+            'stock.compare' => ['accountant', 'data_entry'],
         ],
         'accounts' => [
             'payments.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
@@ -70,7 +76,7 @@ class PermissionRegistry
      */
     public static function all(): array
     {
-        return array_merge(...array_map('array_keys', array_values(self::PERMISSIONS)));
+        return array_values(array_unique(array_merge(...array_map('array_keys', array_values(self::PERMISSIONS)))));
     }
 
     /**
