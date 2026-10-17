@@ -7,5 +7,6 @@ return [
         'security' => 'Security',
         'costing' => 'Stock costing',
         'commission' => 'Commission',
+        'reminders' => 'Payment reminders',
     ],
 ];

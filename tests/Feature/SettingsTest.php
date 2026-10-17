@@ -34,6 +34,12 @@ class SettingsTest extends TestCase
             'commission_pct' => '5',
             'commission_vat_pct' => '0.62',
             'commission_base' => 'sales',
+            'reminder_enabled' => '0',
+            'reminder_channel' => 'log',
+            'reminder_due_days' => '30',
+            'reminder_http_sms_url' => '',
+            'reminder_whatsapp_token' => '',
+            'reminder_whatsapp_phone_id' => '',
         ]];
     }
 

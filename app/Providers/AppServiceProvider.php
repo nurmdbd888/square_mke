@@ -41,6 +41,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Settings\BusinessSettings;
 use App\Settings\CoreSettings;
+use App\Settings\ReminderSettings;
 use App\Settings\SettingsRegistry;
 use App\Settings\SettingsStore;
 use App\Support\Access\PermissionRegistry;
@@ -69,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
             $registry = new SettingsRegistry;
             CoreSettings::register($registry);
             BusinessSettings::register($registry);
+            ReminderSettings::register($registry);
 
             return $registry;
         });

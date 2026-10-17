@@ -7,5 +7,6 @@ return [
         'security' => 'নিরাপত্তা',
         'costing' => 'স্টক কস্টিং',
         'commission' => 'কমিশন',
+        'reminders' => 'পেমেন্ট অনুস্মারক',
     ],
 ];

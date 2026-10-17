@@ -39,7 +39,25 @@
         <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{{ __('This document is posted. Saving recomputes stock and writes an audit entry.') }}</p>
     @endif
 
-    <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-6" x-data="documentForm({{ Js::from(array_values($oldLines)) }})">
+    @if (! $isPurchase)
+        <p id="offline-sales-banner" class="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900" hidden></p>
+    @endif
+
+    <form
+        method="POST"
+        action="{{ $action }}"
+        enctype="multipart/form-data"
+        class="mt-6 space-y-6"
+        x-data="documentForm({{ Js::from(array_values($oldLines)) }})"
+        @unless($isPurchase)
+            data-offline-sales
+            data-sync-url="{{ route('sales.sync-draft') }}"
+            data-offline-saved-label="{{ __('Saved offline. It will sync when you are back online.') }}"
+            data-syncing-label="{{ __('Syncing offline drafts…') }}"
+            data-synced-label="{{ __('Offline drafts synced.') }}"
+            data-sync-error-label="{{ __('Some drafts could not sync yet.') }}"
+        @endunless
+    >
         @csrf
         @if ($document->exists)
             @method('PUT')
@@ -240,4 +258,9 @@
             };
         }
     </script>
+    @unless($isPurchase)
+        @push('scripts')
+            <script src="{{ asset('js/offline-sales.js') }}?v={{ filemtime(public_path('js/offline-sales.js')) }}" defer></script>
+        @endpush
+    @endunless
 @endsection

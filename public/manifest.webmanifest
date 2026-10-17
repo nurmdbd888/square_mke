@@ -1,0 +1,19 @@
+{
+  "name": "Square Distributor Manager",
+  "short_name": "MKE",
+  "description": "Sales, stock and accounts for Square distributors",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}
