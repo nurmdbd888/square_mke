@@ -4,6 +4,8 @@ namespace App\Domain\Profit;
 
 use App\Domain\Money\Exact;
 use App\Models\Document;
+use App\Models\Payment;
+use App\Models\StockNote;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -23,10 +25,42 @@ final class Summary
      *     commission_gross: string,
      *     commission_vat: string,
      *     commission_net: string,
-     *     profit_before_expenses: string
+     *     profit_before_expenses: string,
+     *     expenses: string,
+     *     stock_loss: string,
+     *     net_profit: string
      * }
      */
     public function between(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): array
+    {
+        $figures = $this->salesBetween($from, $to);
+        $expenses = $this->expensesBetween($from, $to);
+        $stockLoss = $this->stockLossBetween($from, $to);
+        $net = Exact::of($figures['profit_before_expenses'])
+            ->minus(Exact::of($expenses))
+            ->minus(Exact::of($stockLoss));
+
+        return [
+            ...$figures,
+            'expenses' => $expenses,
+            'stock_loss' => $stockLoss,
+            'net_profit' => Exact::money($net),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     revenue: string,
+     *     cogs: string,
+     *     free_goods: string,
+     *     gross: string,
+     *     commission_gross: string,
+     *     commission_vat: string,
+     *     commission_net: string,
+     *     profit_before_expenses: string
+     * }
+     */
+    public function salesBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): array
     {
         $query = Document::query()
             ->where('type', Document::TYPE_SALE)
@@ -68,5 +102,48 @@ final class Summary
             'commission_net' => Exact::money($commNet),
             'profit_before_expenses' => Exact::money($profit),
         ];
+    }
+
+    public function expensesBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): string
+    {
+        $query = Payment::query()
+            ->where('kind', Payment::KIND_PAYMENT)
+            ->where('status', Payment::STATUS_POSTED)
+            ->whereNotNull('expense_category_id');
+
+        if ($from !== null) {
+            $query->whereDate('payment_date', '>=', Carbon::parse($from)->toDateString());
+        }
+        if ($to !== null) {
+            $query->whereDate('payment_date', '<=', Carbon::parse($to)->toDateString());
+        }
+
+        $total = Exact::of('0');
+        foreach ($query->get(['amount']) as $payment) {
+            $total = $total->plus(Exact::of($payment->amount));
+        }
+
+        return Exact::money($total);
+    }
+
+    public function stockLossBetween(CarbonInterface|string|null $from = null, CarbonInterface|string|null $to = null): string
+    {
+        $query = StockNote::query()
+            ->where('status', StockNote::STATUS_POSTED)
+            ->where('stock_loss_total', '>', 0);
+
+        if ($from !== null) {
+            $query->whereDate('doc_date', '>=', Carbon::parse($from)->toDateString());
+        }
+        if ($to !== null) {
+            $query->whereDate('doc_date', '<=', Carbon::parse($to)->toDateString());
+        }
+
+        $total = Exact::of('0');
+        foreach ($query->get(['stock_loss_total']) as $note) {
+            $total = $total->plus(Exact::of($note->stock_loss_total));
+        }
+
+        return Exact::money($total);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Domain\Returns;
 
 use App\Domain\Costing\Recompute;
 use App\Domain\Money\Exact;
+use App\Domain\Reports\MonthLockService;
 use App\Models\DocumentLine;
 use App\Models\ProductBatch;
 use App\Models\StockNote;
@@ -19,7 +20,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class StockNoteWriter
 {
-    public function __construct(private readonly Recompute $recompute) {}
+    public function __construct(
+        private readonly Recompute $recompute,
+        private readonly MonthLockService $monthLocks,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $header
@@ -30,6 +34,8 @@ final class StockNoteWriter
         if ($lines === []) {
             throw ValidationException::withMessages(['lines' => __('Add at least one line.')]);
         }
+
+        $this->monthLocks->assertWritable($header['doc_date'] ?? $existing?->doc_date ?? now());
 
         return DB::transaction(function () use ($type, $header, $lines, $by, $existing) {
             $note = $existing ?? new StockNote(['type' => $type, 'status' => StockNote::STATUS_DRAFT]);

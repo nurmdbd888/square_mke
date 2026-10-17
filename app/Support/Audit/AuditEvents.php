@@ -20,6 +20,7 @@ final class AuditEvents
         'claim.status_changed', 'scheme_line.posted',
         'payment.posted', 'payment.posted_edited', 'payment.voided', 'payment.cleared',
         'daily_closing.created',
+        'month_lock.locked', 'month_lock.unlocked',
     ];
 
     public const TYPES = [
@@ -29,6 +30,7 @@ final class AuditEvents
         'document', 'document_line', 'stock_ledger_entry', 'product_batch',
         'stock_note', 'stock_note_line', 'claim', 'scheme_line', 'stock_comparison',
         'payment', 'payment_allocation', 'daily_closing', 'expense_category',
+        'month_lock', 'import_mapping_profile', 'master_import_batch', 'master_import_row',
     ];
 
     public static function label(string $event): string

@@ -70,6 +70,11 @@ return [
         'claim' => [
             'status_changed' => 'দাবির অবস্থা পরিবর্তন',
         ],
+        'month_lock' => [
+            '*' => 'সব মাস লক কাজ',
+            'locked' => 'মাস লক করা হয়েছে',
+            'unlocked' => 'মাস আনলক করা হয়েছে',
+        ],
     ],
     'types' => [
         'user' => 'ব্যবহারকারী',
@@ -97,6 +102,10 @@ return [
         'stock_note_line' => 'স্টক নোট লাইন',
         'claim' => 'দাবি',
         'stock_comparison' => 'স্টক তুলনা',
+        'month_lock' => 'মাস লক',
+        'import_mapping_profile' => 'ইমপোর্ট ম্যাপিং প্রোফাইল',
+        'master_import_batch' => 'মাস্টার ইমপোর্ট ব্যাচ',
+        'master_import_row' => 'মাস্টার ইমপোর্ট সারি',
     ],
     'sources' => [
         'web' => 'অ্যাপ',

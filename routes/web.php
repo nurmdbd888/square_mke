@@ -21,6 +21,8 @@ use App\Http\Controllers\Master\PriceListController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Reports\MonthLockController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Stock\ClaimController;
@@ -204,6 +206,16 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/accounts/closings', [BookController::class, 'closings'])->name('accounts.closings');
         });
         Route::post('/accounts/closings', [BookController::class, 'close'])->middleware('can:accounts.manage')->name('accounts.closings.store');
+
+        Route::middleware('can:reports.view')->group(function () {
+            Route::get('/reports/pl', [ReportController::class, 'profitAndLoss'])->name('reports.pl');
+            Route::get('/reports/month-locks', [MonthLockController::class, 'index'])->name('reports.month-locks');
+        });
+        Route::post('/reports/month-locks', [MonthLockController::class, 'store'])->middleware('can:reports.manage')->name('reports.month-locks.store');
+        Route::delete('/reports/month-locks/{year}/{month}', [MonthLockController::class, 'destroy'])
+            ->middleware('can:reports.manage')
+            ->whereNumber(['year', 'month'])
+            ->name('reports.month-locks.destroy');
 
         Route::middleware('can:users.view')->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');
