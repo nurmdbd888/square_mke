@@ -3,6 +3,9 @@
     $user = auth()->user();
     $nav = array_filter([
         ['route' => 'dashboard', 'label' => __('Dashboard'), 'active' => 'dashboard', 'can' => null],
+        ['route' => 'products.index', 'label' => __('Products'), 'active' => 'products.*', 'can' => 'products.view'],
+        ['route' => 'retailers.index', 'label' => __('Retailers'), 'active' => 'retailers.*', 'can' => 'retailers.view'],
+        ['route' => 'masters.index', 'label' => __('Masters'), 'active' => 'masters.*', 'can' => 'masters.view'],
         ['route' => 'users.index', 'label' => __('Users'), 'active' => 'users.*', 'can' => 'users.view'],
         ['route' => 'roles.index', 'label' => __('Roles and permissions'), 'active' => 'roles.*', 'can' => 'roles.manage'],
         ['route' => 'settings.index', 'label' => __('Settings'), 'active' => 'settings.*', 'can' => 'settings.view'],
