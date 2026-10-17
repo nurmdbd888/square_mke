@@ -51,7 +51,7 @@ class DocumentPrintController extends Controller
     private function renderBranded(Request $request, Document $document, string $docTitle): View
     {
         $document->load(['lines.product', 'supplier', 'retailer', 'salesRep', 'route', 'vehicle']);
-        $size = $request->query('size', (string) setting('default_print_size', 'a5'));
+        $size = $request->query('size', (string) (setting('default_print_size') ?: 'a5'));
         if (! in_array($size, ['a5', 'a4'], true)) {
             $size = 'a5';
         }
