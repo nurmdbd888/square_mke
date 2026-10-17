@@ -251,29 +251,31 @@ class PaymentController extends Controller
 
     public function openInvoices(Request $request): View
     {
-        $party = $request->input('party');
+        // HTMX swaps this fragment into #allocation-box. Never validate()->throw:
+        // a redirect would nest the full Edit receipt layout inside the box.
+        $party = (string) $request->input('party', '');
         $partyId = $request->input('party_id')
             ?? $request->input('retailer_id')
             ?? $request->input('supplier_id');
 
-        $data = validator([
-            'party' => $party,
-            'party_id' => $partyId,
-        ], [
-            'party' => ['required', Rule::in(['retailer', 'supplier'])],
-            'party_id' => ['required', 'integer'],
-        ])->validate();
+        if (! in_array($party, ['retailer', 'supplier'], true) || ! filled($partyId) || ! ctype_digit((string) $partyId)) {
+            return view('payments._open_invoices', [
+                'invoices' => collect(),
+                'partyBalance' => null,
+                'showInvoicePicker' => $party === 'retailer',
+            ]);
+        }
 
-        $partyId = (int) $data['party_id'];
-        $invoices = $this->balances->openInvoices($data['party'], $partyId);
-        $partyBalance = $data['party'] === 'retailer'
+        $partyId = (int) $partyId;
+        $invoices = $this->balances->openInvoices($party, $partyId);
+        $partyBalance = $party === 'retailer'
             ? $this->balances->retailer($partyId)
             : $this->balances->supplier($partyId);
 
         return view('payments._open_invoices', [
             'invoices' => $invoices,
             'partyBalance' => $partyBalance,
-            'showInvoicePicker' => $data['party'] === 'retailer',
+            'showInvoicePicker' => $party === 'retailer',
         ]);
     }
 
