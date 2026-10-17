@@ -56,7 +56,7 @@
                 @forelse ($notes as $note)
                     <tr>
                         <td class="font-mono">{{ $note->number }}</td>
-                        <td>{{ local_date($note->doc_date) }}</td>
+                        <td>{{ local_digits($note->doc_date->format('d-m-Y')) }}</td>
                         <td>{{ __(str_replace('_', ' ', ucfirst($note->type))) }}</td>
                         <td>{{ $note->retailer?->name ?? '—' }}</td>
                         <td class="text-right font-mono">{{ format_money($note->net_total) }}</td>

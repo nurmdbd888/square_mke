@@ -7,7 +7,7 @@
     <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">{{ $note->number }}</h1>
-            <p class="text-sm text-slate-600">{{ local_date($note->doc_date) }} · {{ __(str_replace('_', ' ', ucfirst($note->type))) }} · {{ __(ucfirst($note->status)) }}</p>
+            <p class="text-sm text-slate-600">{{ local_digits($note->doc_date->format('d-m-Y')) }} · {{ __(str_replace('_', ' ', ucfirst($note->type))) }} · {{ __(ucfirst($note->status)) }}</p>
         </div>
         @if ($canManage && ! $note->isVoid())
             <div class="flex flex-wrap gap-2">

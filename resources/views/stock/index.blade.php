@@ -18,7 +18,7 @@
             <h2 class="font-semibold text-amber-900">{{ __('Near expiry') }}</h2>
             <ul class="mt-1 list-inside list-disc text-amber-900">
                 @foreach ($nearExpiry as $batch)
-                    <li>{{ $batch->product->name_en }} · {{ $batch->batch_no }} · {{ local_date($batch->expiry_date) }}</li>
+                    <li>{{ $batch->product->name_en }} · {{ $batch->batch_no }} · {{ local_digits($batch->expiry_date->format('d-m-Y')) }}</li>
                 @endforeach
             </ul>
         </section>
