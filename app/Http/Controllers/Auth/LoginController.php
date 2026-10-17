@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\Access\PermissionRegistry;
 use App\Support\Auth\LoginThrottle;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +37,13 @@ class LoginController extends Controller
             return $this->failed(__('Too many sign-in attempts. Try again in :seconds seconds.', ['seconds' => $seconds]));
         }
 
-        $user = User::query()->where('username', $login)->orWhere('email', $login)->first();
+        try {
+            $user = User::query()->where('username', $login)->orWhere('email', $login)->first();
+        } catch (QueryException $e) {
+            report($e);
+
+            return $this->failed(__('The database is not ready. Open the Maintenance page to check the settings and run migrations.'));
+        }
 
         // Hash even when the user does not exist, so timing does not reveal valid user names.
         $valid = Hash::check($data['password'], $user?->password ?? sprintf('$2y$%02d$%s', config('hashing.bcrypt.rounds', 12), str_repeat('a', 53)));
