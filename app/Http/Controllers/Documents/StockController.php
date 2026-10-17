@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Http\Controllers\Documents;
+
+use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Models\StockLedgerEntry;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class StockController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $products = Product::query()
+            ->when($filters['q'] ?? null, function ($q, $term) {
+                $like = '%'.addcslashes($term, '\\%_').'%';
+                $q->where(fn ($w) => $w->where('name_en', 'like', $like)->orWhere('code', 'like', $like)->orWhere('brand', 'like', $like));
+            })
+            ->orderBy('name_en')
+            ->paginate(50)
+            ->withQueryString();
+
+        $balances = StockLedgerEntry::query()
+            ->select('product_id')
+            ->selectRaw('MAX(id) as last_id')
+            ->whereIn('product_id', $products->pluck('id'))
+            ->groupBy('product_id')
+            ->pluck('last_id', 'product_id');
+
+        $latest = StockLedgerEntry::query()
+            ->whereIn('id', $balances->values())
+            ->get()
+            ->keyBy('product_id');
+
+        return view('stock.index', [
+            'products' => $products,
+            'latest' => $latest,
+            'filters' => $filters,
+            'pending' => (bool) cache()->get('sdm.costing_pending'),
+        ]);
+    }
+
+    public function show(Product $product): View
+    {
+        $entries = StockLedgerEntry::query()
+            ->where('product_id', $product->id)
+            ->with('document')
+            ->orderBy('doc_date')
+            ->orderBy('rank')
+            ->orderBy('posted_at')
+            ->orderBy('id')
+            ->paginate(100);
+
+        return view('stock.show', [
+            'product' => $product,
+            'entries' => $entries,
+            'pending' => (bool) cache()->get('sdm.costing_pending'),
+        ]);
+    }
+}

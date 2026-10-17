@@ -24,6 +24,11 @@ class SettingsTest extends TestCase
             'default_locale' => 'en',
             'fiscal_year_start_month' => '7',
             'require_2fa_roles' => [],
+            'vat_recoverable' => '1',
+            'sd_in_cost' => '1',
+            'costing_mode' => 'weighted_average',
+            'block_negative_stock' => '0',
+            'purchase_bonus_cost' => 'zero',
         ]];
     }
 
