@@ -12,7 +12,8 @@ to write down every name and password you create.
 |---|---|
 | USER | your cPanel user name. It is shown in cPanel on the right ("Current User"), and File Manager shows your home folder as `/home/USER`. |
 | home folder | the top folder you see when File Manager opens (`/home/USER`). It is **not** `public_html`. |
-| release zip | a file named like `mke-v0.0.0.zip` that holds the finished app. |
+| release branch | the `release` branch of our GitHub project. It always holds the newest finished app; cPanel Git™ Version Control copies it to your server. |
+| release zip | a file named like `mke-v0.0.0.zip` that holds the same finished app, for uploading by hand. |
 
 **What the server will look like when you are done**
 
@@ -72,10 +73,27 @@ If cPanel refuses a folder outside `public_html`, stop and tell us. We will send
 
 ### Step 4. Put the app on the server
 
-There are two ways. **Way A (zip)** works on every cPanel. **Way B (Git)** saves time on
-every later update, but only works if your host allows it. If unsure, use Way A.
+Use the **Git way**: every later update is two clicks. Use the **zip way** only if your
+host does not allow Git deployment (you will see that in step 5 below).
 
-#### Way A — upload the zip (always works)
+#### Git way — cPanel Git™ Version Control (main way)
+
+1. cPanel → **Files** → **Git™ Version Control** → **Create**.
+2. Keep **Clone a Repository** switched on.
+   - Clone URL: `https://github.com/nurmdbd888/square_mke.git`
+   - Repository Path: `repositories/square_mke`
+   - Repository Name: `square_mke`
+3. Click **Create** and wait until the clone finishes.
+4. Click **Manage** next to `square_mke`. In **Checked-Out Branch** choose **release** and click **Update**.
+   (Never choose `main`: it has no ready-made program files, so cPanel will refuse to deploy it.)
+5. Open the **Pull or Deploy** tab and click **Deploy HEAD Commit**.
+   This creates `/home/USER/mke/app`, `/home/USER/mke/shared` (with a `.env` file to fill in)
+   and a hidden safety file `/home/USER/mke/.htaccess`.
+
+If there is no **Deploy HEAD Commit** button, or it is greyed out and says deployment is not
+available, your host does not allow it. Use the zip way instead; nothing is broken.
+
+#### Zip way — upload the zip with File Manager (fallback)
 
 1. Download the newest `mke-vX.Y.Z.zip` from
    <https://github.com/nurmdbd888/square_mke/releases> (under **Assets**), or use the zip we send you.
@@ -89,28 +107,13 @@ every later update, but only works if your host allows it. If unsure, use Way A.
 6. Right-click `shared.example` → **Rename** → `shared`.
 7. You can delete the zip now (right-click → **Delete**).
 
-#### Way B — cPanel Git Version Control (faster updates, if your host allows it)
-
-1. cPanel → **Files** → **Git™ Version Control** → **Create**.
-2. Keep **Clone a Repository** switched on.
-   - Clone URL: `https://github.com/nurmdbd888/square_mke.git`
-   - Repository Path: `repositories/square_mke`
-   - Repository Name: `square_mke`
-3. Click **Create** and wait until the clone finishes.
-4. Click **Manage** next to `square_mke`. In **Checked-Out Branch** choose **release** and click **Update**.
-5. Open the **Pull or Deploy** tab and click **Deploy HEAD Commit**.
-   This creates `/home/USER/mke/app` and `/home/USER/mke/shared` (with a `.env` file to fill in).
-
-If there is no **Deploy HEAD Commit** button, or it is greyed out and says deployment is not
-available, your host does not allow it. Use Way A instead; nothing is broken.
-
 ### Step 5. Fill in the settings file (.env)
 
 1. File Manager → top right **Settings** → tick **Show Hidden Files (dotfiles)** → **Save**.
 2. Open `mke/shared`.
-   - Way A: right-click `.env.example` → **Rename** → `.env`.
+   - Git way: `.env` is already there.
+   - Zip way: right-click `.env.example` → **Rename** → `.env`.
      (A spare copy of the example stays in `mke/app/deploy/shared.example/`.)
-   - Way B: `.env` is already there.
 3. Right-click `.env` → **Edit** → **Edit**. Fill in only these lines and leave everything else alone:
 
    ```
@@ -165,6 +168,7 @@ Keep a copy of this file in a safe place (not on the server). Never send it by e
    - <https://mke.rockproviders.com/.env>
    - <https://mke.rockproviders.com/storage/>
    - <https://mke.rockproviders.com/../shared/.env>
+   - <https://mke.rockproviders.com/shared/> (must not show a list of files)
 3. Send us a screenshot of the Maintenance page and of the home page.
    **We stop here until you confirm.**
 
@@ -178,32 +182,38 @@ Before every update, save a copy of the database:
 cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left → **Export** tab →
 **Export** (Quick, SQL). Keep the downloaded `.sql` file. (From M10 the Maintenance page has a **Backup now** button.)
 
-### Update with Way A (zip)
+### Update with the Git way (main way)
+
+1. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
+2. Click **Update from Remote** and wait. **HEAD Commit** now shows "Release vX.Y.Z" with the new number.
+   (If it still shows the old number, we have not published the new version yet. Stop here.)
+3. Click **Deploy HEAD Commit** and wait about a minute.
+   The previous version is moved to `mke/app-prev` automatically. Your settings (`shared`), your PHP
+   version setting and the safety file `mke/.htaccess` are kept.
+4. Maintenance page → **Run migrations** → **Clear caches**.
+5. Open the home page and check the version number changed.
+
+### Update with the zip way (fallback)
+
+Only if the Git way does not work on your host.
 
 1. Download the new `mke-vX.Y.Z.zip` from <https://github.com/nurmdbd888/square_mke/releases>.
 2. File Manager → open `mke`.
 3. If `app-prev` exists, right-click it → **Delete** (tick "Skip the trash" if offered).
 4. Right-click `app` → **Rename** → `app-prev`.
-5. **Upload** the zip into `mke`, then right-click it → **Extract**. A new `app` folder appears.
+5. **Upload** the zip into `mke`, then right-click it → **Extract**. A new `app` folder appears
+   (the hidden safety file `mke/.htaccess` is replaced too).
    Delete the new `shared.example` folder and the zip. **Never touch `shared`.**
 6. If you use **MultiPHP Manager**: open it and check `mke.rockproviders.com` still shows **PHP 8.4**;
    if not, choose 8.4 and **Apply** (replacing the folder can reset it).
 7. Maintenance page → **Run migrations** → **Clear caches**.
 8. Open the home page and check the version number changed.
 
-### Update with Way B (Git)
-
-1. cPanel → **Git™ Version Control** → **Manage** next to `square_mke` → **Pull or Deploy** tab.
-2. Click **Update from Remote**, wait, then click **Deploy HEAD Commit**.
-   (The previous version is moved to `mke/app-prev` automatically, and your PHP version setting is kept.)
-3. Maintenance page → **Run migrations** → **Clear caches**.
-4. Open the home page and check the version number changed.
-
 ---
 
 ## Part 3 — Going back to the previous version (rollback)
 
-### Quick rollback (works for both ways)
+### Quick rollback (works for the Git way and the zip way)
 
 1. File Manager → open `mke`.
 2. Right-click `app` → **Rename** → `app-bad`.
@@ -216,9 +226,9 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 
 ### Going back further (any older version)
 
-- Way A: download the older zip from the Releases page and follow "Update with Way A".
-- Way B: ask us to rebuild the older version (GitHub → **Actions** → **Release** → **Run workflow** →
-  enter the old version such as `v0.0.0`). Then do "Update with Way B".
+- Git way: ask us to republish the older version (GitHub → **Actions** → **Release** → **Run workflow** →
+  enter the old version such as `v0.0.0`). Then do "Update with the Git way".
+- Zip way: download the older zip from the Releases page and follow "Update with the zip way".
 
 ---
 
@@ -227,6 +237,7 @@ cPanel → **Databases** → **phpMyAdmin** → click `USER_mke` on the left →
 | What you see | What to do |
 |---|---|
 | "Setup is not finished yet" on the home page | Do Step 7 (Generate APP_KEY). |
+| Git way: **Deploy HEAD Commit** finished but the version did not change, or it reports an error | In **Manage** → **Basic Information**, **Checked-Out Branch** must be `release`. The deploy log is in File Manager → home folder → `.cpanel/logs/` (newest file with `git_deploy` in its name); send us the end of it. Lines starting with `[sdm-deploy]` come from our script. |
 | Maintenance page says "The Maintenance page is locked" | `MAINTENANCE_TOKEN` in `mke/shared/.env` is empty or shorter than 20 characters. Fix it and reload. |
 | "Too many attempts" | Wait 10 minutes, then type the phrase carefully. |
 | "Shared folder … not found" (amber) | The folder is not called exactly `shared`, or it is not next to `app` inside `mke`. Rename it. |
@@ -285,7 +296,7 @@ encrypted data would become unreadable.
 Only use this if Step 3 fails. The subdomain then lives in a folder inside `public_html`,
 for example `public_html/mke` (whatever cPanel created).
 
-1. Do Steps 1, 2 and 4 (Way A) as normal, so `/home/USER/mke/app` and `/home/USER/mke/shared` exist.
+1. Do Steps 1, 2 and 4 (Git way or zip way) as normal, so `/home/USER/mke/app` and `/home/USER/mke/shared` exist.
 2. File Manager → open `mke/app/public` → **Select All** → **Copy** → to the subdomain's folder
    (for example `/home/USER/public_html/mke`).
 3. Open `mke/app/deploy/shim` → copy `index.php` and `.htaccess` into the subdomain's folder,
