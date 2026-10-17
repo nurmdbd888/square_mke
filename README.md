@@ -9,8 +9,8 @@ built for cPanel shared hosting at `mke.rockproviders.com` with no terminal on t
 - Every assumption and decision: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Server install for the owner: [DEPLOY.md](DEPLOY.md)
 
-Current milestone: **M4, payments, receivables/payables and cash/bank books**. M1 is live as
-v0.1.0; M2–M4 are stacked for a combined v0.2.0 release once CI is green.
+Current milestone: **M5, returns, claims, batch/expiry and stock comparison**. M1 is live as
+v0.1.0; M2–M4 shipped as v0.2.0.
 
 ## Local setup
 
