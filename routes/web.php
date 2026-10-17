@@ -16,6 +16,7 @@ use App\Http\Controllers\Google\GoogleDriveController;
 use App\Http\Controllers\Google\GoogleOAuthController;
 use App\Http\Controllers\Google\GoogleSheetController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Import\DocumentImportController;
 use App\Http\Controllers\Import\EntityImportController;
 use App\Http\Controllers\Master\CustomFieldController;
 use App\Http\Controllers\Master\DirectoryController;
@@ -132,6 +133,17 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
             Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
+        });
+
+        Route::prefix('imports/invoices')->group(function () {
+            Route::get('/', [DocumentImportController::class, 'index'])->name('imports.invoices.index');
+            Route::get('/templates/{docType}/{layout}', [DocumentImportController::class, 'template'])->name('imports.invoices.template');
+            Route::post('/', [DocumentImportController::class, 'store'])->name('imports.invoices.store');
+            Route::post('/profiles', [DocumentImportController::class, 'storeProfile'])->name('imports.invoices.profiles.store');
+            Route::get('/batches/{documentImportBatch}', [DocumentImportController::class, 'show'])->name('imports.invoices.show');
+            Route::put('/batches/{documentImportBatch}/lines/{line}', [DocumentImportController::class, 'updateLine'])->name('imports.invoices.lines.update');
+            Route::post('/batches/{documentImportBatch}/confirm', [DocumentImportController::class, 'confirm'])->name('imports.invoices.confirm');
+            Route::post('/batches/{documentImportBatch}/undo', [DocumentImportController::class, 'undo'])->name('imports.invoices.undo');
         });
 
         $importEntities = implode('|', EntityImportRegistry::ENTITIES);

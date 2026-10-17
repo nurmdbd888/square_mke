@@ -575,3 +575,8 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: one firm `google_connections` row; OAuth scopes `drive.file`, `spreadsheets`, `documents`; refresh/access tokens use Laravel `encrypted` cast. Settings shows Connect/Disconnect and optional Drive folder id. Reports can push to a new or existing Sheet; `google_sheet_subscriptions` refresh daily via `RefreshGoogleSheetJob` from the minute schedule. Client credentials from `GOOGLE_*` env (redirect `/google/callback`).
 - Reason: plan M7 and spec §7.
 - Change: Settings → Google integration, `google/apiclient` (trimmed services).
+
+**111. Excel invoice import (M8)** — 2026-10-17
+- Decision: `/imports/invoices` accepts purchase or sale uploads (.csv/.xlsx/.xls) in **Header+Lines** or **flat** layout (templates downloadable). Column mapping reuses `import_mapping_profiles` entities `purchase_invoice` / `sale_invoice`. Parser normalises Bangla digits, bonus/combo rows and sample date formats; purchase lines warn when `unit×price` differs from value within `max(0.01, qty×0.005)`. Preview stores editable rows; confirm posts via `DocumentWriter`; undo voids posted documents in the batch. Product match: code → name/pack → alias; corrections learn aliases. Large files queue `ProcessDocumentImportJob` above `document_import_inline_limit` (500).
+- Reason: plan M8 and `docs/samples` golden challan + sales invoice.
+- Change: Purchases/Sales **Import from Excel**, `document_import_*` tables.

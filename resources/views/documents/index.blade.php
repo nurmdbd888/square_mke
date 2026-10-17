@@ -12,6 +12,7 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
         @if ($canManage)
+            <a href="{{ route('imports.invoices.index') }}" class="btn-secondary">{{ __('Import from Excel') }}</a>
             <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
         @endif
     </div>
