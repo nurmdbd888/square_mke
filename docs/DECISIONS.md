@@ -601,6 +601,11 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Reason: owner bug — Products showed Export | Import | Export | Add.
 - Change: products/retailers index, shared toolbar partial.
 
+**117. M10 backups, restore and hardening** — 2026-10-17
+- Decision: **`sdm:backup`** (scheduled 02:30 via `Schedule::call`) writes `mke-backup-*.zip` under `storage/backups` with **database.sql.gz** (PDO mysqldump-php on MySQL/MariaDB; SQLite file copy in dev) plus **uploads.zip** of `storage/app/private`. Optional Google Drive upload and prune by **`backup_retention_days`** (default 14). **`sdm:restore basename --force`** and Maintenance **Restore from backup** (select file, type `RESTORE`) replay dump + uploads. **`SecurityHeaders`** middleware sets CSP, X-Frame-Options, nosniff. **System health** shows last backup; **`docs/GO-LIVE.md`** is the parallel-week checklist.
+- Reason: plan M10; owner has no terminal; DECISIONS #12.
+- Change: Maintenance **Backup now**, DEPLOY restore section, composer `druidfi/mysqldump-php`.
+
 **116. Weekly holiday calendar (Tuesday default)** — 2026-10-17
 - Decision: **`weekly_holiday_weekdays`** (ISO 1 = Monday … 7 = Sunday, default **`[2]` Tuesday** only) defines regular closed days; Saturday and Sunday are **not** excluded unless ticked. **`calendar_working_dates`** and **`calendar_extra_holiday_dates`** are plain date lists (one `yyyy-mm-dd` per line on **Settings**) that override weekly rules for specific days (for example a working Tuesday or a mid-week public holiday). **`App\Domain\Calendar\BusinessCalendar`** resolves `isBusinessDay()` and date lists for reporting. Dashboard, P&L, cash/bank/day books and P&L export accept **`business_days=1`** (“Exclude weekly holidays”) to filter movements and P&L lines to business days only; fiscal year stays July–June via **`fiscal_year_start_month`**.
 - Reason: owner weekly holiday is Tuesday, not Sat/Sun; need exception Tuesdays and report toggles.

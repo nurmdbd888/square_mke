@@ -36,3 +36,8 @@ Schedule::call(fn () => Artisan::call('sdm:send-due-reminders'))
     ->name('sdm:send-due-reminders')
     ->dailyAt('09:00')
     ->withoutOverlapping(30);
+
+Schedule::call(fn () => Artisan::call('sdm:backup'))
+    ->name('sdm:backup')
+    ->dailyAt('02:30')
+    ->withoutOverlapping(120);

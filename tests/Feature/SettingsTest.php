@@ -26,6 +26,7 @@ class SettingsTest extends TestCase
                 'fiscal_year_start_month' => '7',
                 'require_2fa_roles' => [],
                 'weekly_holiday_weekdays' => ['2'],
+                'backup_retention_days' => '14',
                 'vat_recoverable' => '1',
                 'sd_in_cost' => '1',
                 'costing_mode' => 'weighted_average',

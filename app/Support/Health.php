@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Domain\Backup\BackupCatalog;
 use App\Models\SmokeHeartbeat;
 use App\Support\Maintenance\DatabaseProbe;
 use App\Support\Maintenance\MigrationStatus;
@@ -37,7 +38,28 @@ class Health
             'disk' => $this->disk(),
             'version' => AppVersion::info(),
             'php' => PHP_VERSION,
+            'backup' => $this->backup(),
         ];
+    }
+
+    /**
+     * @return array{at: string|null, basename: string|null, count: int}|null
+     */
+    private function backup(): ?array
+    {
+        try {
+            $catalog = app(BackupCatalog::class);
+            $manifest = $catalog->lastManifest();
+            $list = $catalog->listLocal();
+
+            return [
+                'at' => isset($manifest['at']) ? (string) $manifest['at'] : null,
+                'basename' => isset($manifest['basename']) ? (string) $manifest['basename'] : ($list[0] ?? null),
+                'count' => count($list),
+            ];
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /**
