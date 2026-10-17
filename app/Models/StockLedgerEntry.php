@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StockLedgerEntry extends Model
 {
     protected $fillable = [
-        'product_id', 'doc_date', 'movement', 'rank', 'document_id', 'document_line_id',
+        'product_id', 'product_batch_id', 'doc_date', 'movement', 'rank',
+        'document_id', 'document_line_id', 'stock_note_id', 'stock_note_line_id',
         'qty_in', 'qty_out', 'value_in', 'value_out', 'running_qty', 'running_value',
         'average_cost', 'posted_at',
     ];
@@ -50,5 +51,21 @@ class StockLedgerEntry extends Model
     public function line(): BelongsTo
     {
         return $this->belongsTo(DocumentLine::class, 'document_line_id');
+    }
+
+    /**
+     * @return BelongsTo<StockNote, $this>
+     */
+    public function stockNote(): BelongsTo
+    {
+        return $this->belongsTo(StockNote::class);
+    }
+
+    /**
+     * @return BelongsTo<ProductBatch, $this>
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ProductBatch::class, 'product_batch_id');
     }
 }

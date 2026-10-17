@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Claim;
 use App\Models\CustomField;
 use App\Models\DailyClosing;
 use App\Models\Document;
@@ -14,10 +15,16 @@ use App\Models\PriceList;
 use App\Models\PriceListItem;
 use App\Models\Product;
 use App\Models\ProductAlias;
+use App\Models\ProductBatch;
 use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
+use App\Models\SchemeLine;
+use App\Models\StockComparison;
+use App\Models\StockComparisonLine;
 use App\Models\StockLedgerEntry;
+use App\Models\StockNote;
+use App\Models\StockNoteLine;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -86,6 +93,13 @@ class AppServiceProvider extends ServiceProvider
             'document' => Document::class,
             'document_line' => DocumentLine::class,
             'stock_ledger_entry' => StockLedgerEntry::class,
+            'product_batch' => ProductBatch::class,
+            'stock_note' => StockNote::class,
+            'stock_note_line' => StockNoteLine::class,
+            'claim' => Claim::class,
+            'scheme_line' => SchemeLine::class,
+            'stock_comparison' => StockComparison::class,
+            'stock_comparison_line' => StockComparisonLine::class,
             'payment' => Payment::class,
             'payment_allocation' => PaymentAllocation::class,
             'daily_closing' => DailyClosing::class,

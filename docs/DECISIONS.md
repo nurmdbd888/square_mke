@@ -540,3 +540,13 @@ Format: **#. Title** — date · Decision · Reason · How to change.
 - Decision: `payments.view` → accountant, SR, data entry, viewer; `payments.manage` → accountant, SR, data entry; `accounts.view` → accountant, data entry, viewer; `accounts.manage` → accountant (daily closing). Nav adds Payments, Receivables, Payables, Cash book, Bank book, Day book, Daily closing. The dashboard ready line now includes payments and the books.
 - Reason: plan M4.
 - Change: Roles and permissions.
+
+**104. Stock notes, returns and batch ledger** — 2026-10-17
+- Decision: `stock_notes` / `stock_note_lines` cover sales returns (linked lines restore at original issue cost; damaged/expired post `loss`), stock count, adjustment and loss. Posted notes feed the same stock ledger as documents; linked return value uses the sale line’s issue cost per unit. Purchase lines may carry `batch_no` / expiry; when `costing_mode = batch_fefo` and the product tracks expiry, sales issue FEFO by batch.
+- Reason: plan M5 acceptance.
+- Change: Returns screens, stock ledger rebuild, optional batch on purchase lines.
+
+**105. Claims and stock comparison** — 2026-10-17
+- Decision: claims use statuses open → submitted → approved → settled (or rejected at most steps). CSV comparison upload matches product code (then name), flags qty differences and unknown products; `near_expiry_days` drives the near-expiry alert on the stock page.
+- Reason: plan M5.
+- Change: Claims, Compare with export, stock alerts.

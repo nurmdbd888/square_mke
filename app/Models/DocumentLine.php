@@ -12,14 +12,16 @@ class DocumentLine extends Model
     public const KIND_COMBO_BONUS = 'combo_bonus';
 
     protected $fillable = [
-        'document_id', 'line_no', 'product_id', 'kind', 'qty', 'bonus_qty', 'unit_price',
+        'document_id', 'line_no', 'product_id', 'batch_no', 'expiry_date', 'product_batch_id', 'kind', 'qty', 'bonus_qty', 'unit_price',
         'line_discount', 'header_discount_share', 'line_value', 'sd_pct', 'vat_pct',
         'sd_amount', 'vat_amount', 'issue_cost', 'bonus_issue_cost', 'notes',
+        'batch_no', 'expiry_date', 'product_batch_id',
     ];
 
     protected function casts(): array
     {
         return [
+            'expiry_date' => 'date:Y-m-d',
             'qty' => 'decimal:3',
             'bonus_qty' => 'decimal:3',
             'unit_price' => 'decimal:4',

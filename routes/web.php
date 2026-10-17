@@ -21,6 +21,9 @@ use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Stock\ClaimController;
+use App\Http\Controllers\Stock\StockComparisonController;
+use App\Http\Controllers\Stock\StockNoteController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -143,8 +146,27 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
         Route::middleware('can:stock.view')->group(function () {
             Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+            Route::get('/stock/comparison', [StockComparisonController::class, 'index'])->middleware('can:stock.compare')->name('stock.comparison.index');
+            Route::get('/stock/comparison/{comparison}', [StockComparisonController::class, 'show'])->middleware('can:stock.compare')->name('stock.comparison.show');
             Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
         });
+        Route::post('/stock/comparison', [StockComparisonController::class, 'store'])->middleware('can:stock.compare')->name('stock.comparison.store');
+
+        Route::get('/returns', [StockNoteController::class, 'index'])->middleware('can:returns.view')->name('returns.index');
+        Route::get('/returns/create', [StockNoteController::class, 'create'])->middleware('can:returns.manage')->name('returns.create');
+        Route::post('/returns', [StockNoteController::class, 'store'])->middleware('can:returns.manage')->name('returns.store');
+        Route::get('/returns/{stockNote}', [StockNoteController::class, 'show'])->middleware('can:returns.view')->name('returns.show');
+        Route::get('/returns/{stockNote}/edit', [StockNoteController::class, 'edit'])->middleware('can:returns.manage')->name('returns.edit');
+        Route::put('/returns/{stockNote}', [StockNoteController::class, 'update'])->middleware('can:returns.manage')->name('returns.update');
+        Route::post('/returns/{stockNote}/post', [StockNoteController::class, 'post'])->middleware('can:returns.manage')->name('returns.post');
+        Route::delete('/returns/{stockNote}', [StockNoteController::class, 'destroy'])->middleware('can:returns.manage')->name('returns.destroy');
+
+        Route::get('/claims', [ClaimController::class, 'index'])->middleware('can:claims.view')->name('claims.index');
+        Route::get('/claims/create', [ClaimController::class, 'create'])->middleware('can:claims.manage')->name('claims.create');
+        Route::post('/claims', [ClaimController::class, 'store'])->middleware('can:claims.manage')->name('claims.store');
+        Route::get('/claims/{claim}', [ClaimController::class, 'show'])->middleware('can:claims.view')->name('claims.show');
+        Route::get('/claims/{claim}/edit', [ClaimController::class, 'edit'])->middleware('can:claims.manage')->name('claims.edit');
+        Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
 
         Route::get('/payments', [PaymentController::class, 'index'])->middleware('can:payments.view')->name('payments.index');
         Route::get('/payments/open-invoices', [PaymentController::class, 'openInvoices'])->middleware('can:payments.manage')->name('payments.open-invoices');

@@ -90,6 +90,16 @@ final class BusinessSettings
         ));
 
         $registry->define(new SettingDefinition(
+            key: 'near_expiry_days',
+            type: SettingDefinition::INTEGER,
+            default: 60,
+            group: 'costing',
+            label: 'Near-expiry alert window (days)',
+            help: 'Batches expiring within this many days appear on stock alerts.',
+            rules: ['integer', 'min:1', 'max:365'],
+        ));
+
+        $registry->define(new SettingDefinition(
             key: 'commission_base',
             type: SettingDefinition::CHOICE,
             default: 'sales',
