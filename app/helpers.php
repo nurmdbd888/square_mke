@@ -45,7 +45,7 @@ if (! function_exists('format_app_date')) {
             $date = Carbon::parse($date);
         }
 
-        $format = (string) setting('date_display_format', 'd/m/Y');
+        $format = (string) (setting('date_display_format') ?: 'd/m/Y');
 
         return local_digits($date->format($format));
     }

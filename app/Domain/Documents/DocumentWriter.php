@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -176,8 +177,10 @@ final class DocumentWriter
 
         if ($document->isSale()) {
             $this->fillSaleTotals($document);
-            $document->collection_status = Document::COLLECTION_DUE;
-            $document->collection_confirmed_at = null;
+            if (Schema::hasColumn('documents', 'collection_status')) {
+                $document->collection_status = Document::COLLECTION_DUE;
+                $document->collection_confirmed_at = null;
+            }
         }
 
         $document->save();

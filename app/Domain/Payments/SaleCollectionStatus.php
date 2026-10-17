@@ -10,6 +10,7 @@ use App\Models\User;
 use Brick\Math\BigDecimal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -25,7 +26,7 @@ final class SaleCollectionStatus
 
     public function sync(Document $document): void
     {
-        if (! $document->isSale() || ! $document->isPosted()) {
+        if (! $document->isSale() || ! $document->isPosted() || ! $this->columnsReady()) {
             return;
         }
 
@@ -52,6 +53,7 @@ final class SaleCollectionStatus
     public function confirmCollected(Document $document, User $by): Document
     {
         abort_unless($document->isSale() && $document->isPosted(), 404);
+        abort_unless($this->columnsReady(), 503, __('Run migrations on the Maintenance page first.'));
 
         $remaining = $this->remainingAmount($document);
         if ($remaining->isPositive()) {
@@ -74,25 +76,36 @@ final class SaleCollectionStatus
      */
     public function pendingForCollector(int $limit = 100): Collection
     {
-        return Document::query()
+        $query = Document::query()
             ->where('type', Document::TYPE_SALE)
-            ->where('status', Document::STATUS_POSTED)
-            ->where(function ($q) {
+            ->where('status', Document::STATUS_POSTED);
+
+        if ($this->columnsReady()) {
+            $query->where(function ($q) {
                 $q->whereIn('collection_status', [self::DUE, self::PARTIAL])
                     ->orWhereNull('collection_status');
-            })
-            ->where(function ($q) {
+            })->where(function ($q) {
                 $q->whereNull('collection_confirmed_at')
                     ->orWhere('collection_status', '!=', self::COMPLETED);
-            })
+            });
+        }
+
+        return $query
             ->orderByDesc('doc_date')
             ->orderByDesc('id')
             ->with('retailer')
             ->limit($limit)
             ->get()
             ->filter(fn (Document $doc) => $this->remainingAmount($doc)->isPositive()
-                || ($this->remainingAmount($doc)->isZero() && $doc->collection_status !== self::COMPLETED))
+                || ($this->columnsReady()
+                    && $this->remainingAmount($doc)->isZero()
+                    && $doc->collection_status !== self::COMPLETED))
             ->values();
+    }
+
+    public function columnsReady(): bool
+    {
+        return Schema::hasColumn('documents', 'collection_status');
     }
 
     public function remainingAmount(Document $document): BigDecimal

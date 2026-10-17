@@ -67,9 +67,15 @@ class LoginController extends Controller
 
         Auth::login($user);
 
-        $home = $user->hasRole('collector') && ! $user->isOwner()
-            ? route('collector.index')
-            : route('dashboard');
+        // Prefer Collections for field collectors; always fall back to dashboard.
+        $home = route('dashboard');
+        if ($user->hasRole('collector') && ! $user->isOwner()) {
+            try {
+                $home = route('collector.index');
+            } catch (Throwable) {
+                $home = route('dashboard');
+            }
+        }
 
         return redirect()->intended($home);
     }
