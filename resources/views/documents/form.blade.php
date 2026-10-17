@@ -36,6 +36,7 @@
         return [
             'id' => $product->id,
             'code' => (string) ($product->code ?? ''),
+            'brand' => (string) ($product->brand ?? ''),
             'name' => (string) $product->name_en,
             'name_bn' => (string) ($product->name_bn ?? ''),
             'searchText' => mb_strtolower(implode(' ', $searchParts)),
@@ -139,44 +140,65 @@
             <p class="mt-1 text-sm text-slate-600">{{ __('Search on the left, click a product to add it. Change quantity and price on the right.') }}</p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
-                <div class="relative rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <label class="block">
-                        <span class="label">{{ __('Search product') }}</span>
-                        <input
-                            type="search"
+                        <span class="label">{{ __('Brand') }}</span>
+                        <select
                             class="input"
-                            placeholder="{{ __('Code, English or Bangla name') }}"
-                            x-model="productQuery"
-                            @input="productOpen = true; productHighlight = 0"
-                            @focus="productOpen = filteredProducts.length > 0"
-                            @keydown.down.prevent="highlightNextProduct()"
-                            @keydown.up.prevent="highlightPrevProduct()"
-                            @keydown.enter.prevent="addHighlightedProduct()"
-                            autocomplete="off"
+                            x-model="brandFilter"
+                            data-testid="product-brand-filter"
+                            @change="productHighlight = 0; productOpen = filteredProducts.length > 0"
                         >
+                            <option value="">{{ __('All brands') }}</option>
+                            <template x-for="brand in brandOptions" :key="brand">
+                                <option :value="brand" x-text="brand"></option>
+                            </template>
+                        </select>
                     </label>
-                    <ul
-                        x-cloak
-                        x-show="productOpen && filteredProducts.length"
-                        @click.outside="productOpen = false"
-                        class="absolute left-3 right-3 top-[4.5rem] z-10 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg"
-                    >
-                        <template x-for="(product, pIndex) in filteredProducts.slice(0, 40)" :key="product.id">
-                            <li>
-                                <button
-                                    type="button"
-                                    class="block w-full px-3 py-2 text-left"
-                                    :class="productHighlight === pIndex ? 'bg-brand-50' : 'hover:bg-slate-50'"
-                                    @mouseenter="productHighlight = pIndex"
-                                    @click="addProduct(product)"
-                                >
-                                    <span class="font-mono text-xs text-slate-500" x-text="product.code || '—'"></span>
-                                    <span class="mt-0.5 block font-medium text-slate-900" x-text="product.name"></span>
-                                    <span class="block text-xs text-slate-600" x-show="product.name_bn" x-text="product.name_bn"></span>
-                                </button>
-                            </li>
-                        </template>
-                    </ul>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Pick a brand to work one brand at a time, or leave on All brands.') }}</p>
+
+                    <div class="relative mt-3">
+                        <label class="block">
+                            <span class="label">{{ __('Search product') }}</span>
+                            <input
+                                type="search"
+                                class="input"
+                                placeholder="{{ __('Code, English or Bangla name') }}"
+                                x-model="productQuery"
+                                @input="productOpen = true; productHighlight = 0"
+                                @focus="productOpen = filteredProducts.length > 0"
+                                @keydown.down.prevent="highlightNextProduct()"
+                                @keydown.up.prevent="highlightPrevProduct()"
+                                @keydown.enter.prevent="addHighlightedProduct()"
+                                autocomplete="off"
+                            >
+                        </label>
+                        <ul
+                            x-cloak
+                            x-show="productOpen && filteredProducts.length"
+                            @click.outside="productOpen = false"
+                            class="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg"
+                        >
+                            <template x-for="(product, pIndex) in filteredProducts.slice(0, 40)" :key="product.id">
+                                <li>
+                                    <button
+                                        type="button"
+                                        class="block w-full px-3 py-2 text-left"
+                                        :class="productHighlight === pIndex ? 'bg-brand-50' : 'hover:bg-slate-50'"
+                                        @mouseenter="productHighlight = pIndex"
+                                        @click="addProduct(product)"
+                                    >
+                                        <span class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                            <span class="font-mono text-xs text-slate-500" x-text="product.code || '—'"></span>
+                                            <span class="text-xs font-medium text-brand-700" x-show="!brandFilter && product.brand" x-text="product.brand"></span>
+                                        </span>
+                                        <span class="mt-0.5 block font-medium text-slate-900" x-text="product.name"></span>
+                                        <span class="block text-xs text-slate-600" x-show="product.name_bn" x-text="product.name_bn"></span>
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
                     <p class="mt-2 text-xs text-slate-500">{{ __('Click a product to add it to the invoice.') }}</p>
                 </div>
 
@@ -315,16 +337,35 @@
             return {
                 lines,
                 catalog: catalog || [],
+                brandFilter: '',
                 productQuery: '',
                 productOpen: false,
                 productHighlight: 0,
-                get filteredProducts() {
-                    const q = this.productQuery.trim().toLocaleLowerCase();
-                    if (q === '') {
-                        return this.catalog.slice(0, 40);
+                get brandOptions() {
+                    const brands = new Set();
+                    this.catalog.forEach((product) => {
+                        if (product.brand) {
+                            brands.add(product.brand);
+                        }
+                    });
+
+                    return [...brands].sort((a, b) => a.localeCompare(b));
+                },
+                get brandScopedProducts() {
+                    if (!this.brandFilter) {
+                        return this.catalog;
                     }
 
-                    return this.catalog.filter((product) => {
+                    return this.catalog.filter((product) => (product.brand || '') === this.brandFilter);
+                },
+                get filteredProducts() {
+                    const pool = this.brandScopedProducts;
+                    const q = this.productQuery.trim().toLocaleLowerCase();
+                    if (q === '') {
+                        return pool;
+                    }
+
+                    return pool.filter((product) => {
                         const haystack = product.searchText || '';
                         const code = (product.code || '').toLocaleLowerCase();
 

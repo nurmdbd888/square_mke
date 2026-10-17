@@ -250,7 +250,7 @@ class DocumentController extends Controller
         return [
             'type' => $type,
             'document' => $document,
-            'products' => Product::query()->with('aliases:id,product_id,name')->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'buy_price', 'sell_price', 'sd_pct', 'vat_pct']),
+            'products' => Product::query()->with('aliases:id,product_id,name')->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'brand', 'buy_price', 'sell_price', 'sd_pct', 'vat_pct']),
             'parties' => $type === Document::TYPE_PURCHASE
                 ? Supplier::query()->orderBy('name')->get(['id', 'code', 'name'])
                 : Retailer::query()->orderBy('name')->get(['id', 'code', 'name']),
