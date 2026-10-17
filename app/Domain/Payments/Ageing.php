@@ -3,9 +3,9 @@
 namespace App\Domain\Payments;
 
 use App\Domain\Money\Exact;
-use Brick\Math\BigDecimal;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Age open invoices into 0–30 / 31–60 / 61–90 / 90+ day buckets.
@@ -33,7 +33,7 @@ final class Ageing
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, object>  $invoices
+     * @param  Collection<int, object>  $invoices
      * @return array{buckets: array<string, string>, total: string, rows: list<array{document_id: int, number: string, doc_date: string, days: int, bucket: string, remaining: string}>}
      */
     private function build($invoices, CarbonInterface|string|null $asOf): array

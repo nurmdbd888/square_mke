@@ -11,6 +11,7 @@ use App\Domain\Payments\PartyBalance;
 use App\Domain\Payments\PaymentWriter;
 use App\Models\AuditLog;
 use App\Models\DailyClosing;
+use App\Models\ExpenseCategory;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Retailer;
@@ -124,7 +125,7 @@ class PaymentEngineTest extends TestCase
         $payments->save([
             'kind' => 'payment', 'number' => 'PX-1', 'method' => 'petty', 'amount' => '50',
             'payment_date' => '2026-10-17', 'action' => 'post',
-            'expense_category_id' => \App\Models\ExpenseCategory::query()->where('key', 'fuel')->value('id'),
+            'expense_category_id' => ExpenseCategory::query()->where('key', 'fuel')->value('id'),
         ], [], $owner);
 
         $cash = $books->cashBook('2026-10-17', '2026-10-17');

@@ -1,13 +1,13 @@
 <?php
 
+use App\Http\Controllers\Accounts\BookController;
+use App\Http\Controllers\Accounts\LedgerController;
+use App\Http\Controllers\Accounts\PaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Accounts\BookController;
-use App\Http\Controllers\Accounts\LedgerController;
-use App\Http\Controllers\Accounts\PaymentController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\HealthController;
