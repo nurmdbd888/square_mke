@@ -66,6 +66,24 @@ class Payment extends Model
     }
 
     /**
+     * @return HasMany<PaymentAttachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PaymentAttachment::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Payment $payment) {
+            $payment->loadMissing('attachments');
+            foreach ($payment->attachments as $file) {
+                $file->deleteFile();
+            }
+        });
+    }
+
+    /**
      * @return BelongsTo<Retailer, $this>
      */
     public function retailer(): BelongsTo

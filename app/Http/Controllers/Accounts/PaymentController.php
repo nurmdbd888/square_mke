@@ -8,11 +8,14 @@ use App\Domain\Payments\PaymentWriter;
 use App\Http\Controllers\Controller;
 use App\Models\ExpenseCategory;
 use App\Models\Payment;
+use App\Models\PaymentAttachment;
 use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\Supplier;
+use App\Support\Access\PaymentAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -56,10 +59,13 @@ class PaymentController extends Controller
             ? 'payments._table'
             : 'payments.index';
 
+        $user = $request->user();
+
         return view($view, [
             'payments' => $payments,
             'filters' => $filters + ['kind' => $kind, 'status' => $status],
-            'canManage' => $request->user()->can('payments.manage'),
+            'canManage' => PaymentAccess::canManage($user),
+            'canCollect' => PaymentAccess::canCollectReceipts($user),
         ]);
     }
 
@@ -67,6 +73,9 @@ class PaymentController extends Controller
     {
         $kind = $request->query('kind', Payment::KIND_RECEIPT);
         abort_unless(in_array($kind, [Payment::KIND_RECEIPT, Payment::KIND_PAYMENT], true), 404);
+        if ($kind === Payment::KIND_PAYMENT) {
+            abort_unless(PaymentAccess::canManage($request->user()), 403);
+        }
 
         return view('payments.form', $this->formData(new Payment([
             'kind' => $kind,
@@ -80,7 +89,9 @@ class PaymentController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        $this->assertCanWriteHeader($request, $data['header']);
         $payment = $this->writer->save($data['header'], $data['allocations'], $request->user());
+        $this->storeAttachments($request, $payment);
 
         return redirect()->route('payments.show', $payment)
             ->with('status', $payment->isPosted()
@@ -90,18 +101,28 @@ class PaymentController extends Controller
 
     public function show(Payment $payment): View
     {
-        $payment->load(['allocations.document', 'retailer', 'supplier', 'expenseCategory', 'salesRep']);
+        $payment->load(['allocations.document', 'retailer', 'supplier', 'expenseCategory', 'salesRep', 'attachments']);
+        $user = request()->user();
 
         return view('payments.show', [
             'payment' => $payment,
-            'canManage' => request()->user()->can('payments.manage'),
+            'canManage' => PaymentAccess::canManage($user),
+            'canWrite' => $payment->isReceipt()
+                ? PaymentAccess::canWriteReceipt($user, $payment)
+                : PaymentAccess::canWritePayment($user, $payment),
         ]);
     }
 
     public function edit(Payment $payment): View
     {
         abort_if($payment->isVoid(), 404);
-        $payment->load('allocations');
+        abort_unless(
+            $payment->isReceipt()
+                ? PaymentAccess::canWriteReceipt(request()->user(), $payment)
+                : PaymentAccess::canWritePayment(request()->user(), $payment),
+            403
+        );
+        $payment->load(['allocations', 'attachments']);
 
         return view('payments.form', $this->formData($payment));
     }
@@ -110,13 +131,16 @@ class PaymentController extends Controller
     {
         abort_if($payment->isVoid(), 404);
         $data = $this->validated($request, $payment);
+        $this->assertCanWriteHeader($request, $data['header'], $payment);
         $payment = $this->writer->save($data['header'], $data['allocations'], $request->user(), $payment);
+        $this->storeAttachments($request, $payment);
 
         return redirect()->route('payments.show', $payment)->with('status', __('Saved.'));
     }
 
     public function destroy(Request $request, Payment $payment): RedirectResponse
     {
+        abort_unless(PaymentAccess::canManage($request->user()), 403);
         $number = $payment->number;
         $this->writer->void($payment, $request->user());
 
@@ -127,6 +151,12 @@ class PaymentController extends Controller
     public function post(Request $request, Payment $payment): RedirectResponse
     {
         abort_unless($payment->isDraft(), 404);
+        abort_unless(
+            $payment->isReceipt()
+                ? PaymentAccess::canWriteReceipt($request->user(), $payment)
+                : PaymentAccess::canWritePayment($request->user(), $payment),
+            403
+        );
         $this->writer->post($payment->load('allocations'), $request->user());
 
         return redirect()->route('payments.show', $payment)
@@ -157,9 +187,16 @@ class PaymentController extends Controller
             'party_id' => ['required', 'integer'],
         ])->validate();
 
-        $invoices = $this->balances->openInvoices($data['party'], (int) $data['party_id']);
+        $partyId = (int) $data['party_id'];
+        $invoices = $this->balances->openInvoices($data['party'], $partyId);
+        $partyBalance = $data['party'] === 'retailer'
+            ? $this->balances->retailer($partyId)
+            : $this->balances->supplier($partyId);
 
-        return view('payments._open_invoices', ['invoices' => $invoices]);
+        return view('payments._open_invoices', [
+            'invoices' => $invoices,
+            'partyBalance' => $partyBalance,
+        ]);
     }
 
     /**
@@ -167,6 +204,21 @@ class PaymentController extends Controller
      */
     private function formData(Payment $payment): array
     {
+        $user = request()->user();
+        $partyBalance = null;
+        $openInvoices = collect();
+        if ($payment->retailer_id) {
+            $openInvoices = $this->balances->openInvoices('retailer', $payment->retailer_id);
+            $partyBalance = $this->balances->retailer($payment->retailer_id);
+        } elseif ($payment->supplier_id) {
+            $openInvoices = $this->balances->openInvoices('supplier', $payment->supplier_id);
+            $partyBalance = $this->balances->supplier($payment->supplier_id);
+        }
+
+        $existingAllocations = $payment->relationLoaded('allocations')
+            ? $payment->allocations->keyBy('document_id')
+            : collect();
+
         return [
             'payment' => $payment,
             'retailers' => Retailer::query()->orderBy('name')->get(['id', 'code', 'name']),
@@ -174,11 +226,10 @@ class PaymentController extends Controller
             'reps' => SalesRep::query()->orderBy('name')->get(['id', 'name']),
             'categories' => ExpenseCategory::query()->orderBy('sort')->get(),
             'methods' => Methods::labels(),
-            'openInvoices' => $payment->retailer_id
-                ? $this->balances->openInvoices('retailer', $payment->retailer_id)
-                : ($payment->supplier_id
-                    ? $this->balances->openInvoices('supplier', $payment->supplier_id)
-                    : collect()),
+            'openInvoices' => $openInvoices,
+            'partyBalance' => $partyBalance,
+            'existingAllocations' => $existingAllocations,
+            'canManage' => PaymentAccess::canManage($user),
         ];
     }
 
@@ -206,6 +257,8 @@ class PaymentController extends Controller
             'allocations' => ['nullable', 'array'],
             'allocations.*.document_id' => ['required_with:allocations', 'integer', 'exists:documents,id'],
             'allocations.*.amount' => ['required_with:allocations', 'decimal:0,2'],
+            'slip_photos' => ['nullable', 'array', 'max:5'],
+            'slip_photos.*' => ['image', 'max:5120'],
         ]);
 
         $allocations = [];
@@ -239,5 +292,52 @@ class PaymentController extends Controller
             ],
             'allocations' => $allocations,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $header
+     */
+    private function assertCanWriteHeader(Request $request, array $header, ?Payment $existing = null): void
+    {
+        $user = $request->user();
+        $kind = (string) ($header['kind'] ?? $existing?->kind ?? Payment::KIND_RECEIPT);
+
+        if ($kind === Payment::KIND_PAYMENT) {
+            abort_unless(PaymentAccess::canWritePayment($user, $existing), 403);
+
+            return;
+        }
+
+        abort_unless(PaymentAccess::canWriteReceipt($user, $existing), 403);
+    }
+
+    private function storeAttachments(Request $request, Payment $payment): void
+    {
+        /** @var list<UploadedFile>|null $files */
+        $files = $request->file('slip_photos');
+        if ($files === null) {
+            return;
+        }
+
+        $existing = $payment->attachments()->count();
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+            if ($existing >= 5) {
+                break;
+            }
+            $path = $file->store('payments/'.$payment->id, 'local');
+            PaymentAttachment::query()->create([
+                'payment_id' => $payment->id,
+                'disk' => 'local',
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+                'size' => $file->getSize() ?: 0,
+                'uploaded_by' => $request->user()?->id,
+            ]);
+            $existing++;
+        }
     }
 }

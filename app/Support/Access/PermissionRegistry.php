@@ -19,7 +19,7 @@ class PermissionRegistry
 {
     public const OWNER = 'owner';
 
-    public const ROLES = ['owner', 'accountant', 'sr', 'data_entry', 'viewer'];
+    public const ROLES = ['owner', 'accountant', 'sr', 'collector', 'data_entry', 'viewer'];
 
     /**
      * group => [permission => roles that get it by default (owner always has all)].
@@ -64,7 +64,8 @@ class PermissionRegistry
             'stock.compare' => ['accountant', 'data_entry'],
         ],
         'accounts' => [
-            'payments.view' => ['accountant', 'sr', 'data_entry', 'viewer'],
+            'payments.view' => ['accountant', 'sr', 'collector', 'data_entry', 'viewer'],
+            'payments.collect' => ['collector', 'sr'],
             'payments.manage' => ['accountant', 'sr', 'data_entry'],
             'accounts.view' => ['accountant', 'data_entry', 'viewer'],
             'accounts.manage' => ['accountant'],

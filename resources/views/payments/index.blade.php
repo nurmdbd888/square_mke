@@ -5,10 +5,12 @@
 @section('content')
     <div class="flex flex-wrap items-end justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Payments') }}</h1>
-        @if ($canManage)
+        @if ($canManage || ($canCollect ?? false))
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('payments.create', ['kind' => 'receipt']) }}" class="btn-primary">{{ __('Add receipt') }}</a>
-                <a href="{{ route('payments.create', ['kind' => 'payment']) }}" class="btn-secondary">{{ __('Add payment') }}</a>
+                @if ($canManage)
+                    <a href="{{ route('payments.create', ['kind' => 'payment']) }}" class="btn-secondary">{{ __('Add payment') }}</a>
+                @endif
             </div>
         @endif
     </div>

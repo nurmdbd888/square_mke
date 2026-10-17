@@ -24,7 +24,7 @@
                 @endif
             </p>
         </div>
-        @if ($canManage && ! $payment->isVoid())
+        @if (($canWrite ?? $canManage) && ! $payment->isVoid())
             <div class="flex flex-wrap gap-2">
                 @unless ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status === 'cleared')
                     <a href="{{ route('payments.edit', $payment) }}" class="btn-secondary">{{ __('Edit') }}</a>
@@ -45,11 +45,13 @@
                         <button class="btn-primary">{{ __('Mark cleared') }}</button>
                     </form>
                 @endif
-                <form method="POST" action="{{ route('payments.destroy', $payment) }}" data-confirm="{{ __('Void this payment? Allocations will reverse.') }}">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn-danger">{{ $payment->isDraft() ? __('Delete draft') : __('Void') }}</button>
-                </form>
+                @if ($canManage)
+                    <form method="POST" action="{{ route('payments.destroy', $payment) }}" data-confirm="{{ __('Void this payment? Allocations will reverse.') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button class="btn-danger">{{ $payment->isDraft() ? __('Delete draft') : __('Void') }}</button>
+                    </form>
+                @endif
             </div>
         @endif
     </div>
@@ -60,6 +62,23 @@
         <div class="card"><dt class="text-xs uppercase text-slate-500">{{ __('Advance') }}</dt><dd class="mt-1 font-mono text-lg font-semibold">{{ format_money(\App\Domain\Money\Exact::of($payment->amount)->minus(\App\Domain\Money\Exact::of($payment->allocations->sum('amount')))) }}</dd></div>
         <div class="card"><dt class="text-xs uppercase text-slate-500">{{ __('Method') }}</dt><dd class="mt-1 font-semibold">{{ \App\Domain\Payments\Methods::label($payment->method) }}</dd></div>
     </dl>
+
+    @if ($payment->attachments->isNotEmpty())
+        <section class="mt-6 card">
+            <h2 class="font-semibold text-slate-900">{{ __('Payment slip photos') }}</h2>
+            <div class="mt-3 flex flex-wrap gap-3">
+                @foreach ($payment->attachments as $photo)
+                    @if ($photo->isImage())
+                        <a href="{{ route('payments.attachments.show', [$payment, $photo]) }}" class="block overflow-hidden rounded-lg border border-slate-200">
+                            <img src="{{ route('payments.attachments.show', [$payment, $photo]) }}" alt="{{ $photo->original_name }}" class="size-24 object-cover sm:size-32" loading="lazy">
+                        </a>
+                    @else
+                        <a href="{{ route('payments.attachments.show', [$payment, $photo]) }}" class="text-sm text-brand-700 underline">{{ $photo->original_name }}</a>
+                    @endif
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     @if ($payment->allocations->isNotEmpty())
         <div class="mt-6 table-wrap">
