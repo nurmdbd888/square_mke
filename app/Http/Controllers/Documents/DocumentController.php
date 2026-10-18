@@ -285,7 +285,10 @@ class DocumentController extends Controller
             'action' => ['nullable', Rule::in(['save', 'post'])],
             'lines' => ['required', 'array', 'min:1', 'max:500'],
             'lines.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'lines.*.kind' => ['nullable', Rule::in(['normal', 'combo_bonus'])],
+            'lines.*.kind' => [
+                'nullable',
+                Rule::in($type === Document::TYPE_SALE ? ['normal', 'combo_bonus'] : ['normal']),
+            ],
             'lines.*.qty' => ['required', 'decimal:0,3'],
             'lines.*.bonus_qty' => ['nullable', 'decimal:0,3'],
             'lines.*.unit_price' => ['nullable', 'decimal:0,4'],

@@ -57,13 +57,32 @@ final class DocumentWriter
             $oldDate = $existing?->doc_date?->toDateString();
             $affected = $existing ? $existing->lines()->pluck('product_id')->all() : [];
 
+            // Combo-bonus lines are free goods on sales only: keep unit price for print/display,
+            // force amount 0, and never let them inflate payable subtotal / header-discount base.
+            foreach ($lines as $i => $line) {
+                $isCombo = $type === Document::TYPE_SALE
+                    && ($line['kind'] ?? DocumentLine::KIND_NORMAL) === DocumentLine::KIND_COMBO_BONUS;
+                $lines[$i]['kind'] = $isCombo ? DocumentLine::KIND_COMBO_BONUS : DocumentLine::KIND_NORMAL;
+
+                if ($isCombo) {
+                    $lines[$i]['line_value'] = '0.00';
+                    $lines[$i]['line_discount'] = '0.00';
+                    $lines[$i]['sd_amount'] = Exact::money($line['sd_amount'] ?? 0);
+                    $lines[$i]['vat_amount'] = Exact::money($line['vat_amount'] ?? 0);
+                } else {
+                    $lineValue = Exact::of($line['line_value'] ?? $this->defaultLineValue($line));
+                    $lines[$i]['line_value'] = Exact::money($lineValue);
+                }
+            }
+
             $shares = $this->allocator->allocate($lines, $header['header_discount'] ?? 0);
             $subtotal = Exact::of('0');
 
             foreach ($lines as $i => $line) {
-                $lineValue = Exact::of($line['line_value'] ?? $this->defaultLineValue($line));
-                $subtotal = $subtotal->plus($lineValue);
-                $lines[$i]['line_value'] = Exact::money($lineValue);
+                $lineValue = Exact::of($line['line_value'] ?? 0);
+                if (($line['kind'] ?? DocumentLine::KIND_NORMAL) !== DocumentLine::KIND_COMBO_BONUS) {
+                    $subtotal = $subtotal->plus($lineValue);
+                }
                 $lines[$i]['header_discount_share'] = $shares[$i];
             }
 
