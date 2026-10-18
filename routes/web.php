@@ -80,9 +80,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/products/bulk', [ProductController::class, 'bulk'])->name('products.bulk');
             Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->withTrashed()->name('products.edit');
             Route::put('/products/{product}', [ProductController::class, 'update'])->withTrashed()->name('products.update');
-            Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
             Route::post('/products/{product}/restore', [ProductController::class, 'restore'])->withTrashed()->name('products.restore');
         });
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('can:products.delete')->name('products.destroy');
 
         Route::middleware('can:retailers.view')->group(function () {
             Route::get('/retailers', [RetailerController::class, 'index'])->name('retailers.index');
@@ -93,9 +93,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/retailers/bulk', [RetailerController::class, 'bulk'])->name('retailers.bulk');
             Route::get('/retailers/{retailer}/edit', [RetailerController::class, 'edit'])->withTrashed()->name('retailers.edit');
             Route::put('/retailers/{retailer}', [RetailerController::class, 'update'])->withTrashed()->name('retailers.update');
-            Route::delete('/retailers/{retailer}', [RetailerController::class, 'destroy'])->name('retailers.destroy');
             Route::post('/retailers/{retailer}/restore', [RetailerController::class, 'restore'])->withTrashed()->name('retailers.restore');
         });
+        Route::delete('/retailers/{retailer}', [RetailerController::class, 'destroy'])->middleware('can:retailers.delete')->name('retailers.destroy');
 
         $masterKinds = 'suppliers|routes|sales-reps|vehicles';
 
@@ -114,30 +114,32 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::middleware('can:masters.manage')->group(function () use ($masterKinds) {
             Route::post('/masters/price-lists', [PriceListController::class, 'store'])->name('masters.price-lists.store');
             Route::put('/masters/price-lists/{priceList}', [PriceListController::class, 'update'])->withTrashed()->name('masters.price-lists.update');
-            Route::delete('/masters/price-lists/{priceList}', [PriceListController::class, 'destroy'])->name('masters.price-lists.destroy');
             Route::post('/masters/price-lists/{priceList}/restore', [PriceListController::class, 'restore'])->withTrashed()->name('masters.price-lists.restore');
             Route::post('/masters/price-lists/{priceList}/items', [PriceListController::class, 'storeItem'])->name('masters.price-lists.items.store');
-            Route::delete('/masters/price-lists/{priceList}/items/{item}', [PriceListController::class, 'destroyItem'])->name('masters.price-lists.items.destroy');
 
             Route::get('/masters/opening-balances/create', [OpeningBalanceController::class, 'create'])->name('masters.opening-balances.create');
             Route::post('/masters/opening-balances', [OpeningBalanceController::class, 'store'])->name('masters.opening-balances.store');
             Route::get('/masters/opening-balances/{openingBalance}/edit', [OpeningBalanceController::class, 'edit'])->name('masters.opening-balances.edit');
             Route::put('/masters/opening-balances/{openingBalance}', [OpeningBalanceController::class, 'update'])->name('masters.opening-balances.update');
-            Route::delete('/masters/opening-balances/{openingBalance}', [OpeningBalanceController::class, 'destroy'])->name('masters.opening-balances.destroy');
 
             Route::get('/masters/custom-fields/create', [CustomFieldController::class, 'create'])->name('masters.custom-fields.create');
             Route::post('/masters/custom-fields', [CustomFieldController::class, 'store'])->name('masters.custom-fields.store');
             Route::get('/masters/custom-fields/{customField}/edit', [CustomFieldController::class, 'edit'])->name('masters.custom-fields.edit');
             Route::put('/masters/custom-fields/{customField}', [CustomFieldController::class, 'update'])->name('masters.custom-fields.update');
-            Route::delete('/masters/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('masters.custom-fields.destroy');
 
             Route::get('/masters/{kind}/create', [DirectoryController::class, 'create'])->where('kind', $masterKinds)->name('masters.directory.create');
             Route::post('/masters/{kind}/bulk', [DirectoryController::class, 'bulk'])->where('kind', $masterKinds)->name('masters.directory.bulk');
             Route::post('/masters/{kind}', [DirectoryController::class, 'store'])->where('kind', $masterKinds)->name('masters.directory.store');
             Route::get('/masters/{kind}/{id}/edit', [DirectoryController::class, 'edit'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.edit');
             Route::put('/masters/{kind}/{id}', [DirectoryController::class, 'update'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.update');
-            Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
             Route::post('/masters/{kind}/{id}/restore', [DirectoryController::class, 'restore'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.restore');
+        });
+        Route::middleware('can:masters.delete')->group(function () use ($masterKinds) {
+            Route::delete('/masters/price-lists/{priceList}', [PriceListController::class, 'destroy'])->name('masters.price-lists.destroy');
+            Route::delete('/masters/price-lists/{priceList}/items/{item}', [PriceListController::class, 'destroyItem'])->name('masters.price-lists.items.destroy');
+            Route::delete('/masters/opening-balances/{openingBalance}', [OpeningBalanceController::class, 'destroy'])->name('masters.opening-balances.destroy');
+            Route::delete('/masters/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('masters.custom-fields.destroy');
+            Route::delete('/masters/{kind}/{id}', [DirectoryController::class, 'destroy'])->where('kind', $masterKinds)->whereNumber('id')->name('masters.directory.destroy');
         });
 
         Route::prefix('imports/invoices')->group(function () {
@@ -171,7 +173,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->name('purchases.update');
         Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.bulk');
         Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->name('purchases.post');
-        Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.manage')->name('purchases.destroy');
+        Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.delete')->name('purchases.destroy');
 
         Route::get('/sales', [DocumentController::class, 'index'])->middleware('can:sales.view')->defaults('type', 'sale')->name('sales.index');
         Route::get('/sales/create', [DocumentController::class, 'create'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.create');
@@ -181,7 +183,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
         Route::post('/sales/bulk', [DocumentController::class, 'bulk'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.bulk');
         Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
-        Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.manage')->name('sales.destroy');
+        Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.delete')->name('sales.destroy');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
         Route::get('/sales/{document}/print/invoice', [DocumentPrintController::class, 'invoiceA4'])->middleware('can:sales.view')->name('sales.print.invoice');
         Route::get('/sales/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:sales.view')->name('sales.print.challan');
@@ -204,7 +206,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/returns/{stockNote}', [StockNoteController::class, 'update'])->middleware('can:returns.manage')->name('returns.update');
         Route::post('/returns/bulk', [StockNoteController::class, 'bulk'])->middleware('can:returns.manage')->name('returns.bulk');
         Route::post('/returns/{stockNote}/post', [StockNoteController::class, 'post'])->middleware('can:returns.manage')->name('returns.post');
-        Route::delete('/returns/{stockNote}', [StockNoteController::class, 'destroy'])->middleware('can:returns.manage')->name('returns.destroy');
+        Route::delete('/returns/{stockNote}', [StockNoteController::class, 'destroy'])->middleware('can:returns.delete')->name('returns.destroy');
 
         Route::get('/claims', [ClaimController::class, 'index'])->middleware('can:claims.view')->name('claims.index');
         Route::get('/claims/create', [ClaimController::class, 'create'])->middleware('can:claims.manage')->name('claims.create');
@@ -213,6 +215,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/claims/{claim}/edit', [ClaimController::class, 'edit'])->middleware('can:claims.manage')->name('claims.edit');
         Route::put('/claims/{claim}', [ClaimController::class, 'update'])->middleware('can:claims.manage')->name('claims.update');
         Route::post('/claims/bulk', [ClaimController::class, 'bulk'])->middleware('can:claims.manage')->name('claims.bulk');
+        Route::delete('/claims/{claim}', [ClaimController::class, 'destroy'])->middleware('can:claims.delete')->name('claims.destroy');
 
         Route::get('/collections', [CollectorController::class, 'index'])->middleware('can:payments.collect')->name('collector.index');
         Route::post('/sales/{document}/collection/confirm', [CollectorController::class, 'confirm'])
@@ -233,7 +236,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::put('/payments/{payment}', [PaymentController::class, 'update'])->name('payments.update');
         Route::post('/payments/{payment}/post', [PaymentController::class, 'post'])->name('payments.post');
         Route::post('/payments/{payment}/clear', [PaymentController::class, 'clear'])->middleware('can:payments.admin-write')->name('payments.clear');
-        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->middleware('can:payments.delete')->name('payments.destroy');
 
         Route::middleware('can:accounts.view')->group(function () {
             Route::get('/accounts/receivables', [LedgerController::class, 'receivables'])->name('accounts.receivables');
@@ -283,9 +286,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::put('/users/{user}', [UserController::class, 'update'])->withTrashed()->name('users.update');
             Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
             Route::post('/users/{user}/reset-two-factor', [UserController::class, 'resetTwoFactor'])->name('users.reset-two-factor');
-            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
             Route::post('/users/{user}/restore', [UserController::class, 'restore'])->withTrashed()->name('users.restore');
         });
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('can:users.delete')->name('users.destroy');
 
         Route::middleware('can:roles.manage')->group(function () {
             Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');

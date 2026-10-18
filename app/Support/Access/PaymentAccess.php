@@ -12,6 +12,11 @@ final class PaymentAccess
         return $user->can('payments.manage');
     }
 
+    public static function canDelete(User $user): bool
+    {
+        return $user->can('payments.delete');
+    }
+
     public static function canCollectReceipts(User $user): bool
     {
         return $user->can('payments.manage') || $user->can('payments.collect');

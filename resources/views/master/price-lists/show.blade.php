@@ -43,13 +43,13 @@
                                 <td>{{ format_number($item->price, 2) }}</td>
                                 <td>{{ local_digits($item->effective_from->format('d-m-Y')) }}</td>
                                 <td class="text-right">
-                                    @can('masters.manage')
+                                    @can('masters.delete')
                                         @unless ($list->trashed())
-                                            <form method="POST" action="{{ route('masters.price-lists.items.destroy', [$list, $item]) }}" data-confirm="{{ __('Remove this price?') }}">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button class="font-medium text-red-700 underline">{{ __('Remove') }}</button>
-                                            </form>
+                                            <x-delete-form
+                                                :action="route('masters.price-lists.items.destroy', [$list, $item])"
+                                                :confirm="__('Remove this price?')"
+                                                :label="__('Remove')"
+                                            />
                                         @endunless
                                     @endcan
                                 </td>
@@ -99,15 +99,18 @@
                             <button class="btn-secondary w-fit">{{ __('Save') }}</button>
                         </form>
                     </section>
-                    <section class="card">
-                        <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
-                        <p class="mt-1 text-sm text-slate-600">{{ __('Retailers keep the link. You can reactivate the list later.') }}</p>
-                        <form method="POST" action="{{ route('masters.price-lists.destroy', $list) }}" class="mt-3" data-confirm="{{ __('Deactivate this price list?') }}">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn-danger">{{ __('Deactivate') }}</button>
-                        </form>
-                    </section>
+                    @can('masters.delete')
+                        <section class="card">
+                            <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
+                            <p class="mt-1 text-sm text-slate-600">{{ __('Retailers keep the link. You can reactivate the list later.') }}</p>
+                            <x-delete-form
+                                :action="route('masters.price-lists.destroy', $list)"
+                                :confirm="__('Deactivate this price list?')"
+                                :label="__('Deactivate')"
+                                class="mt-3"
+                            />
+                        </section>
+                    @endcan
                 @endunless
             </aside>
         @endcan

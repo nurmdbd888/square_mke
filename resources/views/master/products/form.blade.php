@@ -98,18 +98,21 @@
             </form>
         </section>
 
-        @if ($product->exists && ! $product->trashed())
-            <aside>
-                <section class="card">
-                    <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">{{ __('The product stays in old documents. You can reactivate it later.') }}</p>
-                    <form method="POST" action="{{ route('products.destroy', $product) }}" class="mt-3" data-confirm="{{ __('Deactivate this product?') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn-danger">{{ __('Deactivate') }}</button>
-                    </form>
-                </section>
-            </aside>
-        @endif
+        @can('products.delete')
+            @if ($product->exists && ! $product->trashed())
+                <aside>
+                    <section class="card">
+                        <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
+                        <p class="mt-1 text-sm text-slate-600">{{ __('The product stays in old documents. You can reactivate it later.') }}</p>
+                        <x-delete-form
+                            :action="route('products.destroy', $product)"
+                            :confirm="__('Deactivate this product?')"
+                            :label="__('Deactivate')"
+                            class="mt-3"
+                        />
+                    </section>
+                </aside>
+            @endif
+        @endcan
     </div>
 @endsection

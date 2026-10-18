@@ -100,17 +100,20 @@
                     </section>
                 @endif
 
-                @unless ($user->is(auth()->user()))
-                    <section class="card">
-                        <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
-                        <p class="mt-1 text-sm text-slate-600">{{ __('The user can no longer sign in. Their history stays. You can reactivate them later.') }}</p>
-                        <form method="POST" action="{{ route('users.destroy', $user) }}" class="mt-3" data-confirm="{{ __('Deactivate this user?') }}">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn-danger">{{ __('Deactivate') }}</button>
-                        </form>
-                    </section>
-                @endunless
+                @can('users.delete')
+                    @unless ($user->is(auth()->user()))
+                        <section class="card">
+                            <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
+                            <p class="mt-1 text-sm text-slate-600">{{ __('The user can no longer sign in. Their history stays. You can reactivate them later.') }}</p>
+                            <x-delete-form
+                                :action="route('users.destroy', $user)"
+                                :confirm="__('Deactivate this user?')"
+                                :label="__('Deactivate')"
+                                class="mt-3"
+                            />
+                        </section>
+                    @endunless
+                @endcan
             </aside>
         @endif
     </div>

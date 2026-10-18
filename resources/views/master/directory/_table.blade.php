@@ -1,5 +1,6 @@
 @php
     $manage = auth()->user()->can('masters.manage');
+    $canDelete = auth()->user()->can('masters.delete');
     $bulkFields = match ($kind) {
         'suppliers' => ['phone' => __('Phone'), 'bin' => __('BIN')],
         'routes' => ['code' => __('Code')],
@@ -7,7 +8,7 @@
         'vehicles' => ['type' => __('Vehicle type')],
         default => [],
     };
-    $span = count($meta['columns']) + 1 + ($manage ? 1 : 0);
+    $span = count($meta['columns']) + 1 + ($manage || $canDelete ? 1 : 0);
 @endphp
 @if ($manage)
     <form method="POST" action="{{ route('masters.directory.bulk', $kind) }}">
@@ -49,9 +50,17 @@
                         </td>
                     @endforeach
                     <td class="text-right">
-                        @can('masters.manage')
-                            <x-row-actions :edit="route('masters.directory.edit', [$kind, $row])" />
-                        @endcan
+                        @if ($manage || $canDelete)
+                            <x-row-actions :edit="$manage ? route('masters.directory.edit', [$kind, $row]) : null">
+                                @if ($canDelete && ! $row->trashed())
+                                    <x-delete-form
+                                        :action="route('masters.directory.destroy', [$kind, $row])"
+                                        :confirm="__('Deactivate this record?')"
+                                        :label="__('Deactivate')"
+                                    />
+                                @endif
+                            </x-row-actions>
+                        @endif
                     </td>
                 </tr>
             @empty

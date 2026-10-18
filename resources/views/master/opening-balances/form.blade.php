@@ -63,12 +63,13 @@
     </section>
 
     @if ($row->exists)
-        @can('masters.manage')
-            <form method="POST" action="{{ route('masters.opening-balances.destroy', $row) }}" class="mt-6" data-confirm="{{ __('Remove this opening balance?') }}">
-                @csrf
-                @method('DELETE')
-                <button class="btn-danger">{{ __('Remove') }}</button>
-            </form>
+        @can('masters.delete')
+            <x-delete-form
+                :action="route('masters.opening-balances.destroy', $row)"
+                :confirm="__('Remove this opening balance?')"
+                :label="__('Remove')"
+                class="mt-6"
+            />
         @endcan
     @endif
 @endsection
