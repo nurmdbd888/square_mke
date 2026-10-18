@@ -199,6 +199,20 @@
                             </template>
                         </ul>
                     </div>
+                    @unless ($isPurchase)
+                        <div class="mt-3" data-testid="line-add-kind">
+                            <span class="label">{{ __('Add next product as') }}</span>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                <button type="button" class="btn-secondary py-1.5 text-xs"
+                                        :class="lineAddKind === 'normal' ? 'ring-2 ring-brand-500' : ''"
+                                        @click="lineAddKind = 'normal'">{{ __('Paid line') }}</button>
+                                <button type="button" class="btn-secondary py-1.5 text-xs"
+                                        :class="lineAddKind === 'combo_bonus' ? 'ring-2 ring-brand-500' : ''"
+                                        @click="lineAddKind = 'combo_bonus'">{{ __('Invoice Combo Bonus') }}</button>
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">{{ __('Combo bonus lines leave stock but add 0.00 to the invoice total.') }}</p>
+                        </div>
+                    @endunless
                     <p class="mt-2 text-xs text-slate-500">{{ __('Click a product to add it to the invoice.') }}</p>
                 </div>
 
@@ -217,7 +231,7 @@
                             </thead>
                             <tbody>
                                 <template x-for="(line, index) in lines" :key="index">
-                                    <tr class="align-top">
+                                    <tr class="align-top" :class="line.kind === 'combo_bonus' ? 'bg-amber-50/80' : ''">
                                         <td>
                                             <input type="hidden" :name="`lines[${index}][product_id]`" x-model="line.product_id">
                                             <input type="hidden" :name="`lines[${index}][kind]`" x-model="line.kind">
@@ -227,6 +241,7 @@
                                             <input type="hidden" :name="`lines[${index}][sd_amount]`" x-model="line.sd_amount">
                                             <input type="hidden" :name="`lines[${index}][vat_amount]`" x-model="line.vat_amount">
                                             <span class="font-medium text-slate-900" x-text="productLabel(line.product_id)"></span>
+                                            <span x-show="line.kind === 'combo_bonus'" class="ml-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">{{ __('Combo bonus') }}</span>
                                             <button type="button" class="mt-1 block text-xs text-brand-700 underline" @click="line.showTax = !line.showTax" x-text="line.showTax ? '{{ __('Hide tax & bonus') }}' : '{{ __('Tax & bonus') }}'"></button>
                                         </td>
                                         <td>
@@ -236,11 +251,11 @@
                                             <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" @input="recalc(index)">
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" @input="recalc(index)">
+                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" :disabled="line.kind === 'combo_bonus'" @input="recalc(index)">
                                         </td>
                                         <td class="text-right font-mono">
                                             <input type="hidden" :name="`lines[${index}][line_value]`" x-model="line.line_value">
-                                            <span x-text="line.line_value || '0.00'"></span>
+                                            <span x-text="line.kind === 'combo_bonus' ? '0.00' : (line.line_value || '0.00')"></span>
                                         </td>
                                         <td class="text-right">
                                             <button type="button" class="text-xs text-red-700 underline" @click="removeLine(index)">{{ __('Remove') }}</button>
@@ -249,13 +264,15 @@
                                     <tr x-show="line.showTax" x-cloak class="bg-slate-50">
                                         <td colspan="6" class="py-2">
                                             <div class="flex flex-wrap gap-3 text-xs">
-                                                <label class="flex items-center gap-1">
-                                                    <span>{{ __('Kind') }}</span>
-                                                    <select x-model="line.kind" class="input py-1 text-xs">
-                                                        <option value="normal">{{ __('Normal') }}</option>
-                                                        <option value="combo_bonus">{{ __('Combo bonus') }}</option>
-                                                    </select>
-                                                </label>
+                                                @unless ($isPurchase)
+                                                    <label class="flex items-center gap-1">
+                                                        <span>{{ __('Kind') }}</span>
+                                                        <select x-model="line.kind" class="input py-1 text-xs" @change="recalc(index)">
+                                                            <option value="normal">{{ __('Normal') }}</option>
+                                                            <option value="combo_bonus">{{ __('Combo bonus') }}</option>
+                                                        </select>
+                                                    </label>
+                                                @endunless
                                                 <label class="flex items-center gap-1">
                                                     <span>{{ __('Bonus qty') }}</span>
                                                     <input type="text" x-model="line.bonus_qty" class="input w-16 py-1 text-xs font-mono">
@@ -337,6 +354,7 @@
             return {
                 lines,
                 catalog: catalog || [],
+                lineAddKind: 'normal',
                 brandFilter: '',
                 productQuery: '',
                 productOpen: false,
@@ -381,7 +399,10 @@
                     return (product.code ? product.code + ' · ' : '') + product.name;
                 },
                 addProduct(product) {
-                    const index = this.lines.findIndex((line) => String(line.product_id) === String(product.id));
+                    const kind = isPurchase ? 'normal' : (this.lineAddKind || 'normal');
+                    const index = this.lines.findIndex((line) =>
+                        String(line.product_id) === String(product.id) && (line.kind || 'normal') === kind
+                    );
                     if (index >= 0) {
                         const qty = parseFloat(this.lines[index].qty || '0');
                         this.lines[index].qty = String((Number.isFinite(qty) ? qty : 0) + 1);
@@ -389,17 +410,17 @@
                     } else {
                         this.lines.push({
                             product_id: String(product.id),
-                            kind: 'normal',
+                            kind: kind,
                             qty: '1',
                             bonus_qty: '0',
                             unit_price: isPurchase ? (product.buy || '') : (product.sell || product.buy || ''),
                             line_discount: '0',
-                            line_value: '',
+                            line_value: kind === 'combo_bonus' ? '0.00' : '',
                             sd_pct: product.sd || '0',
                             vat_pct: product.vat || '15',
                             sd_amount: '0',
                             vat_amount: '0',
-                            showTax: false,
+                            showTax: kind === 'combo_bonus',
                         });
                         this.recalc(this.lines.length - 1);
                     }
@@ -426,6 +447,11 @@
                 recalc(index) {
                     const line = this.lines[index];
                     if (!line) {
+                        return;
+                    }
+                    if (line.kind === 'combo_bonus') {
+                        line.line_discount = '0';
+                        line.line_value = '0.00';
                         return;
                     }
                     const qty = parseFloat(line.qty || '0');
