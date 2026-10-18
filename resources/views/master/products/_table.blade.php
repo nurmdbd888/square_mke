@@ -1,6 +1,7 @@
 @php
     $manage = auth()->user()->can('products.manage');
-    $span = 2 + count($columns) + ($manage ? 1 : 0);
+    $canDelete = auth()->user()->can('products.delete');
+    $span = 2 + count($columns) + ($manage || $canDelete ? 1 : 0);
 @endphp
 @if ($manage)
     <form method="POST" action="{{ route('products.bulk') }}">
@@ -64,8 +65,16 @@
                         <td>{{ format_number($row->vat_pct, 2) }}</td>
                     @endif
                     <td class="text-right">
-                        @if ($manage)
-                            <x-row-actions :edit="route('products.edit', $row)" />
+                        @if ($manage || $canDelete)
+                            <x-row-actions :edit="$manage ? route('products.edit', $row) : null">
+                                @if ($canDelete && ! $row->trashed())
+                                    <x-delete-form
+                                        :action="route('products.destroy', $row)"
+                                        :confirm="__('Deactivate this product?')"
+                                        :label="__('Deactivate')"
+                                    />
+                                @endif
+                            </x-row-actions>
                         @endif
                     </td>
                 </tr>

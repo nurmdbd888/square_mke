@@ -238,9 +238,9 @@
     "Default paper size for invoices and challans (A5 recommended for delivery).": "ইনভয়েস ও চালানের ডিফল্ট কাগজের আকার (ডেলিভারির জন্য A5 সুপারিশ)।",
     "Default print page size": "ডিফল্ট প্রিন্ট পৃষ্ঠার আকার",
     "Default value": "ডিফল্ট মান",
-    "Delete": "Delete",
+    "Delete": "মুছুন",
     "Delete draft": "খসড়া মুছুন",
-    "Delete this note?": "Delete this note?",
+    "Delete this note?": "এই নোট মুছবেন?",
     "Delivery": "ডেলিভারি",
     "Delivery challan": "ডেলিভারি চালান",
     "Delivery date": "ডেলিভারি তারিখ",
@@ -956,5 +956,10 @@
     "Sub Total": "উপমোট",
     "Rate": "রেট",
     "Tax": "কর",
-    "No lines.": "কোনো লাইন নেই।"
+    "No lines.": "কোনো লাইন নেই।",
+    "Claim :number was deleted.": "ক্লেইম :number মুছে ফেলা হয়েছে।",
+    "Delete this draft?": "এই খসড়া মুছবেন?",
+    "Void this note? Stock will be recomputed.": "এই নোট বাতিল করবেন? স্টক পুনরায় হিসাব হবে।",
+    "Delete this record? This cannot be undone easily.": "এই রেকর্ড মুছবেন? সহজে পূর্বাবস্থায় ফেরানো যাবে না।",
+    "Delete this claim?": "এই ক্লেইম মুছবেন?"
 }

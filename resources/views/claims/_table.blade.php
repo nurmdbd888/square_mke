@@ -1,4 +1,6 @@
 @php
+    $canManage = $canManage ?? false;
+    $canDelete = $canDelete ?? false;
     $span = 6 + ($canManage ? 1 : 0);
 @endphp
 @if ($canManage)
@@ -33,7 +35,20 @@
                     <td>{{ $claim->supplier?->name ?? '—' }}</td>
                     <td class="text-right font-mono">{{ format_money($claim->amount) }}</td>
                     <td>{{ __(ucfirst($claim->status)) }}</td>
-                    <td class="text-right"><a href="{{ route('claims.show', $claim) }}" class="text-brand-700 underline">{{ __('Open') }}</a></td>
+                    <td class="text-right">
+                        <x-row-actions
+                            :view="route('claims.show', $claim)"
+                            :view-label="__('Open')"
+                            :edit="$canManage && ! in_array($claim->status, ['settled', 'rejected'], true) ? route('claims.edit', $claim) : null"
+                        >
+                            @if ($canDelete && ! in_array($claim->status, ['settled', 'rejected'], true))
+                                <x-delete-form
+                                    :action="route('claims.destroy', $claim)"
+                                    :confirm="__('Delete this claim?')"
+                                />
+                            @endif
+                        </x-row-actions>
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="{{ $span }}" class="py-8 text-center text-slate-500">{{ __('No claims yet.') }}</td></tr>

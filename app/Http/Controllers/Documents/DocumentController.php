@@ -68,6 +68,7 @@ class DocumentController extends Controller
             'documents' => $documents,
             'filters' => $filters + ['status' => $status],
             'canManage' => $request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.manage' : 'sales.manage'),
+            'canDelete' => $request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.delete' : 'sales.delete'),
         ]);
     }
 
@@ -112,6 +113,7 @@ class DocumentController extends Controller
             'document' => $document,
             'type' => $document->type,
             'canManage' => $request->user()->can($document->isPurchase() ? 'purchases.manage' : 'sales.manage'),
+            'canDelete' => $request->user()->can($document->isPurchase() ? 'purchases.delete' : 'sales.delete'),
         ]);
     }
 
@@ -145,7 +147,7 @@ class DocumentController extends Controller
     public function destroy(Request $request, Document $document): RedirectResponse
     {
         $this->assertRouteMatches($request, $document);
-        $this->authorizeManage($request, $document->type);
+        $this->authorizeDelete($request, $document->type);
         $type = $document->type;
         $number = $document->number;
         $this->writer->void($document, $request->user());
@@ -158,11 +160,16 @@ class DocumentController extends Controller
     public function bulk(Request $request, string $type): RedirectResponse
     {
         $this->assertType($type);
-        $this->authorizeManage($request, $type);
-
         $action = $request->validate([
             'action' => ['required', Rule::in(['post', 'void'])],
         ])['action'];
+
+        if ($action === 'void') {
+            $this->authorizeDelete($request, $type);
+        } else {
+            $this->authorizeManage($request, $type);
+        }
+
         $ids = BulkSelection::ids($request);
         $result = new BulkActionResult;
 
@@ -369,5 +376,10 @@ class DocumentController extends Controller
     private function authorizeManage(Request $request, string $type): void
     {
         abort_unless($request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.manage' : 'sales.manage'), 403);
+    }
+
+    private function authorizeDelete(Request $request, string $type): void
+    {
+        abort_unless($request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.delete' : 'sales.delete'), 403);
     }
 }

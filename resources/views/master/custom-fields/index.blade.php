@@ -31,9 +31,17 @@
                         <td class="font-mono">{{ $field->key }}</td>
                         <td>{{ $field->type === 'number' ? __('Number') : __('Text') }}</td>
                         <td class="text-right">
-                            @can('masters.manage')
-                                <a href="{{ route('masters.custom-fields.edit', $field) }}" class="font-medium text-brand-700 underline">{{ __('Edit') }}</a>
-                            @endcan
+                            <x-row-actions
+                                :edit="auth()->user()->can('masters.manage') ? route('masters.custom-fields.edit', $field) : null"
+                            >
+                                @can('masters.delete')
+                                    <x-delete-form
+                                        :action="route('masters.custom-fields.destroy', $field)"
+                                        :confirm="__('Remove this custom field?')"
+                                        :label="__('Remove')"
+                                    />
+                                @endcan
+                            </x-row-actions>
                         </td>
                     </tr>
                 @empty

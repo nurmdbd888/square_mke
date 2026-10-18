@@ -13,7 +13,17 @@
     @if ($claim->description)
         <p class="mt-4 text-sm">{{ $claim->description }}</p>
     @endif
-    @if ($canManage && ! in_array($claim->status, ['settled', 'rejected'], true))
-        <a href="{{ route('claims.edit', $claim) }}" class="btn-secondary mt-4 inline-flex">{{ __('Edit') }}</a>
+    @if (($canManage || ($canDelete ?? false)) && ! in_array($claim->status, ['settled', 'rejected'], true))
+        <div class="mt-4 flex flex-wrap gap-2">
+            @if ($canManage)
+                <a href="{{ route('claims.edit', $claim) }}" class="btn-secondary inline-flex">{{ __('Edit') }}</a>
+            @endif
+            @if ($canDelete ?? false)
+                <x-delete-form
+                    :action="route('claims.destroy', $claim)"
+                    :confirm="__('Delete this claim?')"
+                />
+            @endif
+        </div>
     @endif
 @endsection

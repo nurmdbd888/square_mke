@@ -21,17 +21,18 @@ class PermissionMatrixTest extends TestCase
             [
                 'health.view', 'users.view', 'audit.view', 'settings.view',
                 'products.view', 'retailers.view', 'masters.view',
-                'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
-                'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
-                'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                'stock.view', 'stock.manage', 'stock.compare',
+                'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete',
+                'payments.view', 'payments.manage', 'payments.delete', 'accounts.view', 'accounts.manage',
                 'reports.view', 'reports.manage', 'exports.view', 'google.manage',
             ],
             Role::findByName('accountant')->permissions->pluck('name')->all(),
         );
         $this->assertEqualsCanonicalizing(
             [
-                'products.view', 'retailers.view', 'sales.view', 'sales.manage',
-                'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage',
+                'products.view', 'retailers.view', 'sales.view', 'sales.manage', 'sales.delete',
+                'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage', 'returns.delete',
             ],
             Role::findByName('sr')->permissions->pluck('name')->all(),
         );
@@ -41,10 +42,12 @@ class PermissionMatrixTest extends TestCase
         );
         $this->assertEqualsCanonicalizing(
             [
-                'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
-                'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
-                'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
-                'payments.view', 'payments.manage', 'accounts.view',
+                'products.view', 'products.manage', 'products.delete', 'retailers.view', 'retailers.manage', 'retailers.delete',
+                'masters.view', 'masters.manage', 'masters.delete',
+                'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                'stock.view', 'stock.manage', 'stock.compare',
+                'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete',
+                'payments.view', 'payments.manage', 'payments.delete', 'accounts.view',
                 'reports.view', 'exports.view',
             ],
             Role::findByName('data_entry')->permissions->pluck('name')->all(),
@@ -88,18 +91,21 @@ class PermissionMatrixTest extends TestCase
                 'accountant' => [
                     'health.view', 'users.view', 'audit.view', 'settings.view',
                     'products.view', 'retailers.view', 'masters.view',
-                    'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
-                    'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
-                    'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                    'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                    'stock.view', 'stock.manage', 'stock.compare',
+                    'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete',
+                    'payments.view', 'payments.manage', 'payments.delete', 'accounts.view', 'accounts.manage',
                     'reports.view', 'reports.manage', 'exports.view', 'google.manage',
                 ],
                 'sr' => ['settings.view'],
                 'collector' => ['payments.view', 'payments.collect', 'retailers.view'],
                 'data_entry' => [
-                    'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
-                    'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
-                    'payments.view', 'payments.manage', 'accounts.view',
-                    'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                    'products.view', 'products.manage', 'products.delete', 'retailers.view', 'retailers.manage', 'retailers.delete',
+                    'masters.view', 'masters.manage', 'masters.delete',
+                    'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                    'stock.view', 'stock.manage',
+                    'payments.view', 'payments.manage', 'payments.delete', 'accounts.view',
+                    'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete', 'stock.compare',
                     'reports.view', 'exports.view',
                 ],
                 'viewer' => [
@@ -113,10 +119,12 @@ class PermissionMatrixTest extends TestCase
         $this->assertSame(['settings.view'], Role::findByName('sr')->permissions->pluck('name')->all());
         $this->assertEqualsCanonicalizing(
             [
-                'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
-                'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
-                'payments.view', 'payments.manage', 'accounts.view',
-                'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                'products.view', 'products.manage', 'products.delete', 'retailers.view', 'retailers.manage', 'retailers.delete',
+                'masters.view', 'masters.manage', 'masters.delete',
+                'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                'stock.view', 'stock.manage',
+                'payments.view', 'payments.manage', 'payments.delete', 'accounts.view',
+                'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete', 'stock.compare',
                 'reports.view', 'exports.view',
             ],
             Role::findByName('data_entry')->permissions->pluck('name')->all(),
@@ -130,7 +138,11 @@ class PermissionMatrixTest extends TestCase
             ->sole();
         $this->assertSame('role', $log->auditable_type);
         $this->assertEqualsCanonicalizing(
-            ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'returns.view', 'returns.manage', 'payments.view', 'payments.collect', 'payments.manage'],
+            [
+                'products.view', 'retailers.view', 'sales.view', 'sales.manage', 'sales.delete',
+                'returns.view', 'returns.manage', 'returns.delete',
+                'payments.view', 'payments.collect', 'payments.manage',
+            ],
             $log->old_values['permissions'],
         );
         $this->assertSame(['permissions' => ['settings.view']], $log->new_values);
@@ -144,18 +156,24 @@ class PermissionMatrixTest extends TestCase
                 'accountant' => [
                     'health.view', 'users.view', 'audit.view', 'settings.view',
                     'products.view', 'retailers.view', 'masters.view',
-                    'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage', 'stock.compare',
-                    'returns.view', 'returns.manage', 'claims.view', 'claims.manage',
-                    'payments.view', 'payments.manage', 'accounts.view', 'accounts.manage',
+                    'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                    'stock.view', 'stock.manage', 'stock.compare',
+                    'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete',
+                    'payments.view', 'payments.manage', 'payments.delete', 'accounts.view', 'accounts.manage',
                     'reports.view', 'reports.manage', 'exports.view', 'google.manage',
                 ],
                 'collector' => ['payments.view', 'payments.collect', 'retailers.view'],
-                'sr' => ['products.view', 'retailers.view', 'sales.view', 'sales.manage', 'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage'],
+                'sr' => [
+                    'products.view', 'retailers.view', 'sales.view', 'sales.manage', 'sales.delete',
+                    'payments.view', 'payments.collect', 'payments.manage', 'returns.view', 'returns.manage', 'returns.delete',
+                ],
                 'data_entry' => [
-                    'products.view', 'products.manage', 'retailers.view', 'retailers.manage', 'masters.view', 'masters.manage',
-                    'purchases.view', 'purchases.manage', 'sales.view', 'sales.manage', 'stock.view', 'stock.manage',
-                    'payments.view', 'payments.manage', 'accounts.view',
-                    'returns.view', 'returns.manage', 'claims.view', 'claims.manage', 'stock.compare',
+                    'products.view', 'products.manage', 'products.delete', 'retailers.view', 'retailers.manage', 'retailers.delete',
+                    'masters.view', 'masters.manage', 'masters.delete',
+                    'purchases.view', 'purchases.manage', 'purchases.delete', 'sales.view', 'sales.manage', 'sales.delete',
+                    'stock.view', 'stock.manage',
+                    'payments.view', 'payments.manage', 'payments.delete', 'accounts.view',
+                    'returns.view', 'returns.manage', 'returns.delete', 'claims.view', 'claims.manage', 'claims.delete', 'stock.compare',
                     'reports.view', 'exports.view',
                 ],
                 'viewer' => [

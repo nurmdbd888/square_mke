@@ -1,6 +1,7 @@
 @php
     $manage = auth()->user()->can('retailers.manage');
-    $span = 2 + count($columns) + ($manage ? 1 : 0);
+    $canDelete = auth()->user()->can('retailers.delete');
+    $span = 2 + count($columns) + ($manage || $canDelete ? 1 : 0);
 @endphp
 @if ($manage)
     <form method="POST" action="{{ route('retailers.bulk') }}">
@@ -56,8 +57,16 @@
                         <td>{{ $row->credit_limit !== null ? format_money($row->credit_limit) : '—' }}</td>
                     @endif
                     <td class="text-right">
-                        @if ($manage)
-                            <x-row-actions :edit="route('retailers.edit', $row)" />
+                        @if ($manage || $canDelete)
+                            <x-row-actions :edit="$manage ? route('retailers.edit', $row) : null">
+                                @if ($canDelete && ! $row->trashed())
+                                    <x-delete-form
+                                        :action="route('retailers.destroy', $row)"
+                                        :confirm="__('Deactivate this retailer?')"
+                                        :label="__('Deactivate')"
+                                    />
+                                @endif
+                            </x-row-actions>
                         @endif
                     </td>
                 </tr>

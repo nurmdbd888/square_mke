@@ -1,6 +1,7 @@
 @php
     $manage = auth()->user()->can('users.manage');
-    $span = 6 + ($manage ? 1 : 0);
+    $canDelete = auth()->user()->can('users.delete');
+    $span = 6 + ($manage || $canDelete ? 1 : 0);
 @endphp
 @if ($manage)
     <form method="POST" action="{{ route('users.bulk') }}">
@@ -43,11 +44,17 @@
                     <td class="hidden md:table-cell">{{ $row->hasTwoFactorEnabled() ? __('On') : __('Off') }}</td>
                     <td class="hidden md:table-cell">{{ $row->last_login_at ? local_digits($row->last_login_at->format('d-m-Y H:i')) : '—' }}</td>
                     <td class="text-right">
-                        @can('users.manage')
-                            @if (! $row->isOwner() || auth()->user()->isOwner())
-                                <x-row-actions :edit="route('users.edit', $row)" />
-                            @endif
-                        @endcan
+                        @if (($manage || $canDelete) && (! $row->isOwner() || auth()->user()->isOwner()))
+                            <x-row-actions :edit="$manage ? route('users.edit', $row) : null">
+                                @if ($canDelete && ! $row->trashed() && ! $row->is(auth()->user()))
+                                    <x-delete-form
+                                        :action="route('users.destroy', $row)"
+                                        :confirm="__('Deactivate this user?')"
+                                        :label="__('Deactivate')"
+                                    />
+                                @endif
+                            </x-row-actions>
+                        @endif
                     </td>
                 </tr>
             @empty

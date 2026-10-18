@@ -46,6 +46,7 @@ class StockNoteController extends Controller
             'notes' => $notes,
             'filters' => $filters + ['type' => $type, 'status' => $status],
             'canManage' => $request->user()->can('returns.manage'),
+            'canDelete' => $request->user()->can('returns.delete'),
         ]);
     }
 
@@ -80,6 +81,7 @@ class StockNoteController extends Controller
         return view('returns.show', [
             'note' => $stockNote,
             'canManage' => request()->user()->can('returns.manage'),
+            'canDelete' => request()->user()->can('returns.delete'),
         ]);
     }
 
@@ -103,11 +105,16 @@ class StockNoteController extends Controller
 
     public function bulk(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->can('returns.manage'), 403);
-
         $action = $request->validate([
             'action' => ['required', Rule::in(['post', 'void'])],
         ])['action'];
+
+        if ($action === 'void') {
+            abort_unless($request->user()->can('returns.delete'), 403);
+        } else {
+            abort_unless($request->user()->can('returns.manage'), 403);
+        }
+
         $ids = BulkSelection::ids($request);
         $result = new BulkActionResult;
 
@@ -154,6 +161,7 @@ class StockNoteController extends Controller
 
     public function destroy(Request $request, StockNote $stockNote): RedirectResponse
     {
+        abort_unless($request->user()->can('returns.delete'), 403);
         $this->writer->void($stockNote, $request->user());
 
         return redirect()->route('returns.index')

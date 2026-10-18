@@ -9,13 +9,21 @@
             <h1 class="text-2xl font-semibold text-slate-900">{{ $note->number }}</h1>
             <p class="text-sm text-slate-600">{{ local_digits($note->doc_date->format('d-m-Y')) }} · {{ __(str_replace('_', ' ', ucfirst($note->type))) }} · {{ __(ucfirst($note->status)) }}</p>
         </div>
-        @if ($canManage && ! $note->isVoid())
+        @if (($canManage || ($canDelete ?? false)) && ! $note->isVoid())
             <div class="flex flex-wrap gap-2">
-                @if ($note->isDraft())
-                    <form method="POST" action="{{ route('returns.post', $note) }}">@csrf<button class="btn-primary">{{ __('Post') }}</button></form>
+                @if ($canManage)
+                    @if ($note->isDraft())
+                        <form method="POST" action="{{ route('returns.post', $note) }}">@csrf<button class="btn-primary">{{ __('Post') }}</button></form>
+                    @endif
+                    <a href="{{ route('returns.edit', $note) }}" class="btn-secondary">{{ __('Edit') }}</a>
                 @endif
-                <a href="{{ route('returns.edit', $note) }}" class="btn-secondary">{{ __('Edit') }}</a>
-                <form method="POST" action="{{ route('returns.destroy', $note) }}" onsubmit="return confirm(@js(__('Delete this note?')))">@csrf @method('DELETE')<button class="btn-secondary">{{ __('Delete') }}</button></form>
+                @if ($canDelete ?? false)
+                    <x-delete-form
+                        :action="route('returns.destroy', $note)"
+                        :confirm="$note->isDraft() ? __('Delete this draft?') : __('Void this note? Stock will be recomputed.')"
+                        :label="$note->isDraft() ? __('Delete') : __('Void')"
+                    />
+                @endif
             </div>
         @endif
     </div>
