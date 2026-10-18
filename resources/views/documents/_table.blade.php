@@ -1,13 +1,17 @@
 @php
     $showRoute = $type === 'purchase' ? 'purchases.show' : 'sales.show';
     $editRoute = $type === 'purchase' ? 'purchases.edit' : 'sales.edit';
+    $destroyRoute = $type === 'purchase' ? 'purchases.destroy' : 'sales.destroy';
     $bulkRoute = $type === 'purchase' ? 'purchases.bulk' : 'sales.bulk';
     $isSale = $type === 'sale';
-    $span = 6 + ($isSale ? 1 : 0) + ($canManage ? 1 : 0);
+    $canManage = $canManage ?? false;
+    $canDelete = $canDelete ?? false;
+    $bulkAllowed = $canManage || $canDelete;
+    $span = 6 + ($isSale ? 1 : 0) + ($bulkAllowed ? 1 : 0);
     $collection = app(\App\Domain\Payments\SaleCollectionStatus::class);
     $collectionReady = $collection->columnsReady();
 @endphp
-@if ($canManage)
+@if ($bulkAllowed)
     <form method="POST" action="{{ route($bulkRoute) }}">
         @csrf
 @endif
@@ -15,7 +19,7 @@
     <table class="data-table">
         <thead>
             <tr>
-                @if ($canManage)
+                @if ($bulkAllowed)
                     <th scope="col"><x-bulk-select-all /></th>
                 @endif
                 <th>{{ __('Number') }}</th>
@@ -32,7 +36,7 @@
         <tbody>
             @forelse ($documents as $document)
                 <tr>
-                    @if ($canManage)
+                    @if ($bulkAllowed)
                         <td>
                             <input type="checkbox" name="ids[]" value="{{ $document->id }}" class="rounded border-slate-300" aria-label="{{ $document->number }}">
                         </td>
@@ -80,8 +84,16 @@
                         <x-row-actions
                             :view="route($showRoute, $document)"
                             :view-label="__('Open')"
-                            :edit="$canManage ? route($editRoute, $document) : null"
-                        />
+                            :edit="$canManage && ! $document->isVoid() ? route($editRoute, $document) : null"
+                        >
+                            @if ($canDelete && ! $document->isVoid())
+                                <x-delete-form
+                                    :action="route($destroyRoute, $document)"
+                                    :confirm="$document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.')"
+                                    :label="$document->isDraft() ? __('Delete') : __('Void')"
+                                />
+                            @endif
+                        </x-row-actions>
                     </td>
                 </tr>
             @empty
@@ -90,11 +102,17 @@
         </tbody>
     </table>
 </div>
-@if ($canManage)
-    <x-bulk-action-bar :actions="[
-        'post' => __('Post drafts'),
-        'void' => __('Void or delete'),
-    ]" />
+@if ($bulkAllowed)
+    @php
+        $bulkActions = [];
+        if ($canManage) {
+            $bulkActions['post'] = __('Post drafts');
+        }
+        if ($canDelete) {
+            $bulkActions['void'] = __('Void or delete');
+        }
+    @endphp
+    <x-bulk-action-bar :actions="$bulkActions" />
     </form>
 @endif
 {{ $documents->links() }}

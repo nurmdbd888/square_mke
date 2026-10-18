@@ -1,5 +1,8 @@
 @php
-    $bulkAllowed = ($canCollect ?? false) || ($canManage ?? false);
+    $canManage = $canManage ?? false;
+    $canDelete = $canDelete ?? false;
+    $canCollect = $canCollect ?? false;
+    $bulkAllowed = $canCollect || $canManage || $canDelete;
     $span = 8 + ($bulkAllowed ? 1 : 0);
 @endphp
 @if ($bulkAllowed)
@@ -53,10 +56,17 @@
                         <x-row-actions
                             :view="route('payments.show', $payment)"
                             :view-label="__('Open')"
-                            :edit="($canManage ?? false) || (($canCollect ?? false) && $payment->isReceipt() && $payment->isDraft()) ? route('payments.edit', $payment) : null"
+                            :edit="$canManage || ($canCollect && $payment->isReceipt() && $payment->isDraft()) ? route('payments.edit', $payment) : null"
                         >
                             @if ($payment->isPosted())
                                 <a href="{{ route('payments.print', $payment) }}" class="btn-secondary px-2.5 py-1 text-xs" target="_blank" rel="noopener">{{ __('Print') }}</a>
+                            @endif
+                            @if ($canDelete && ! $payment->isVoid())
+                                <x-delete-form
+                                    :action="route('payments.destroy', $payment)"
+                                    :confirm="$payment->isDraft() ? __('Delete this draft?') : __('Void this payment? Allocations will reverse.')"
+                                    :label="$payment->isDraft() ? __('Delete') : __('Void')"
+                                />
                             @endif
                         </x-row-actions>
                     </td>
@@ -69,8 +79,11 @@
 </div>
 @if ($bulkAllowed)
     @php
-        $bulkActions = ['post' => __('Post drafts')];
-        if ($canManage ?? false) {
+        $bulkActions = [];
+        if ($canCollect || $canManage) {
+            $bulkActions['post'] = __('Post drafts');
+        }
+        if ($canDelete) {
             $bulkActions['void'] = __('Void');
         }
     @endphp

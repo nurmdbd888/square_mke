@@ -27,33 +27,35 @@
         @if ($payment->isPosted())
             <a href="{{ route('payments.print', $payment) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
         @endif
-        @if (($canWrite ?? $canManage) && ! $payment->isVoid())
+        @if ((($canWrite ?? $canManage) || ($canDelete ?? false)) && ! $payment->isVoid())
             <div class="flex flex-wrap gap-2">
-                @unless ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status === 'cleared')
-                    <a href="{{ route('payments.edit', $payment) }}" class="btn-secondary">{{ __('Edit') }}</a>
-                @endunless
-                @if ($payment->isDraft())
-                    <form method="POST" action="{{ route('payments.post', $payment) }}">
-                        @csrf
-                        <button class="btn-primary">{{ __('Post') }}</button>
-                    </form>
+                @if ($canWrite ?? $canManage)
+                    @unless ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status === 'cleared')
+                        <a href="{{ route('payments.edit', $payment) }}" class="btn-secondary">{{ __('Edit') }}</a>
+                    @endunless
+                    @if ($payment->isDraft())
+                        <form method="POST" action="{{ route('payments.post', $payment) }}">
+                            @csrf
+                            <button class="btn-primary">{{ __('Post') }}</button>
+                        </form>
+                    @endif
+                    @if ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status !== 'cleared')
+                        <form method="POST" action="{{ route('payments.clear', $payment) }}" class="flex flex-wrap items-end gap-2">
+                            @csrf
+                            <label class="block">
+                                <span class="label">{{ __('Cleared on') }}</span>
+                                <x-date-input name="cleared_on" :value="now()->toDateString()" />
+                            </label>
+                            <button class="btn-primary">{{ __('Mark cleared') }}</button>
+                        </form>
+                    @endif
                 @endif
-                @if ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status !== 'cleared')
-                    <form method="POST" action="{{ route('payments.clear', $payment) }}" class="flex flex-wrap items-end gap-2">
-                        @csrf
-                        <label class="block">
-                            <span class="label">{{ __('Cleared on') }}</span>
-                            <x-date-input name="cleared_on" :value="now()->toDateString()" />
-                        </label>
-                        <button class="btn-primary">{{ __('Mark cleared') }}</button>
-                    </form>
-                @endif
-                @if ($canManage)
-                    <form method="POST" action="{{ route('payments.destroy', $payment) }}" data-confirm="{{ __('Void this payment? Allocations will reverse.') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn-danger">{{ $payment->isDraft() ? __('Delete draft') : __('Void') }}</button>
-                    </form>
+                @if ($canDelete ?? false)
+                    <x-delete-form
+                        :action="route('payments.destroy', $payment)"
+                        :confirm="$payment->isDraft() ? __('Delete this draft?') : __('Void this payment? Allocations will reverse.')"
+                        :label="$payment->isDraft() ? __('Delete draft') : __('Void')"
+                    />
                 @endif
             </div>
         @endif

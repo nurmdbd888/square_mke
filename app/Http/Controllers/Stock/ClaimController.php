@@ -41,6 +41,7 @@ class ClaimController extends Controller
             'claims' => $claims,
             'filters' => $filters + ['status' => $status],
             'canManage' => $request->user()->can('claims.manage'),
+            'canDelete' => $request->user()->can('claims.delete'),
         ]);
     }
 
@@ -68,6 +69,7 @@ class ClaimController extends Controller
         return view('claims.show', [
             'claim' => $claim,
             'canManage' => request()->user()->can('claims.manage'),
+            'canDelete' => request()->user()->can('claims.delete'),
         ]);
     }
 
@@ -85,6 +87,18 @@ class ClaimController extends Controller
 
         return redirect()->route('claims.show', $claim)
             ->with('status', __('Claim :number was updated.', ['number' => $claim->number]));
+    }
+
+    public function destroy(Request $request, Claim $claim): RedirectResponse
+    {
+        abort_unless($request->user()->can('claims.delete'), 403);
+        abort_if(in_array($claim->status, [Claim::STATUS_SETTLED, Claim::STATUS_REJECTED], true), 404);
+
+        $number = $claim->number;
+        $claim->delete();
+
+        return redirect()->route('claims.index')
+            ->with('status', __('Claim :number was deleted.', ['number' => $number]));
     }
 
     public function bulk(Request $request): RedirectResponse

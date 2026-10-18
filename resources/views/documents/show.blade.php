@@ -38,20 +38,25 @@
                 @endif
             </div>
         @endif
-        @if ($canManage && ! $document->isVoid())
+        @if (($canManage || ($canDelete ?? false)) && ! $document->isVoid())
             <div class="mt-2 flex flex-wrap gap-2">
-                <a href="{{ route($editRoute, $document) }}" class="btn-secondary">{{ __('Edit') }}</a>
-                @if ($document->isDraft())
-                    <form method="POST" action="{{ route($postRoute, $document) }}">
-                        @csrf
-                        <button class="btn-primary">{{ __('Post') }}</button>
-                    </form>
+                @if ($canManage)
+                    <a href="{{ route($editRoute, $document) }}" class="btn-secondary">{{ __('Edit') }}</a>
+                    @if ($document->isDraft())
+                        <form method="POST" action="{{ route($postRoute, $document) }}">
+                            @csrf
+                            <button class="btn-primary">{{ __('Post') }}</button>
+                        </form>
+                    @endif
                 @endif
-                <form method="POST" action="{{ route($voidRoute, $document) }}" data-confirm="{{ __('Void this document? Posted stock will be recomputed.') }}">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn-danger">{{ $document->isDraft() ? __('Delete draft') : __('Void') }}</button>
-                </form>
+                @if ($canDelete ?? false)
+                    <x-delete-form
+                        :action="route($voidRoute, $document)"
+                        :confirm="$document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.')"
+                        :label="$document->isDraft() ? __('Delete draft') : __('Void')"
+                        class="inline"
+                    />
+                @endif
             </div>
         @endif
     </div>

@@ -24,9 +24,17 @@
                     <td>{{ $row->qty !== null ? format_number($row->qty, 2) : '—' }}</td>
                     <td>{{ format_money($row->amount) }}</td>
                     <td class="text-right">
-                        @can('masters.manage')
-                            <a href="{{ route('masters.opening-balances.edit', $row) }}" class="font-medium text-brand-700 underline">{{ __('Edit') }}</a>
-                        @endcan
+                        <x-row-actions
+                            :edit="auth()->user()->can('masters.manage') ? route('masters.opening-balances.edit', $row) : null"
+                        >
+                            @can('masters.delete')
+                                <x-delete-form
+                                    :action="route('masters.opening-balances.destroy', $row)"
+                                    :confirm="__('Remove this opening balance?')"
+                                    :label="__('Remove')"
+                                />
+                            @endcan
+                        </x-row-actions>
                     </td>
                 </tr>
             @empty

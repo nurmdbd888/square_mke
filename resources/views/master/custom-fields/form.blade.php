@@ -44,18 +44,21 @@
             </form>
         </section>
 
-        @if ($field->exists)
-            <aside>
-                <section class="card">
-                    <h2 class="font-semibold text-slate-900">{{ __('Remove') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">{{ __('The question leaves the form. Answers already saved stay on the record.') }}</p>
-                    <form method="POST" action="{{ route('masters.custom-fields.destroy', $field) }}" class="mt-3" data-confirm="{{ __('Remove this custom field?') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn-danger">{{ __('Remove') }}</button>
-                    </form>
-                </section>
-            </aside>
-        @endif
+        @can('masters.delete')
+            @if ($field->exists)
+                <aside>
+                    <section class="card">
+                        <h2 class="font-semibold text-slate-900">{{ __('Remove') }}</h2>
+                        <p class="mt-1 text-sm text-slate-600">{{ __('The question leaves the form. Answers already saved stay on the record.') }}</p>
+                        <x-delete-form
+                            :action="route('masters.custom-fields.destroy', $field)"
+                            :confirm="__('Remove this custom field?')"
+                            :label="__('Remove')"
+                            class="mt-3"
+                        />
+                    </section>
+                </aside>
+            @endif
+        @endcan
     </div>
 @endsection

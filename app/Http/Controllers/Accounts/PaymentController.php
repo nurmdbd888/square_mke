@@ -67,6 +67,7 @@ class PaymentController extends Controller
             'payments' => $payments,
             'filters' => $filters + ['kind' => $kind, 'status' => $status],
             'canManage' => PaymentAccess::canManage($user),
+            'canDelete' => PaymentAccess::canDelete($user),
             'canCollect' => PaymentAccess::canCollectReceipts($user),
         ]);
     }
@@ -126,6 +127,7 @@ class PaymentController extends Controller
         return view('payments.show', [
             'payment' => $payment,
             'canManage' => PaymentAccess::canManage($user),
+            'canDelete' => PaymentAccess::canDelete($user),
             'canWrite' => $payment->isReceipt()
                 ? PaymentAccess::canWriteReceipt($user, $payment)
                 : PaymentAccess::canWritePayment($user, $payment),
@@ -194,7 +196,7 @@ class PaymentController extends Controller
                         return;
                     }
 
-                    if (! PaymentAccess::canManage($user)) {
+                    if (! PaymentAccess::canDelete($user)) {
                         $result->skipped++;
 
                         return;
@@ -217,7 +219,7 @@ class PaymentController extends Controller
 
     public function destroy(Request $request, Payment $payment): RedirectResponse
     {
-        abort_unless(PaymentAccess::canManage($request->user()), 403);
+        abort_unless(PaymentAccess::canDelete($request->user()), 403);
         $number = $payment->number;
         $this->writer->void($payment, $request->user());
 

@@ -48,18 +48,21 @@
             </form>
         </section>
 
-        @if ($row->exists && ! $row->trashed())
-            <aside>
-                <section class="card">
-                    <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">{{ __('You can reactivate this later. Old documents keep the name.') }}</p>
-                    <form method="POST" action="{{ route('masters.directory.destroy', [$kind, $row]) }}" class="mt-3" data-confirm="{{ __('Deactivate this record?') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn-danger">{{ __('Deactivate') }}</button>
-                    </form>
-                </section>
-            </aside>
-        @endif
+        @can('masters.delete')
+            @if ($row->exists && ! $row->trashed())
+                <aside>
+                    <section class="card">
+                        <h2 class="font-semibold text-slate-900">{{ __('Deactivate') }}</h2>
+                        <p class="mt-1 text-sm text-slate-600">{{ __('You can reactivate this later. Old documents keep the name.') }}</p>
+                        <x-delete-form
+                            :action="route('masters.directory.destroy', [$kind, $row])"
+                            :confirm="__('Deactivate this record?')"
+                            :label="__('Deactivate')"
+                            class="mt-3"
+                        />
+                    </section>
+                </aside>
+            @endif
+        @endcan
     </div>
 @endsection
