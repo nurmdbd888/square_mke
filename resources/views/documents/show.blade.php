@@ -65,6 +65,11 @@
         </section>
     @endif
 
+    @php
+        $paidLines = $document->lines->reject(fn ($line) => $line->isComboBonus())->values();
+        $bonusLines = $document->lines->filter(fn ($line) => $line->isComboBonus())->values();
+    @endphp
+
     <div class="mt-6 table-wrap">
         <table class="data-table" data-testid="document-lines">
             <thead>
@@ -81,14 +86,11 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($document->lines as $line)
+                @foreach ($paidLines as $line)
                     <tr>
                         <td>{{ $line->line_no }}</td>
                         <td>
                             <span class="font-medium">{{ $line->product?->name_en }}</span>
-                            @if ($line->isComboBonus())
-                                <span class="ml-2 rounded bg-slate-100 px-1.5 text-xs">{{ __('Combo bonus') }}</span>
-                            @endif
                             @if ($line->product?->code)
                                 <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>
                             @endif
@@ -105,6 +107,46 @@
             </tbody>
         </table>
     </div>
+
+    @if ($bonusLines->isNotEmpty())
+        <h2 class="mt-8 text-lg font-semibold text-slate-900" data-testid="invoice-combo-bonus-heading">{{ __('Invoice Combo Bonus') }}</h2>
+        <div class="mt-3 table-wrap">
+            <table class="data-table" data-testid="combo-bonus-lines">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{{ __('Product') }}</th>
+                        <th class="text-right">{{ __('Qty') }}</th>
+                        <th class="text-right">{{ __('Rate') }}</th>
+                        <th class="text-right">{{ __('Value') }}</th>
+                        @if ($document->isSale() && $document->isPosted())
+                            <th class="text-right">{{ __('Free goods cost') }}</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($bonusLines as $i => $line)
+                        <tr class="bg-amber-50/50">
+                            <td>{{ $i + 1 }}</td>
+                            <td>
+                                <span class="font-medium">{{ $line->product?->name_en }}</span>
+                                <span class="ml-2 rounded bg-amber-100 px-1.5 text-xs text-amber-900">{{ __('Combo bonus') }}</span>
+                                @if ($line->product?->code)
+                                    <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>
+                                @endif
+                            </td>
+                            <td class="text-right font-mono">{{ local_digits($line->qty) }}</td>
+                            <td class="text-right font-mono">{{ format_number($line->unit_price, 4) }}</td>
+                            <td class="text-right font-mono">{{ format_money(0) }}</td>
+                            @if ($document->isSale() && $document->isPosted())
+                                <td class="text-right font-mono">{{ format_money($line->bonus_issue_cost ?? 0) }}</td>
+                            @endif
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 
     <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
         <div><dt class="text-slate-500">{{ __('Subtotal') }}</dt><dd class="font-mono">{{ format_money($document->subtotal) }}</dd></div>
