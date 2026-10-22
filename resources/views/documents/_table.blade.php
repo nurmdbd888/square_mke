@@ -12,7 +12,7 @@
     $collectionReady = $collection->columnsReady();
 @endphp
 @if ($bulkAllowed)
-    <form method="POST" action="{{ route($bulkRoute) }}" id="documents-bulk-form">
+    <form method="post" action="{{ route($bulkRoute) }}" id="documents-bulk-form" accept-charset="UTF-8">
         @csrf
 @endif
 <div class="table-wrap">

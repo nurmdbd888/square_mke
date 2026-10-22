@@ -163,19 +163,23 @@ class DocumentController extends Controller
             ->with('status', $message);
     }
 
+    /**
+     * GET /sales/bulk and /purchases/bulk — bookmarks / refresh / non-POST navigations.
+     * Never 404 (show binding) or 405 (POST-only route).
+     */
+    public function bulkRedirect(Request $request, string $type): RedirectResponse
+    {
+        $this->assertType($type);
+
+        return redirect()
+            ->route($type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index')
+            ->with('status', __('Select rows on the list, then use Delete or Apply.'));
+    }
+
     public function bulk(Request $request, string $type): RedirectResponse
     {
         $this->assertType($type);
         $route = $type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index';
-
-        // GET /sales/bulk must not 404: older route order matched show(document: "bulk").
-        // Browser navigations (bookmark, refresh after submit, missing POST) land here.
-        if ($request->isMethod('GET')) {
-            return redirect()->route($route)->with(
-                'status',
-                __('Select rows on the list, then use Delete or Apply.')
-            );
-        }
 
         $action = $request->validate([
             'action' => ['required', Rule::in(['post', 'void'])],
