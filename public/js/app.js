@@ -41,6 +41,43 @@
         }
     }, true);
 
+    // Header "Delete" on list pages: set bulk action and submit the selected rows.
+    document.addEventListener('click', function (event) {
+        var btn = event.target.closest('[data-bulk-delete-form]');
+        if (!btn) {
+            return;
+        }
+
+        event.preventDefault();
+        var form = document.getElementById(btn.getAttribute('data-bulk-delete-form'));
+        if (!form) {
+            return;
+        }
+
+        var selected = form.querySelectorAll('input[name="ids[]"]:checked');
+        if (selected.length === 0) {
+            window.alert(btn.getAttribute('data-empty') || 'Select at least one row.');
+            return;
+        }
+
+        var message = btn.getAttribute('data-confirm');
+        if (message && !window.confirm(message)) {
+            return;
+        }
+
+        var action = btn.getAttribute('data-bulk-delete-action') || 'void';
+        var select = form.querySelector('select[name="action"]');
+        if (select) {
+            select.value = action;
+        }
+
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    });
+
     function toAsciiDigits(text) {
         return String(text).replace(/[০-৯]/g, function (ch) {
             return ASCII[BANGLA.indexOf(ch)] || ch;

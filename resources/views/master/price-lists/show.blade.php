@@ -3,7 +3,7 @@
 @section('title', $list->name)
 
 @section('content')
-    <a href="{{ route('masters.price-lists.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to price lists') }}</a>
+    <x-back-link :href="route('masters.price-lists.index')">{{ __('Back to price lists') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $list->name }}</h1>
 
     @if ($list->trashed())

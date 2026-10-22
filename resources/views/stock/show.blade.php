@@ -3,7 +3,7 @@
 @section('title', __('Stock ledger'))
 
 @section('content')
-    <a href="{{ route('stock.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to stock') }}</a>
+    <x-back-link :href="route('stock.index')">{{ __('Back to stock') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $product->name_en }}</h1>
     @if ($product->code)
         <p class="font-mono text-sm text-slate-500">{{ $product->code }}</p>

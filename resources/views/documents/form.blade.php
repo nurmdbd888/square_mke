@@ -51,7 +51,7 @@
 @section('title', $title)
 
 @section('content')
-    <a href="{{ route($indexRoute) }}" class="text-sm text-brand-700 underline">{{ $isPurchase ? __('Back to purchases') : __('Back to sales') }}</a>
+    <x-back-link :href="route($indexRoute)">{{ $isPurchase ? __('Back to purchases') : __('Back to sales') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $title }}</h1>
     @if ($document->exists && $document->isPosted())
         <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{{ __('This document is posted. Saving recomputes stock and writes an audit entry.') }}</p>

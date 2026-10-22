@@ -3,7 +3,7 @@
 @section('title', __('Stock comparison'))
 
 @section('content')
-    <a href="{{ route('stock.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to stock') }}</a>
+    <x-back-link :href="route('stock.index')">{{ __('Back to stock') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ __('Stock comparison') }}</h1>
     <p class="mt-1 text-sm text-slate-600">{{ __('Upload a CSV export from your master software (code, name, quantity columns).') }}</p>
 

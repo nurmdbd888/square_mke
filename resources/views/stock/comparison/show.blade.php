@@ -3,7 +3,7 @@
 @section('title', __('Stock comparison'))
 
 @section('content')
-    <a href="{{ route('stock.comparison.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to comparisons') }}</a>
+    <x-back-link :href="route('stock.comparison.index')">{{ __('Back to comparisons') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $comparison->original_name }}</h1>
 
     <div class="mt-4 table-wrap">

@@ -3,7 +3,7 @@
 @section('title', $meta['title'])
 
 @section('content')
-    <a href="{{ route('masters.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to masters') }}</a>
+    <x-back-link :href="route('masters.index')">{{ __('Back to masters') }}</x-back-link>
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ $meta['title'] }}</h1>
         @php

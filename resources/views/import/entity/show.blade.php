@@ -3,7 +3,7 @@
 @section('title', $batch->original_name)
 
 @section('content')
-    <a href="{{ route('imports.entity.index', $entity) }}" class="text-sm text-brand-700 underline">{{ __('Back to import') }}</a>
+    <x-back-link :href="route('imports.entity.index', $entity)">{{ __('Back to import') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold">{{ $batch->original_name }}</h1>
     <p class="text-sm text-slate-600">{{ __($def['title']) }} · {{ $batch->status }} · {{ $batch->row_count }} {{ __('rows') }} · {{ $batch->error_count }} {{ __('errors') }}</p>
 
