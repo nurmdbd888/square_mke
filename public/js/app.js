@@ -214,10 +214,11 @@
             },
 
             /**
-             * Keep the native control in sync before the browser opens its UI.
-             * The picker is a real-size opacity-0 overlay on the calendar icon
-             * (see date-input.blade.php) — do not call showPicker() on a
-             * zero-size input; Chromium rejects that as NotAllowedError.
+             * Keep the native control in sync before opening the UI.
+             * The calendar chrome is a real <button> (full hit target). The
+             * type=date input stays sized (not h-0/w-0) so showPicker() is
+             * allowed, but has pointer-events:none — Chromium only activates a
+             * tiny glyph inside opacity-0 date overlays, which felt broken.
              */
             preparePicker: function () {
                 var picker = this.$refs.picker;
@@ -241,11 +242,17 @@
 
                         return;
                     } catch (e) {
-                        // Element must be user-visible with a layout box.
+                        // Element must be attached with a non-zero layout box.
                     }
                 }
-                picker.focus();
-                picker.click();
+                // Fallback: briefly enable pointer events and synthesize a click.
+                picker.style.pointerEvents = 'auto';
+                try {
+                    picker.focus();
+                    picker.click();
+                } finally {
+                    picker.style.pointerEvents = 'none';
+                }
             },
         };
     };
