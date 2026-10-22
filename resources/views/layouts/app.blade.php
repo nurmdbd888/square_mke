@@ -44,7 +44,7 @@
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div class="flex items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-3">
-                <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 xl:hidden" @click="menu = !menu; userMenuOpen = false"
+                <button type="button" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 xl:hidden" @click="menu = !menu; userMenuOpen = false"
                         :aria-expanded="menu.toString()" aria-controls="sidebar" aria-label="{{ __('Menu') }}">
                     <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
@@ -136,7 +136,7 @@
             </ul>
         </nav>
 
-        <main id="main" class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main" class="min-w-0 flex-1 overflow-x-hidden px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
             <x-flash />
             @yield('content')
         </main>
