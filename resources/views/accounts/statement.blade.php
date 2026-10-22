@@ -3,7 +3,7 @@
 @section('title', __('Retailer statement'))
 
 @section('content')
-    <a href="{{ route('accounts.receivables') }}" class="text-sm text-brand-700 underline">{{ __('Back to receivables') }}</a>
+    <x-back-link :href="route('accounts.receivables')">{{ __('Back to receivables') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $party->name }}</h1>
     <p class="text-sm text-slate-600">{{ __('As of') }} {{ local_digits(\Illuminate\Support\Carbon::parse($asOf)->format('d-m-Y')) }}
         @if ($credit)

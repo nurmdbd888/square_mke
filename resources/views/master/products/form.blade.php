@@ -3,7 +3,7 @@
 @section('title', $product->exists ? __('Edit product') : __('Add product'))
 
 @section('content')
-    <a href="{{ route('products.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to products') }}</a>
+    <x-back-link :href="route('products.index')">{{ __('Back to products') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $product->exists ? __('Edit product') : __('Add product') }}</h1>
 
     @if ($product->exists && $product->trashed())

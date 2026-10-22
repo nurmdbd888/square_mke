@@ -7,7 +7,7 @@
 @endphp
 
 @section('content')
-    <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('audit.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to the audit log') }}</a>
+    <x-back-link :href="url()->previous() !== url()->current() ? url()->previous() : route('audit.index')">{{ __('Back to the audit log') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ \App\Support\Audit\AuditEvents::label($log->event) }}</h1>
 
     <section class="card mt-6">

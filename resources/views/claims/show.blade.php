@@ -3,7 +3,7 @@
 @section('title', $claim->number)
 
 @section('content')
-    <a href="{{ route('claims.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to claims') }}</a>
+    <x-back-link :href="route('claims.index')">{{ __('Back to claims') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $claim->number }}</h1>
     <p class="text-sm text-slate-600">{{ local_date($claim->doc_date) }} · {{ __(ucfirst($claim->status)) }}</p>
     <dl class="mt-4 grid max-w-lg gap-2 text-sm">

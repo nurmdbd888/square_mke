@@ -3,7 +3,7 @@
 @section('title', $user->exists ? __('Edit user') : __('Add user'))
 
 @section('content')
-    <a href="{{ route('users.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to users') }}</a>
+    <x-back-link :href="route('users.index')">{{ __('Back to users') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $user->exists ? __('Edit user') : __('Add user') }}</h1>
 
     @if ($user->exists && $user->trashed())

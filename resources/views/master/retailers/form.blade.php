@@ -3,7 +3,7 @@
 @section('title', $retailer->exists ? __('Edit retailer') : __('Add retailer'))
 
 @section('content')
-    <a href="{{ route('retailers.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to retailers') }}</a>
+    <x-back-link :href="route('retailers.index')">{{ __('Back to retailers') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $retailer->exists ? __('Edit retailer') : __('Add retailer') }}</h1>
 
     @if ($retailer->exists && $retailer->trashed())

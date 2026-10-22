@@ -3,7 +3,7 @@
 @section('title', $row->exists ? $meta['edit'] : $meta['add'])
 
 @section('content')
-    <a href="{{ route('masters.directory.index', $kind) }}" class="text-sm text-brand-700 underline">{{ __('Back') }}</a>
+    <x-back-link :href="route('masters.directory.index', $kind)">{{ __('Back') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $row->exists ? $meta['edit'] : $meta['add'] }}</h1>
 
     @if ($row->exists && $row->trashed())

@@ -3,9 +3,7 @@
 @section('title', __('Ageing'))
 
 @section('content')
-    <a href="{{ $partyType === 'retailer' ? route('accounts.receivables') : route('accounts.payables') }}" class="text-sm text-brand-700 underline">
-        {{ $partyType === 'retailer' ? __('Back to receivables') : __('Back to payables') }}
-    </a>
+    <x-back-link :href="$partyType === 'retailer' ? route('accounts.receivables') : route('accounts.payables')">{{ $partyType === 'retailer' ? __('Back to receivables') : __('Back to payables') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ __('Ageing') }} · {{ $party->name }}</h1>
     <p class="text-sm text-slate-600">{{ __('As of') }} {{ local_digits(\Illuminate\Support\Carbon::parse($asOf)->format('d-m-Y')) }}</p>
 
