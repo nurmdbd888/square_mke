@@ -17,7 +17,7 @@
                 <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
             @endif
             @if ($canDelete)
-                {{-- type=submit + form= associates with the table form so Delete POSTs with CSRF even if JS is delayed --}}
+                {{-- Associated with #documents-bulk-form (checkboxes + CSRF live in the table partial). --}}
                 <button
                     type="submit"
                     form="documents-bulk-form"
@@ -50,7 +50,7 @@
                 <option value="void" @selected(($filters['status'] ?? '') === 'void')>{{ __('Void') }}</option>
             </select>
         </label>
-        <button class="btn-secondary">{{ __('Filter') }}</button>
+        <button type="submit" class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 
     <div id="documents-table" class="mt-4" data-testid="documents-table">

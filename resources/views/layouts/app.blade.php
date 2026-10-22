@@ -141,5 +141,7 @@
             @yield('content')
         </main>
     </div>
+    {{-- Row delete forms from <x-delete-form> — kept outside any bulk <form> (see component). --}}
+    @stack('remote-forms')
 </body>
 </html>
