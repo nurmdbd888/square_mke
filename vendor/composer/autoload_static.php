@@ -647,6 +647,7 @@ class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
         'App\\Domain\\Import\\SpreadsheetImportReader' => __DIR__ . '/../..' . '/app/Domain/Import/SpreadsheetImportReader.php',
         'App\\Domain\\Money\\Exact' => __DIR__ . '/../..' . '/app/Domain/Money/Exact.php',
         'App\\Domain\\Money\\Formatter' => __DIR__ . '/../..' . '/app/Domain/Money/Formatter.php',
+        'App\\Domain\\Ocr\\OcrTextParser' => __DIR__ . '/../..' . '/app/Domain/Ocr/OcrTextParser.php',
         'App\\Domain\\Payments\\Ageing' => __DIR__ . '/../..' . '/app/Domain/Payments/Ageing.php',
         'App\\Domain\\Payments\\Books' => __DIR__ . '/../..' . '/app/Domain/Payments/Books.php',
         'App\\Domain\\Payments\\CreditLimit' => __DIR__ . '/../..' . '/app/Domain/Payments/CreditLimit.php',

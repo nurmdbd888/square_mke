@@ -47,6 +47,7 @@ return array(
     'App\\Domain\\Import\\SpreadsheetImportReader' => $baseDir . '/app/Domain/Import/SpreadsheetImportReader.php',
     'App\\Domain\\Money\\Exact' => $baseDir . '/app/Domain/Money/Exact.php',
     'App\\Domain\\Money\\Formatter' => $baseDir . '/app/Domain/Money/Formatter.php',
+    'App\\Domain\\Ocr\\OcrTextParser' => $baseDir . '/app/Domain/Ocr/OcrTextParser.php',
     'App\\Domain\\Payments\\Ageing' => $baseDir . '/app/Domain/Payments/Ageing.php',
     'App\\Domain\\Payments\\Books' => $baseDir . '/app/Domain/Payments/Books.php',
     'App\\Domain\\Payments\\CreditLimit' => $baseDir . '/app/Domain/Payments/CreditLimit.php',

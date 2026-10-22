@@ -3,8 +3,9 @@
 <meta name="theme-color" content="#0f766e">
 <link rel="stylesheet" href="{{ $asset('css/app.css') }}">
 <script src="{{ $asset('js/htmx.min.js') }}" defer></script>
-{{-- app.js registers Alpine factories (appDateInput) before Alpine.start() --}}
+{{-- app.js / ocr-scan.js register Alpine factories before Alpine.start() --}}
 <script src="{{ $asset('js/app.js') }}" defer></script>
+<script src="{{ $asset('js/ocr-scan.js') }}" defer></script>
 <script src="{{ $asset('js/alpine.min.js') }}" defer></script>
 @auth
 <script>
