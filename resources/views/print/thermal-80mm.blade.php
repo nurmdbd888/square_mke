@@ -76,6 +76,17 @@
     @endif
 
     <div class="totals" style="max-width: none;">
-        <div class="net"><span>{{ __('Net total') }}</span><span class="mono">{{ format_money($document->net_total) }}</span></div>
+        @if ((float) ($document->tds_amount ?? 0) != 0.0 || (float) $document->slab_adjustment != 0.0 || (float) $document->combo_bonus_discount != 0.0)
+            @if ((float) $document->slab_adjustment != 0.0)
+                <div><span>{{ __('Loading Adjustment') }}</span><span class="mono">−{{ format_money($document->slab_adjustment) }}</span></div>
+            @endif
+            @if ((float) $document->combo_bonus_discount != 0.0)
+                <div><span>{{ __('Combo Discount') }}</span><span class="mono">−{{ format_money($document->combo_bonus_discount) }}</span></div>
+            @endif
+            @if ((float) ($document->tds_amount ?? 0) != 0.0)
+                <div><span>{{ __('Total TDS Amount') }}</span><span class="mono">+{{ format_money($document->tds_amount) }}</span></div>
+            @endif
+        @endif
+        <div class="net"><span>{{ __('Total payable') }}</span><span class="mono">{{ format_money($document->net_total) }}</span></div>
     </div>
 @endsection

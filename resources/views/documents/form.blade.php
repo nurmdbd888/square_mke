@@ -70,6 +70,7 @@
             'header_discount' => old('header_discount', $document->header_discount ?? '0'),
             'slab_adjustment' => old('slab_adjustment', $document->slab_adjustment ?? '0'),
             'combo_bonus_discount' => old('combo_bonus_discount', $document->combo_bonus_discount ?? '0'),
+            'tds_amount' => old('tds_amount', $document->tds_amount ?? '0'),
             'rounding_adjustment' => old('rounding_adjustment', $document->rounding_adjustment ?? '0'),
         ]) }})"
         @unless($isPurchase)
@@ -319,38 +320,49 @@
                             <span>{{ __('Lines subtotal') }}</span>
                             <span class="font-mono" data-testid="invoice-lines-subtotal" x-text="linesSubtotal"></span>
                         </div>
+                        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2 text-sm text-slate-600">
+                            <span>{{ __('Net invoice amount') }}</span>
+                            <span class="font-mono" data-testid="net-invoice-amount" x-text="netInvoiceAmount"></span>
+                        </div>
                         <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2">
-                            <span class="text-base font-semibold text-slate-900">{{ __('Invoice total') }}</span>
+                            <span class="text-base font-semibold text-slate-900">{{ __('Total payable') }}</span>
                             <span class="font-mono text-lg font-semibold text-slate-900" data-testid="invoice-grand-total" x-text="invoiceTotal"></span>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">{{ __('Includes header discount, slab, combo bonus discount and rounding.') }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Net invoice = subtotal − loading − combo. Total payable = net invoice + TDS.') }}</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="card grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label class="block">
-                <span class="label">{{ __('Header discount') }}</span>
-                <input type="text" name="header_discount" x-model="header_discount" inputmode="decimal" class="input">
-            </label>
-            <label class="block">
-                <span class="label">{{ __('Slab adjustment') }}</span>
-                <input type="text" name="slab_adjustment" x-model="slab_adjustment" inputmode="decimal" class="input">
-            </label>
-            <label class="block">
-                <span class="label">{{ __('Combo bonus discount') }}</span>
-                <input type="text" name="combo_bonus_discount" x-model="combo_bonus_discount" inputmode="decimal" class="input">
-            </label>
-            <label class="block">
-                <span class="label">{{ __('Rounding adjustment') }}</span>
-                <input type="text" name="rounding_adjustment" x-model="rounding_adjustment" inputmode="decimal" class="input">
-            </label>
-            <div class="sm:col-span-2 lg:col-span-4 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3" data-testid="invoice-total-footer">
-                <span class="text-base font-semibold text-slate-900">{{ __('Invoice total') }}</span>
+        {{-- Square Invoice Adjustment: Loading = slab_adjustment, Combo Discount = combo_bonus_discount. --}}
+        <section class="card" data-testid="invoice-adjustment">
+            <h2 class="font-semibold text-slate-900">{{ __('Invoice Adjustment') }}</h2>
+            <p class="mt-1 text-sm text-slate-600">{{ __('As printed on Square Toiletries invoices. Loading and combo reduce the net invoice; TDS is added to total payable.') }}</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <label class="block">
+                    <span class="label">{{ __('Total TDS Amount') }}</span>
+                    <input type="text" name="tds_amount" x-model="tds_amount" inputmode="decimal" class="input font-mono" data-testid="tds-amount">
+                </label>
+                <label class="block">
+                    <span class="label">{{ __('Loading Adjustment') }}</span>
+                    <input type="text" name="slab_adjustment" x-model="slab_adjustment" inputmode="decimal" class="input font-mono" data-testid="loading-adjustment">
+                </label>
+                <label class="block">
+                    <span class="label">{{ __('Combo Discount') }}</span>
+                    <input type="text" name="combo_bonus_discount" x-model="combo_bonus_discount" inputmode="decimal" class="input font-mono" data-testid="combo-discount">
+                </label>
+            </div>
+            {{-- Preserve legacy fields without showing duplicate Square-unrelated controls. --}}
+            <input type="hidden" name="header_discount" x-model="header_discount">
+            <input type="hidden" name="rounding_adjustment" x-model="rounding_adjustment">
+            <div class="mt-4 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3" data-testid="invoice-total-footer">
+                <div>
+                    <div class="text-sm text-slate-600">{{ __('Net invoice amount') }}: <span class="font-mono" x-text="netInvoiceAmount"></span></div>
+                    <div class="text-base font-semibold text-slate-900">{{ __('Total payable') }}</div>
+                </div>
                 <span class="font-mono text-xl font-semibold text-slate-900" x-text="invoiceTotal"></span>
             </div>
-            <label class="block sm:col-span-2 lg:col-span-4">
+            <label class="mt-4 block">
                 <span class="label">{{ __('Attachments') }} <span class="font-normal text-slate-500">({{ __('optional, max 5 MB each') }})</span></span>
                 <input type="file" name="attachments[]" multiple class="input">
             </label>
@@ -384,6 +396,7 @@
                 header_discount: String(adj.header_discount ?? '0'),
                 slab_adjustment: String(adj.slab_adjustment ?? '0'),
                 combo_bonus_discount: String(adj.combo_bonus_discount ?? '0'),
+                tds_amount: String(adj.tds_amount ?? '0'),
                 rounding_adjustment: String(adj.rounding_adjustment ?? '0'),
                 lineAddKind: 'normal',
                 brandFilter: '',
@@ -406,19 +419,28 @@
 
                     return this.money(sum);
                 },
-                get invoiceTotal() {
+                // Square: Net Invoice = subtotal − loading − combo (− header); Payable = net + TDS (+ rounding).
+                get netInvoiceAmount() {
                     const subtotal = parseFloat(this.linesSubtotal);
                     const header = parseFloat(this.header_discount || '0');
-                    const slab = parseFloat(this.slab_adjustment || '0');
+                    const loading = parseFloat(this.slab_adjustment || '0');
                     const combo = parseFloat(this.combo_bonus_discount || '0');
-                    const rounding = parseFloat(this.rounding_adjustment || '0');
                     const net = (Number.isFinite(subtotal) ? subtotal : 0)
                         - (Number.isFinite(header) ? header : 0)
-                        - (Number.isFinite(slab) ? slab : 0)
-                        - (Number.isFinite(combo) ? combo : 0)
-                        + (Number.isFinite(rounding) ? rounding : 0);
+                        - (Number.isFinite(loading) ? loading : 0)
+                        - (Number.isFinite(combo) ? combo : 0);
 
                     return this.money(Math.round(net * 100) / 100);
+                },
+                get invoiceTotal() {
+                    const netInvoice = parseFloat(this.netInvoiceAmount);
+                    const tds = parseFloat(this.tds_amount || '0');
+                    const rounding = parseFloat(this.rounding_adjustment || '0');
+                    const payable = (Number.isFinite(netInvoice) ? netInvoice : 0)
+                        + (Number.isFinite(tds) ? tds : 0)
+                        + (Number.isFinite(rounding) ? rounding : 0);
+
+                    return this.money(Math.round(payable * 100) / 100);
                 },
                 get brandOptions() {
                     const brands = new Set();
