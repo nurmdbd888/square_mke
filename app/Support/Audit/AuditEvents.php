@@ -20,6 +20,7 @@ final class AuditEvents
         'claim.status_changed', 'scheme_line.posted',
         'stock_check.confirmed',
         'payment.posted', 'payment.posted_edited', 'payment.voided', 'payment.cleared',
+        'collection.confirmed',
         'daily_closing.created',
         'month_lock.locked', 'month_lock.unlocked',
     ];

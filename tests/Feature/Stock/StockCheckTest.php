@@ -117,4 +117,52 @@ class StockCheckTest extends TestCase
             ])
             ->assertForbidden();
     }
+
+    public function test_stock_check_history_lists_who_when_marks_and_export(): void
+    {
+        $owner = $this->owner();
+        $a = Product::query()->create(['code' => 'H1', 'name_en' => 'History Alpha', 'unit' => 'Pcs']);
+        $b = Product::query()->create(['code' => 'H2', 'name_en' => 'History Beta', 'unit' => 'Pcs']);
+
+        $this->actingAs($owner)
+            ->post(route('stock.checks.store'), [
+                'items' => [
+                    ['product_id' => $a->id, 'in_store' => 'available'],
+                    ['product_id' => $b->id, 'in_store' => 'not_available'],
+                ],
+            ])
+            ->assertRedirect();
+
+        $check = StockCheck::query()->first();
+        $this->assertNotNull($check);
+
+        $this->actingAs($owner)
+            ->get(route('stock.index'))
+            ->assertOk()
+            ->assertSee('data-testid="stock-check-history"', false)
+            ->assertSee(__('Past checks'), false);
+
+        $this->actingAs($owner)
+            ->get(route('stock.checks.index'))
+            ->assertOk()
+            ->assertSee('data-testid="stock-checks-table"', false)
+            ->assertSee($owner->name, false)
+            ->assertSee('data-testid="stock-check-export-'.$check->id.'"', false);
+
+        $this->actingAs($owner)
+            ->get(route('stock.checks.show', $check))
+            ->assertOk()
+            ->assertSee('data-testid="stock-check-meta"', false)
+            ->assertSee('History Alpha', false)
+            ->assertSee(__('Available'), false)
+            ->assertSee(__('Not Available'), false);
+
+        $csv = $this->actingAs($owner)
+            ->get(route('stock.checks.export', $check))
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('History Alpha', $csv);
+        $this->assertStringContainsString('Not Available', $csv);
+    }
 }

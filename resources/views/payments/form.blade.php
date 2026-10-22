@@ -53,9 +53,15 @@
                   this.$dispatch('allocation-changed');
               }
           }"
-          x-init="recalc()"
+          x-init="
+              recalc();
+              const focusId = {{ \Illuminate\Support\Js::from(request('document_id')) }};
+              if (focusId) {
+                  $nextTick(() => pickInvoice(String(focusId)));
+              }
+          "
           @allocation-changed.window="recalc()"
-          @htmx:after-swap.window="if ($event.detail.target?.id === 'allocation-box') recalc()">
+          @htmx:after-swap.window="if ($event.detail.target?.id === 'allocation-box') { recalc(); const focusId = {{ \Illuminate\Support\Js::from(request('document_id')) }}; if (focusId) pickInvoice(String(focusId)); }">
         @csrf
         @if ($payment->exists)
             @method('PUT')

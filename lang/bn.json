@@ -1017,5 +1017,22 @@
     "Export report": "রিপোর্ট এক্সপোর্ট",
     "Mark each product Available or Not Available, then confirm to export the report.": "প্রতিটি পণ্যে Available বা Not Available চিহ্নিত করুন, তারপর রিপোর্ট এক্সপোর্ট করতে নিশ্চিত করুন।",
     "marked": "চিহ্নিত",
-    "Stock check confirmed. You can export the report.": "স্টক চেক নিশ্চিত হয়েছে। আপনি রিপোর্ট এক্সপোর্ট করতে পারেন।"
+    "Stock check confirmed. You can export the report.": "স্টক চেক নিশ্চিত হয়েছে। আপনি রিপোর্ট এক্সপোর্ট করতে পারেন।",
+    ":count partially due": ":countটি আংশিক বকেয়া",
+    ":count receipts today": ":countটি রসিদ আজ",
+    "Back to stock checks": "স্টক চেকে ফিরে যান",
+    "Confirmed by": "নিশ্চিত করেছেন",
+    "Confirmed by :name on :when": ":name :when-এ নিশ্চিত করেছেন",
+    "Confirmed today": "আজ নিশ্চিত",
+    "Invoice or retailer": "ইনভয়েস বা খুচরা বিক্রেতা",
+    "Marked completed": "সম্পূর্ণ চিহ্নিত",
+    "New stock check": "নতুন স্টক চেক",
+    "No stock checks yet.": "এখনো কোনো স্টক চেক নেই।",
+    "Older than :days days": ":days দিনের বেশি পুরনো",
+    "Overdue only": "শুধু মেয়াদোত্তীর্ণ",
+    "Paid in full — confirm": "পূর্ণ পরিশোধ — নিশ্চিত করুন",
+    "Past checks": "আগের চেকসমূহ",
+    "Past physical checks with who confirmed, when, and IN STORE marks.": "কে, কখন নিশ্চিত করেছেন এবং ইন স্টোর চিহ্নসহ আগের চেক।",
+    "Stock check history": "স্টক চেকের ইতিহাস",
+    "View receipts": "রসিদ দেখুন"
 }

@@ -58,6 +58,9 @@ return [
             'voided' => 'Payment voided',
             'cleared' => 'Post-dated cheque cleared',
         ],
+        'collection' => [
+            'confirmed' => 'Collection confirmed paid',
+        ],
         'daily_closing' => [
             'created' => 'Daily closing recorded',
         ],
