@@ -33,14 +33,16 @@
     <table class="lines">
         <thead>
             <tr>
+                <th>{{ __('SL. NO.') }}</th>
                 <th>{{ __('Product') }}</th>
                 <th class="text-right">{{ __('Qty') }}</th>
                 <th class="text-right">{{ __('Value') }}</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($paidLines as $line)
+            @foreach ($paidLines as $index => $line)
                 <tr>
+                    <td class="mono">{{ $index + 1 }}</td>
                     <td>{{ $line->product?->name_en }}</td>
                     <td class="text-right mono">{{ local_digits($line->qty) }}</td>
                     <td class="text-right mono">{{ format_money($line->line_value) }}</td>
@@ -54,14 +56,16 @@
         <table class="lines">
             <thead>
                 <tr>
+                    <th>{{ __('SL. NO.') }}</th>
                     <th>{{ __('Product') }}</th>
                     <th class="text-right">{{ __('Qty') }}</th>
                     <th class="text-right">{{ __('Value') }}</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($bonusLines as $line)
+                @foreach ($bonusLines as $index => $line)
                     <tr>
+                        <td class="mono">{{ $index + 1 }}</td>
                         <td>{{ $line->product?->name_en }}</td>
                         <td class="text-right mono">{{ local_digits($line->qty) }}</td>
                         <td class="text-right mono">{{ format_money(0) }}</td>

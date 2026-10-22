@@ -66,7 +66,12 @@
         action="{{ $action }}"
         enctype="multipart/form-data"
         class="mt-6 space-y-6"
-        x-data="documentForm({{ Js::from(array_values($oldLines)) }}, {{ Js::from($productCatalog) }})"
+        x-data="documentForm({{ Js::from(array_values($oldLines)) }}, {{ Js::from($productCatalog) }}, {{ Js::from([
+            'header_discount' => old('header_discount', $document->header_discount ?? '0'),
+            'slab_adjustment' => old('slab_adjustment', $document->slab_adjustment ?? '0'),
+            'combo_bonus_discount' => old('combo_bonus_discount', $document->combo_bonus_discount ?? '0'),
+            'rounding_adjustment' => old('rounding_adjustment', $document->rounding_adjustment ?? '0'),
+        ]) }})"
         @unless($isPurchase)
             data-offline-sales
             data-sync-url="{{ route('sales.sync-draft') }}"
@@ -221,6 +226,7 @@
                         <table class="data-table text-sm">
                             <thead>
                                 <tr>
+                                    <th class="w-14 whitespace-nowrap">{{ __('SL. NO.') }}</th>
                                     <th>{{ __('Product') }}</th>
                                     <th class="min-w-[5.5rem]">{{ __('Qty') }}</th>
                                     <th class="min-w-[6.5rem]">{{ __('Price') }}</th>
@@ -232,6 +238,7 @@
                             <tbody>
                                 <template x-for="(line, index) in lines" :key="index">
                                     <tr class="align-top" :class="line.kind === 'combo_bonus' ? 'bg-amber-50/80' : ''">
+                                        <td class="font-mono text-slate-600" data-testid="line-sl-no" x-text="index + 1"></td>
                                         <td>
                                             <input type="hidden" :name="`lines[${index}][product_id]`" x-model="line.product_id">
                                             <input type="hidden" :name="`lines[${index}][kind]`" x-model="line.kind">
@@ -262,7 +269,7 @@
                                         </td>
                                     </tr>
                                     <tr x-show="line.showTax" x-cloak class="bg-slate-50">
-                                        <td colspan="6" class="py-2">
+                                        <td colspan="7" class="py-2">
                                             <div class="flex flex-wrap gap-3 text-xs">
                                                 @unless ($isPurchase)
                                                     <label class="flex items-center gap-1">
@@ -298,10 +305,25 @@
                                     </tr>
                                 </template>
                                 <tr x-show="lines.length === 0">
-                                    <td colspan="6" class="py-8 text-center text-slate-500">{{ __('No products yet. Search on the left and click to add.') }}</td>
+                                    <td colspan="7" class="py-8 text-center text-slate-500">{{ __('No products yet. Search on the left and click to add.') }}</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div
+                        class="sticky bottom-0 z-10 mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                        data-testid="invoice-total-summary"
+                    >
+                        <div class="flex flex-wrap items-baseline justify-between gap-2 text-sm text-slate-600">
+                            <span>{{ __('Lines subtotal') }}</span>
+                            <span class="font-mono" data-testid="invoice-lines-subtotal" x-text="linesSubtotal"></span>
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+                            <span class="text-base font-semibold text-slate-900">{{ __('Invoice total') }}</span>
+                            <span class="font-mono text-lg font-semibold text-slate-900" data-testid="invoice-grand-total" x-text="invoiceTotal"></span>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Includes header discount, slab, combo bonus discount and rounding.') }}</p>
                     </div>
                 </div>
             </div>
@@ -310,20 +332,24 @@
         <section class="card grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label class="block">
                 <span class="label">{{ __('Header discount') }}</span>
-                <input type="text" name="header_discount" value="{{ old('header_discount', $document->header_discount ?? '0') }}" inputmode="decimal" class="input">
+                <input type="text" name="header_discount" x-model="header_discount" inputmode="decimal" class="input">
             </label>
             <label class="block">
                 <span class="label">{{ __('Slab adjustment') }}</span>
-                <input type="text" name="slab_adjustment" value="{{ old('slab_adjustment', $document->slab_adjustment ?? '0') }}" inputmode="decimal" class="input">
+                <input type="text" name="slab_adjustment" x-model="slab_adjustment" inputmode="decimal" class="input">
             </label>
             <label class="block">
                 <span class="label">{{ __('Combo bonus discount') }}</span>
-                <input type="text" name="combo_bonus_discount" value="{{ old('combo_bonus_discount', $document->combo_bonus_discount ?? '0') }}" inputmode="decimal" class="input">
+                <input type="text" name="combo_bonus_discount" x-model="combo_bonus_discount" inputmode="decimal" class="input">
             </label>
             <label class="block">
                 <span class="label">{{ __('Rounding adjustment') }}</span>
-                <input type="text" name="rounding_adjustment" value="{{ old('rounding_adjustment', $document->rounding_adjustment ?? '0') }}" inputmode="decimal" class="input">
+                <input type="text" name="rounding_adjustment" x-model="rounding_adjustment" inputmode="decimal" class="input">
             </label>
+            <div class="sm:col-span-2 lg:col-span-4 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3" data-testid="invoice-total-footer">
+                <span class="text-base font-semibold text-slate-900">{{ __('Invoice total') }}</span>
+                <span class="font-mono text-xl font-semibold text-slate-900" x-text="invoiceTotal"></span>
+            </div>
             <label class="block sm:col-span-2 lg:col-span-4">
                 <span class="label">{{ __('Attachments') }} <span class="font-normal text-slate-500">({{ __('optional, max 5 MB each') }})</span></span>
                 <input type="file" name="attachments[]" multiple class="input">
@@ -337,8 +363,9 @@
     </form>
 
     <script>
-        function documentForm(initial, catalog) {
+        function documentForm(initial, catalog, adjustments) {
             const isPurchase = @json($isPurchase);
+            const adj = adjustments || {};
             const lines = (initial || []).map((line) => ({
                 showTax: false,
                 kind: 'normal',
@@ -354,11 +381,45 @@
             return {
                 lines,
                 catalog: catalog || [],
+                header_discount: String(adj.header_discount ?? '0'),
+                slab_adjustment: String(adj.slab_adjustment ?? '0'),
+                combo_bonus_discount: String(adj.combo_bonus_discount ?? '0'),
+                rounding_adjustment: String(adj.rounding_adjustment ?? '0'),
                 lineAddKind: 'normal',
                 brandFilter: '',
                 productQuery: '',
                 productOpen: false,
                 productHighlight: 0,
+                money(value) {
+                    const n = parseFloat(value || '0');
+                    return (Number.isFinite(n) ? n : 0).toFixed(2);
+                },
+                get linesSubtotal() {
+                    const sum = this.lines.reduce((total, line) => {
+                        if (line.kind === 'combo_bonus') {
+                            return total;
+                        }
+                        const value = parseFloat(line.line_value || '0');
+
+                        return total + (Number.isFinite(value) ? value : 0);
+                    }, 0);
+
+                    return this.money(sum);
+                },
+                get invoiceTotal() {
+                    const subtotal = parseFloat(this.linesSubtotal);
+                    const header = parseFloat(this.header_discount || '0');
+                    const slab = parseFloat(this.slab_adjustment || '0');
+                    const combo = parseFloat(this.combo_bonus_discount || '0');
+                    const rounding = parseFloat(this.rounding_adjustment || '0');
+                    const net = (Number.isFinite(subtotal) ? subtotal : 0)
+                        - (Number.isFinite(header) ? header : 0)
+                        - (Number.isFinite(slab) ? slab : 0)
+                        - (Number.isFinite(combo) ? combo : 0)
+                        + (Number.isFinite(rounding) ? rounding : 0);
+
+                    return this.money(Math.round(net * 100) / 100);
+                },
                 get brandOptions() {
                     const brands = new Set();
                     this.catalog.forEach((product) => {

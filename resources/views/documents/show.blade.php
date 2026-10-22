@@ -79,7 +79,7 @@
         <table class="data-table" data-testid="document-lines">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>{{ __('SL. NO.') }}</th>
                     <th>{{ __('Product') }}</th>
                     <th class="text-right">{{ __('Qty') }}</th>
                     <th class="text-right">{{ __('Bonus') }}</th>
@@ -119,7 +119,7 @@
             <table class="data-table" data-testid="combo-bonus-lines">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th>{{ __('SL. NO.') }}</th>
                         <th>{{ __('Product') }}</th>
                         <th class="text-right">{{ __('Qty') }}</th>
                         <th class="text-right">{{ __('Rate') }}</th>
