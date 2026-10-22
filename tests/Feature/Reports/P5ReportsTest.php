@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Reports;
 
+use App\Domain\Backup\BackupCatalog;
 use App\Domain\Documents\DocumentWriter;
 use App\Domain\Payments\PaymentWriter;
 use App\Models\Product;
@@ -121,6 +122,13 @@ class P5ReportsTest extends TestCase
 
     public function test_dashboard_shows_backup_stale_banner_when_no_backup(): void
     {
+        // BackupRestoreTest (MySQL/MariaDB) writes last-backup.json onto the shared
+        // storage/backups tree; clear it so this assertion is order-independent.
+        $manifest = app(BackupCatalog::class)->directory().'/last-backup.json';
+        if (is_file($manifest)) {
+            unlink($manifest);
+        }
+
         $this->actingAs($this->owner())
             ->get(route('dashboard'))
             ->assertOk()
