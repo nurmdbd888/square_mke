@@ -4,6 +4,8 @@
     'parties',
     'selectedId' => null,
     'required' => true,
+    'createUrl' => null,
+    'createLabel' => null,
 ])
 
 @php
@@ -14,15 +16,32 @@
     ])->values();
     $resolvedId = old($name, $selectedId);
     $selected = $items->first(fn ($row) => (string) $row['id'] === (string) $resolvedId);
+    $createLabel ??= __('Add new');
+    $canCreate = filled($createUrl);
 @endphp
 
 <div
     class="block"
-    x-data="partyCodePicker({{ Js::from($items) }}, {{ Js::from($selected) }})"
+    x-data="partyCodePicker({{ Js::from($items) }}, {{ Js::from($selected) }}, {{ Js::from([
+        'createUrl' => $createUrl,
+        'csrf' => csrf_token(),
+        'creatingLabel' => __('Saving…'),
+        'errorLabel' => __('Could not save. Check the name and try again.'),
+    ]) }})"
     x-init="if (partyId) { $nextTick(() => $refs.hiddenInput?.dispatchEvent(new Event('change', { bubbles: true }))); }"
-    @keydown.escape.window="open = false"
+    @keydown.escape.window="open = false; creating = false"
 >
-    <span class="label">{{ $label }}</span>
+    <div class="flex flex-wrap items-end justify-between gap-2">
+        <span class="label">{{ $label }}</span>
+        @if ($canCreate)
+            <button
+                type="button"
+                class="text-sm font-semibold text-brand-700 hover:underline"
+                data-testid="party-quick-add"
+                @click="creating = true; createError = ''; $nextTick(() => $refs.createName?.focus())"
+            >{{ $createLabel }}</button>
+        @endif
+    </div>
     <input
         type="hidden"
         name="{{ $name }}"
@@ -83,19 +102,65 @@
             </template>
         </ul>
     </div>
+
+    @if ($canCreate)
+        <div
+            x-cloak
+            x-show="creating"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+            role="dialog"
+            aria-modal="true"
+            :aria-label="{{ Js::from($createLabel) }}"
+            data-testid="party-quick-add-dialog"
+        >
+            <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg" @click.outside="!saving && (creating = false)">
+                <h2 class="text-lg font-semibold text-slate-900">{{ $createLabel }}</h2>
+                <p class="mt-1 text-sm text-slate-600">{{ __('Saved to masters and selected on this document.') }}</p>
+                <div class="mt-4 space-y-3">
+                    <label class="block">
+                        <span class="label">{{ __('Name') }}</span>
+                        <input type="text" class="input" x-ref="createName" x-model="createName" maxlength="191" required>
+                    </label>
+                    <label class="block">
+                        <span class="label">{{ __('Code') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                        <input type="text" class="input font-mono" x-model="createCode" maxlength="40">
+                    </label>
+                    <label class="block">
+                        <span class="label">{{ __('Phone') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                        <input type="tel" class="input" x-model="createPhone" maxlength="20">
+                    </label>
+                    <p x-cloak x-show="createError" class="text-sm text-red-700" x-text="createError"></p>
+                </div>
+                <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button type="button" class="btn-secondary w-full sm:w-auto" @click="creating = false" :disabled="saving">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn-primary w-full sm:w-auto" data-testid="party-quick-add-save" @click="saveNew()" :disabled="saving || !createName.trim()">
+                        <span x-text="saving ? opts.creatingLabel : {{ Js::from(__('Save and select')) }}"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
 @once
     @push('scripts')
         <script>
-            function partyCodePicker(parties, selected) {
+            function partyCodePicker(parties, selected, opts) {
+                opts = opts || {};
                 return {
-                    parties,
+                    parties: parties || [],
+                    opts,
                     partyId: selected?.id ? String(selected.id) : '',
                     partyName: selected?.name ?? '',
                     query: selected?.code ?? '',
                     open: false,
                     highlight: 0,
+                    creating: false,
+                    saving: false,
+                    createName: '',
+                    createCode: '',
+                    createPhone: '',
+                    createError: '',
                     get filtered() {
                         const q = this.query.trim().toLowerCase();
                         if (q === '') {
@@ -153,6 +218,54 @@
                     },
                     highlightPrev() {
                         this.highlight = Math.max(this.highlight - 1, 0);
+                    },
+                    async saveNew() {
+                        if (!this.opts.createUrl || !this.createName.trim() || this.saving) {
+                            return;
+                        }
+                        this.saving = true;
+                        this.createError = '';
+                        try {
+                            const body = new URLSearchParams();
+                            body.set('name', this.createName.trim());
+                            if (this.createCode.trim()) {
+                                body.set('code', this.createCode.trim());
+                            }
+                            if (this.createPhone.trim()) {
+                                body.set('phone', this.createPhone.trim());
+                            }
+                            const res = await fetch(this.opts.createUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': this.opts.csrf || '',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                                },
+                                body: body.toString(),
+                                credentials: 'same-origin',
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) {
+                                const first = data?.errors ? Object.values(data.errors).flat()[0] : null;
+                                throw new Error(first || data?.message || this.opts.errorLabel);
+                            }
+                            const party = {
+                                id: data.id,
+                                code: data.code || '',
+                                name: data.name || this.createName.trim(),
+                            };
+                            this.parties = [party].concat(this.parties.filter((p) => String(p.id) !== String(party.id)));
+                            this.pick(party);
+                            this.creating = false;
+                            this.createName = '';
+                            this.createCode = '';
+                            this.createPhone = '';
+                        } catch (err) {
+                            this.createError = err.message || this.opts.errorLabel;
+                        } finally {
+                            this.saving = false;
+                        }
                     },
                 };
             }

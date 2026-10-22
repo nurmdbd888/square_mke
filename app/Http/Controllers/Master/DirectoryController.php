@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Master\Concerns\RespondsWithPartyJson;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
 use App\Models\Supplier;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Support\Bulk\BulkSelection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,6 +22,8 @@ use Illuminate\View\View;
  */
 class DirectoryController extends Controller
 {
+    use RespondsWithPartyJson;
+
     public function index(Request $request, string $kind): View
     {
         $meta = $this->meta($kind);
@@ -71,10 +75,14 @@ class DirectoryController extends Controller
         ]);
     }
 
-    public function store(Request $request, string $kind): RedirectResponse
+    public function store(Request $request, string $kind): RedirectResponse|JsonResponse
     {
         $meta = $this->meta($kind);
         $row = $meta['model']::query()->create($this->validated($request, $kind));
+
+        if ($kind === 'suppliers' && $this->wantsPartyJson($request)) {
+            return $this->partyJson($row);
+        }
 
         return redirect()->route('masters.directory.index', $kind)->with('status', $this->saved($kind, $row));
     }

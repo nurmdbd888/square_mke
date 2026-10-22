@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Master\Concerns\RespondsWithPartyJson;
 use App\Models\CustomField;
 use App\Models\PriceList;
 use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,6 +17,8 @@ use Illuminate\View\View;
 
 class RetailerController extends Controller
 {
+    use RespondsWithPartyJson;
+
     public function index(Request $request): View
     {
         $filters = $request->validate([
@@ -55,9 +59,13 @@ class RetailerController extends Controller
         return view('master.retailers.form', $this->formData(new Retailer));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $retailer = Retailer::query()->create($this->validated($request));
+
+        if ($this->wantsPartyJson($request)) {
+            return $this->partyJson($retailer);
+        }
 
         return redirect()->route('retailers.index')->with('status', __('Retailer :name was saved.', ['name' => $retailer->name]));
     }
