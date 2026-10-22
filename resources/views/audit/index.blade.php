@@ -21,7 +21,7 @@
             <span class="label">{{ __('Action') }}</span>
             <select name="event" class="input">
                 <option value="">{{ __('All actions') }}</option>
-                @foreach (['auth.*', 'two_factor.*', 'user.*', 'settings.*', 'maintenance.*'] as $prefix)
+                @foreach (['auth.*', 'two_factor.*', 'user.*', 'settings.*', 'maintenance.*', 'document.*', 'payment.*', 'stock_note.*'] as $prefix)
                     <option value="{{ $prefix }}" @selected(($filters['event'] ?? null) === $prefix)>{{ \App\Support\Audit\AuditEvents::label($prefix) }}</option>
                 @endforeach
                 @foreach ($events as $event)

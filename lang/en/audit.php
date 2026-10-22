@@ -42,6 +42,8 @@ return [
             'generate_key' => 'Generate APP_KEY',
             'migrate' => 'Run migrations',
             'clear_caches' => 'Clear caches',
+            'backup' => 'Backup created',
+            'restore' => 'Backup restored',
             'owner_created' => 'Owner account created',
             'owner_recovered' => 'Owner password reset (recovery)',
         ],

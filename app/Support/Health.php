@@ -6,6 +6,7 @@ use App\Domain\Backup\BackupCatalog;
 use App\Models\SmokeHeartbeat;
 use App\Support\Maintenance\DatabaseProbe;
 use App\Support\Maintenance\MigrationStatus;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -43,19 +44,32 @@ class Health
     }
 
     /**
-     * @return array{at: string|null, basename: string|null, count: int}|null
+     * @return array{at: string|null, basename: string|null, count: int, stale: bool, age_hours: int|null}|null
      */
-    private function backup(): ?array
+    public function backup(int $staleAfterHours = 36): ?array
     {
         try {
             $catalog = app(BackupCatalog::class);
             $manifest = $catalog->lastManifest();
             $list = $catalog->listLocal();
+            $at = isset($manifest['at']) ? (string) $manifest['at'] : null;
+            $ageHours = null;
+            $stale = true;
+            if ($at !== null && $at !== '') {
+                try {
+                    $ageHours = (int) max(0, now()->diffInHours(Carbon::parse($at), absolute: true));
+                    $stale = $ageHours >= $staleAfterHours;
+                } catch (Throwable) {
+                    $stale = true;
+                }
+            }
 
             return [
-                'at' => isset($manifest['at']) ? (string) $manifest['at'] : null,
+                'at' => $at,
                 'basename' => isset($manifest['basename']) ? (string) $manifest['basename'] : ($list[0] ?? null),
                 'count' => count($list),
+                'stale' => $stale,
+                'age_hours' => $ageHours,
             ];
         } catch (Throwable) {
             return null;

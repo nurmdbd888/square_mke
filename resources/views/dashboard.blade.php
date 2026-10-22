@@ -12,6 +12,26 @@
             @endif
         </div>
     @endif
+    @if (! empty($health['backup']['stale']))
+        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert" data-testid="backup-stale-banner">
+            <p class="font-semibold">{{ __('Backup reminder') }}</p>
+            <p class="mt-1">
+                @if (empty($health['backup']['at']))
+                    {{ __('No backup has been recorded yet. Take a backup from Maintenance or wait for the nightly job.') }}
+                @else
+                    {{ __('Last backup is older than :hours hours. Confirm the nightly job or run Backup now.', ['hours' => local_digits(36)]) }}
+                @endif
+            </p>
+            <p class="mt-2 flex flex-wrap gap-3">
+                @can('health.view')
+                    <a href="{{ route('health') }}" class="font-semibold underline">{{ __('System health') }}</a>
+                @endcan
+                @if (auth()->user()?->isOwner())
+                    <a href="{{ route('maintenance') }}" class="font-semibold underline">{{ __('Open the Maintenance page') }}</a>
+                @endif
+            </p>
+        </div>
+    @endif
     <section class="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-500 px-6 py-8 text-white shadow-sm sm:px-8">
         <p class="text-sm font-medium text-brand-100">{{ __('Welcome, :name', ['name' => auth()->user()->name]) }}</p>
         <h1 class="mt-1 text-2xl font-bold sm:text-3xl">{{ setting('firm_name') }}</h1>
@@ -116,7 +136,7 @@
         <h2 class="font-semibold text-slate-900">{{ __('What is ready') }}</h2>
         <p class="mt-1 text-sm text-slate-600">{{ __('Sign-in through P&L, dashboard metrics, month lock, list import/export, returns, claims, payments and the books are ready.') }}</p>
         @can('reports.view')
-            <p class="mt-2"><a href="{{ route('reports.pl') }}" class="text-brand-700 hover:underline">{{ __('Open profit and loss') }}</a></p>
+            <p class="mt-2"><a href="{{ route('reports.index') }}" class="text-brand-700 hover:underline">{{ __('Open reports') }}</a></p>
         @endcan
     </section>
 @endsection
