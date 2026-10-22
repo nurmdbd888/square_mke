@@ -169,28 +169,33 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
         Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
         Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
-        Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->name('purchases.show');
-        Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->name('purchases.edit');
-        Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->name('purchases.update');
-        // Bulk authorizes per action inside the controller (post → manage, void/remove → delete).
-        Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])->defaults('type', 'purchase')->name('purchases.bulk');
-        Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->name('purchases.post');
-        Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.delete')->name('purchases.destroy');
+        // Bulk must be registered before /{document} and document ids are numeric only —
+        // otherwise GET /purchases/bulk is captured as show(document: "bulk") → 404.
+        Route::match(['get', 'post'], '/purchases/bulk', [DocumentController::class, 'bulk'])
+            ->defaults('type', 'purchase')
+            ->name('purchases.bulk');
+        Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->whereNumber('document')->name('purchases.show');
+        Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->whereNumber('document')->name('purchases.edit');
+        Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->whereNumber('document')->name('purchases.update');
+        Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->whereNumber('document')->name('purchases.post');
+        Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.delete')->whereNumber('document')->name('purchases.destroy');
+        Route::get('/purchases/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:purchases.view')->whereNumber('document')->name('purchases.print.challan');
 
         Route::get('/sales', [DocumentController::class, 'index'])->middleware('can:sales.view')->defaults('type', 'sale')->name('sales.index');
         Route::get('/sales/create', [DocumentController::class, 'create'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.create');
         Route::post('/sales', [DocumentController::class, 'store'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.store');
-        Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->name('sales.show');
-        Route::get('/sales/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:sales.manage')->name('sales.edit');
-        Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
-        Route::post('/sales/bulk', [DocumentController::class, 'bulk'])->defaults('type', 'sale')->name('sales.bulk');
-        Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
-        Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.delete')->name('sales.destroy');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
-        Route::get('/sales/{document}/print/invoice', [DocumentPrintController::class, 'invoiceA4'])->middleware('can:sales.view')->name('sales.print.invoice');
-        Route::get('/sales/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:sales.view')->name('sales.print.challan');
-        Route::get('/sales/{document}/print/thermal', [DocumentPrintController::class, 'thermal80'])->middleware('can:sales.view')->name('sales.print.thermal');
-        Route::get('/purchases/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:purchases.view')->name('purchases.print.challan');
+        Route::match(['get', 'post'], '/sales/bulk', [DocumentController::class, 'bulk'])
+            ->defaults('type', 'sale')
+            ->name('sales.bulk');
+        Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->whereNumber('document')->name('sales.show');
+        Route::get('/sales/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:sales.manage')->whereNumber('document')->name('sales.edit');
+        Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->whereNumber('document')->name('sales.update');
+        Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->whereNumber('document')->name('sales.post');
+        Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.delete')->whereNumber('document')->name('sales.destroy');
+        Route::get('/sales/{document}/print/invoice', [DocumentPrintController::class, 'invoiceA4'])->middleware('can:sales.view')->whereNumber('document')->name('sales.print.invoice');
+        Route::get('/sales/{document}/print/challan', [DocumentPrintController::class, 'challanA4'])->middleware('can:sales.view')->whereNumber('document')->name('sales.print.challan');
+        Route::get('/sales/{document}/print/thermal', [DocumentPrintController::class, 'thermal80'])->middleware('can:sales.view')->whereNumber('document')->name('sales.print.thermal');
 
         Route::middleware('can:stock.view')->group(function () {
             Route::get('/stock', [StockController::class, 'index'])->name('stock.index');

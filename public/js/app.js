@@ -69,6 +69,21 @@
         var select = form.querySelector('select[name="action"]');
         if (select) {
             select.value = action;
+        } else {
+            var hidden = form.querySelector('input[name="action"][type="hidden"]');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'action';
+                form.appendChild(hidden);
+            }
+            hidden.value = action;
+        }
+
+        // Never let a degraded form navigate with GET to /sales/bulk (show 404).
+        form.method = 'post';
+        if (!form.getAttribute('action')) {
+            form.setAttribute('action', btn.getAttribute('data-bulk-delete-action-url') || window.location.pathname.replace(/\/?$/, '') + '/bulk');
         }
 
         if (typeof form.requestSubmit === 'function') {
