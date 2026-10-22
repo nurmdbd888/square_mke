@@ -150,11 +150,17 @@ class DocumentController extends Controller
         $this->authorizeDelete($request, $document->type);
         $type = $document->type;
         $number = $document->number;
-        $this->writer->void($document, $request->user());
+        $outcome = $this->writer->deleteOrVoid($document, $request->user());
+
+        $message = match ($outcome) {
+            'removed' => __('Document :number was removed from the list.', ['number' => $number]),
+            'deleted' => __('Document :number was deleted.', ['number' => $number]),
+            default => __('Document :number was voided.', ['number' => $number]),
+        };
 
         return redirect()
             ->route($type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index')
-            ->with('status', __('Document :number was voided.', ['number' => $number]));
+            ->with('status', $message);
     }
 
     public function bulk(Request $request, string $type): RedirectResponse
@@ -172,13 +178,15 @@ class DocumentController extends Controller
 
         $ids = BulkSelection::ids($request);
         $result = new BulkActionResult;
+        $voided = 0;
+        $removed = 0;
 
         Document::query()
             ->where('type', $type)
             ->whereIn('id', $ids)
             ->orderBy('id')
             ->get()
-            ->each(function (Document $document) use ($action, $request, $result) {
+            ->each(function (Document $document) use ($action, $request, $result, &$voided, &$removed) {
                 try {
                     if ($action === 'post') {
                         if (! $document->isDraft()) {
@@ -193,13 +201,13 @@ class DocumentController extends Controller
                         return;
                     }
 
-                    if ($document->isVoid()) {
-                        $result->skipped++;
-
-                        return;
-                    }
-                    $this->writer->void($document, $request->user());
+                    $outcome = $this->writer->deleteOrVoid($document, $request->user());
                     $result->applied++;
+                    if ($outcome === 'voided') {
+                        $voided++;
+                    } else {
+                        $removed++;
+                    }
                 } catch (\Throwable $e) {
                     $result->skipped++;
                     $result->errors[] = $document->number.': '.$e->getMessage();
@@ -207,8 +215,44 @@ class DocumentController extends Controller
             });
 
         $route = $type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index';
+        $status = $action === 'void'
+            ? $this->deleteBulkMessage($voided, $removed, $result)
+            : $result->message();
 
-        return redirect()->route($route)->with('status', $result->message());
+        return redirect()->route($route)->with('status', $status);
+    }
+
+    private function deleteBulkMessage(int $voided, int $removed, BulkActionResult $result): string
+    {
+        if ($result->errors !== []) {
+            return __('Voided :voided. Removed :removed. Skipped :skipped. :count errors.', [
+                'voided' => $voided,
+                'removed' => $removed,
+                'skipped' => $result->skipped,
+                'count' => count($result->errors),
+            ]);
+        }
+
+        if ($voided > 0 && $removed > 0) {
+            return __('Voided :voided. Removed :removed.', [
+                'voided' => $voided,
+                'removed' => $removed,
+            ]);
+        }
+
+        if ($removed > 0) {
+            return __('Removed :count from the list.', ['count' => $removed]);
+        }
+
+        if ($voided > 0) {
+            return __('Voided :count documents.', ['count' => $voided]);
+        }
+
+        if ($result->skipped > 0) {
+            return __('Applied 0. Skipped :skipped.', ['skipped' => $result->skipped]);
+        }
+
+        return __('No documents were changed.');
     }
 
     public function post(Request $request, Document $document): RedirectResponse

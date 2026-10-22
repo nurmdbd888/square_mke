@@ -171,7 +171,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->name('purchases.show');
         Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->name('purchases.edit');
         Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->name('purchases.update');
-        Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.bulk');
+        // Bulk authorizes per action inside the controller (post → manage, void/remove → delete).
+        Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])->defaults('type', 'purchase')->name('purchases.bulk');
         Route::post('/purchases/{document}/post', [DocumentController::class, 'post'])->middleware('can:purchases.manage')->name('purchases.post');
         Route::delete('/purchases/{document}', [DocumentController::class, 'destroy'])->middleware('can:purchases.delete')->name('purchases.destroy');
 
@@ -181,7 +182,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->name('sales.show');
         Route::get('/sales/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:sales.manage')->name('sales.edit');
         Route::put('/sales/{document}', [DocumentController::class, 'update'])->middleware('can:sales.manage')->name('sales.update');
-        Route::post('/sales/bulk', [DocumentController::class, 'bulk'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.bulk');
+        Route::post('/sales/bulk', [DocumentController::class, 'bulk'])->defaults('type', 'sale')->name('sales.bulk');
         Route::post('/sales/{document}/post', [DocumentController::class, 'post'])->middleware('can:sales.manage')->name('sales.post');
         Route::delete('/sales/{document}', [DocumentController::class, 'destroy'])->middleware('can:sales.delete')->name('sales.destroy');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
