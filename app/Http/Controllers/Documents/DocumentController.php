@@ -166,6 +166,17 @@ class DocumentController extends Controller
     public function bulk(Request $request, string $type): RedirectResponse
     {
         $this->assertType($type);
+        $route = $type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index';
+
+        // GET /sales/bulk must not 404: older route order matched show(document: "bulk").
+        // Browser navigations (bookmark, refresh after submit, missing POST) land here.
+        if ($request->isMethod('GET')) {
+            return redirect()->route($route)->with(
+                'status',
+                __('Select rows on the list, then use Delete or Apply.')
+            );
+        }
+
         $action = $request->validate([
             'action' => ['required', Rule::in(['post', 'void'])],
         ])['action'];
@@ -214,7 +225,6 @@ class DocumentController extends Controller
                 }
             });
 
-        $route = $type === Document::TYPE_PURCHASE ? 'purchases.index' : 'sales.index';
         $status = $action === 'void'
             ? $this->deleteBulkMessage($voided, $removed, $result)
             : $result->message();

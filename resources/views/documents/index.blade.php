@@ -23,6 +23,7 @@
                     data-testid="documents-bulk-delete"
                     data-bulk-delete-form="documents-bulk-form"
                     data-bulk-delete-action="void"
+                    data-bulk-delete-action-url="{{ route($type === 'purchase' ? 'purchases.bulk' : 'sales.bulk') }}"
                     data-confirm="{{ __('Void posted documents, or remove drafts and already-void documents from the list?') }}"
                     data-empty="{{ __('Select at least one row to delete.') }}"
                 >{{ __('Delete') }}</button>

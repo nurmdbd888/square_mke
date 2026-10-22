@@ -67,6 +67,57 @@ class SalesListDeleteUxTest extends TestCase
             ->assertSee('data-testid="documents-bulk-delete"', false);
     }
 
+    public function test_get_sales_bulk_redirects_to_index_not_404(): void
+    {
+        $owner = $this->owner();
+
+        $this->actingAs($owner)
+            ->get('/sales/bulk')
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status', __('Select rows on the list, then use Delete or Apply.'));
+
+        $this->actingAs($owner)
+            ->get('/purchases/bulk')
+            ->assertRedirect(route('purchases.index'));
+    }
+
+    public function test_post_sales_bulk_void_path_succeeds_not_404(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        $document = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-BULK-404',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/sales/bulk', [
+                'action' => 'void',
+                'ids' => [$document->id],
+            ])
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status')
+            ->assertSessionMissing('errors');
+
+        $this->assertSoftDeleted('documents', ['id' => $document->id]);
+    }
+
+    public function test_sales_show_rejects_non_numeric_document_segment(): void
+    {
+        $owner = $this->owner();
+
+        // "bulk" must never bind as sales/{document} after the route fix.
+        $this->actingAs($owner)
+            ->get('/sales/not-a-document-id')
+            ->assertNotFound();
+    }
+
     public function test_bulk_delete_removes_already_void_sales_from_list(): void
     {
         $owner = $this->owner();
