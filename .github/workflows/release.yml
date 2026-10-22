@@ -70,7 +70,15 @@ jobs:
           fi
 
       - name: Build
-        run: ./scripts/build-release.sh "${{ steps.version.outputs.version }}"
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        run: |
+          for attempt in 1 2 3; do
+            ./scripts/build-release.sh "${{ steps.version.outputs.version }}" && exit 0
+            echo "build-release failed (attempt $attempt); retrying in $((attempt * 20))s..."
+            sleep $((attempt * 20))
+          done
+          exit 1
 
       - name: Check the zip layout
         run: |
