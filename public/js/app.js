@@ -172,8 +172,24 @@
             fromPicker: function (event) {
                 var value = event.target.value || '';
                 this.iso = value;
-                this.display = formatIso(value, this.format);
+                this.display = value ? formatIso(value, this.format) : '';
                 this.invalid = false;
+            },
+
+            /**
+             * Keep the native control in sync before the browser opens its UI.
+             * The picker is a real-size opacity-0 overlay on the calendar icon
+             * (see date-input.blade.php) — do not call showPicker() on a
+             * zero-size input; Chromium rejects that as NotAllowedError.
+             */
+            preparePicker: function () {
+                var picker = this.$refs.picker;
+                if (!picker) {
+                    return;
+                }
+                if (this.iso && picker.value !== this.iso) {
+                    picker.value = this.iso;
+                }
             },
 
             openPicker: function () {
@@ -181,20 +197,20 @@
                 if (!picker) {
                     return;
                 }
-                if (this.iso) {
-                    picker.value = this.iso;
-                }
+                this.preparePicker();
                 if (typeof picker.showPicker === 'function') {
                     try {
                         picker.showPicker();
 
                         return;
                     } catch (e) {
-                        // fall through to click()
+                        // Element must be user-visible with a layout box.
                     }
                 }
+                picker.focus();
                 picker.click();
             },
         };
     };
 })();
+
