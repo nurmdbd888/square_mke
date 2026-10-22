@@ -86,11 +86,13 @@
                             :view-label="__('Open')"
                             :edit="$canManage && ! $document->isVoid() ? route($editRoute, $document) : null"
                         >
-                            @if ($canDelete && ! $document->isVoid())
+                            @if ($canDelete)
                                 <x-delete-form
                                     :action="route($destroyRoute, $document)"
-                                    :confirm="$document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.')"
-                                    :label="$document->isDraft() ? __('Delete') : __('Void')"
+                                    :confirm="$document->isVoid()
+                                        ? __('Remove this voided document from the list?')
+                                        : ($document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.'))"
+                                    :label="$document->isVoid() || $document->isDraft() ? __('Delete') : __('Void')"
                                 />
                             @endif
                         </x-row-actions>
@@ -109,7 +111,7 @@
             $bulkActions['post'] = __('Post drafts');
         }
         if ($canDelete) {
-            $bulkActions['void'] = __('Void or delete');
+            $bulkActions['void'] = __('Void / remove');
         }
     @endphp
     <x-bulk-action-bar :actions="$bulkActions" />

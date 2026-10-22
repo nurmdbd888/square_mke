@@ -261,6 +261,30 @@ final class DocumentWriter
         return $document->fresh();
     }
 
+    /**
+     * List Delete: draft → remove, posted → void, already void → remove from list.
+     *
+     * @return 'deleted'|'voided'|'removed'
+     */
+    public function deleteOrVoid(Document $document, ?User $by = null): string
+    {
+        if ($document->isVoid()) {
+            $document->delete();
+
+            return 'removed';
+        }
+
+        if ($document->isDraft()) {
+            $document->delete();
+
+            return 'deleted';
+        }
+
+        $this->void($document, $by);
+
+        return 'voided';
+    }
+
     private function fillSaleTotals(Document $document): void
     {
         $revenue = Exact::of('0');

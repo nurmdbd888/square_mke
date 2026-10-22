@@ -20,8 +20,10 @@ class SalesListDeleteUxTest extends TestCase
             ->assertOk()
             ->assertSee(__('Add sale'), false)
             ->assertSee('data-testid="documents-bulk-delete"', false)
+            ->assertSee('data-bulk-delete-action="void"', false)
             ->assertSee(__('Delete'), false)
-            ->assertSee('id="documents-bulk-form"', false);
+            ->assertSee('id="documents-bulk-form"', false)
+            ->assertSee(__('Void / remove'), false);
     }
 
     public function test_viewer_does_not_see_sales_delete_button(): void
@@ -63,5 +65,112 @@ class SalesListDeleteUxTest extends TestCase
         $this->actingAs($owner)->get(route('purchases.index'))
             ->assertOk()
             ->assertSee('data-testid="documents-bulk-delete"', false);
+    }
+
+    public function test_bulk_delete_removes_already_void_sales_from_list(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        $a = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => '2610050698555',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '100',
+            'net_total' => '100',
+        ]);
+        $b = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => '2610050652897',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-15',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '50',
+            'net_total' => '50',
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('sales.bulk'), [
+                'action' => 'void',
+                'ids' => [$a->id, $b->id],
+            ])
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status', __('Removed :count from the list.', ['count' => 2]));
+
+        $this->assertSoftDeleted('documents', ['id' => $a->id]);
+        $this->assertSoftDeleted('documents', ['id' => $b->id]);
+
+        $this->actingAs($owner)->get(route('sales.index'))
+            ->assertOk()
+            ->assertDontSee('2610050698555', false)
+            ->assertDontSee('2610050652897', false);
+    }
+
+    public function test_bulk_delete_voids_posted_and_removes_void(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        $posted = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-POST-1',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_POSTED,
+            'posted_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+        $voided = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-VOID-1',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-16',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('sales.bulk'), [
+                'action' => 'void',
+                'ids' => [$posted->id, $voided->id],
+            ])
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status', __('Voided :voided. Removed :removed.', [
+                'voided' => 1,
+                'removed' => 1,
+            ]));
+
+        $this->assertSame(Document::STATUS_VOID, $posted->fresh()->status);
+        $this->assertSoftDeleted('documents', ['id' => $voided->id]);
+    }
+
+    public function test_single_destroy_removes_voided_sale(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        $document = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-VOID-DEL',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('sales.destroy', $document))
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status', __('Document :number was removed from the list.', [
+                'number' => 'S-VOID-DEL',
+            ]));
+
+        $this->assertSoftDeleted('documents', ['id' => $document->id]);
     }
 }

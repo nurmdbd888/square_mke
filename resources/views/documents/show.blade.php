@@ -38,9 +38,9 @@
                 @endif
             </div>
         @endif
-        @if (($canManage || ($canDelete ?? false)) && ! $document->isVoid())
+        @if ($canManage || ($canDelete ?? false))
             <div class="mt-2 flex flex-wrap gap-2">
-                @if ($canManage)
+                @if ($canManage && ! $document->isVoid())
                     <a href="{{ route($editRoute, $document) }}" class="btn-secondary">{{ __('Edit') }}</a>
                     @if ($document->isDraft())
                         <form method="POST" action="{{ route($postRoute, $document) }}">
@@ -52,8 +52,10 @@
                 @if ($canDelete ?? false)
                     <x-delete-form
                         :action="route($voidRoute, $document)"
-                        :confirm="$document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.')"
-                        :label="$document->isDraft() ? __('Delete draft') : __('Void')"
+                        :confirm="$document->isVoid()
+                            ? __('Remove this voided document from the list?')
+                            : ($document->isDraft() ? __('Delete this draft?') : __('Void this document? Posted stock will be recomputed.'))"
+                        :label="$document->isVoid() ? __('Delete') : ($document->isDraft() ? __('Delete draft') : __('Void'))"
                         class="inline"
                     />
                 @endif
