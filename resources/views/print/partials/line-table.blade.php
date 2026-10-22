@@ -11,7 +11,7 @@
 <table class="lines">
     <thead>
         <tr>
-            <th>#</th>
+            <th>{{ __('SL. NO.') }}</th>
             <th>{{ __('Product') }}</th>
             <th>{{ __('Pack') }}</th>
             <th class="text-right">{{ __('Rate') }}</th>
