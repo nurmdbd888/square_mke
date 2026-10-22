@@ -41,27 +41,29 @@
         }
     }, true);
 
-    // Header "Delete" on list pages: set bulk action and submit the selected rows.
+    // Header "Delete" on list pages: confirm, then let the native submit POST the form (CSRF + action=void).
     document.addEventListener('click', function (event) {
         var btn = event.target.closest('[data-bulk-delete-form]');
         if (!btn) {
             return;
         }
 
-        event.preventDefault();
         var form = document.getElementById(btn.getAttribute('data-bulk-delete-form'));
         if (!form) {
+            event.preventDefault();
             return;
         }
 
         var selected = form.querySelectorAll('input[name="ids[]"]:checked');
         if (selected.length === 0) {
+            event.preventDefault();
             window.alert(btn.getAttribute('data-empty') || 'Select at least one row.');
             return;
         }
 
         var message = btn.getAttribute('data-confirm');
         if (message && !window.confirm(message)) {
+            event.preventDefault();
             return;
         }
 
@@ -69,27 +71,24 @@
         var select = form.querySelector('select[name="action"]');
         if (select) {
             select.value = action;
-        } else {
-            var hidden = form.querySelector('input[name="action"][type="hidden"]');
-            if (!hidden) {
-                hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = 'action';
-                form.appendChild(hidden);
-            }
-            hidden.value = action;
         }
 
-        // Never let a degraded form navigate with GET to /sales/bulk (show 404).
+        // Force POST + action URL so a degraded form never GETs /sales/bulk (404/405).
         form.method = 'post';
-        if (!form.getAttribute('action')) {
-            form.setAttribute('action', btn.getAttribute('data-bulk-delete-action-url') || window.location.pathname.replace(/\/?$/, '') + '/bulk');
+        form.setAttribute('method', 'post');
+        var actionUrl = btn.getAttribute('data-bulk-delete-action-url');
+        if (actionUrl) {
+            form.setAttribute('action', actionUrl);
         }
 
-        if (typeof form.requestSubmit === 'function') {
-            form.requestSubmit();
-        } else {
-            form.submit();
+        // type=submit + form= already posts; only requestSubmit when the button is type=button.
+        if (btn.getAttribute('type') === 'button') {
+            event.preventDefault();
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
         }
     });
 
