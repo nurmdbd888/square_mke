@@ -698,6 +698,7 @@ class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
         'App\\Http\\Controllers\\Import\\EntityImportController' => __DIR__ . '/../..' . '/app/Http/Controllers/Import/EntityImportController.php',
         'App\\Http\\Controllers\\LocaleController' => __DIR__ . '/../..' . '/app/Http/Controllers/LocaleController.php',
         'App\\Http\\Controllers\\MaintenanceController' => __DIR__ . '/../..' . '/app/Http/Controllers/MaintenanceController.php',
+        'App\\Http\\Controllers\\Master\\Concerns\\RespondsWithPartyJson' => __DIR__ . '/../..' . '/app/Http/Controllers/Master/Concerns/RespondsWithPartyJson.php',
         'App\\Http\\Controllers\\Master\\CustomFieldController' => __DIR__ . '/../..' . '/app/Http/Controllers/Master/CustomFieldController.php',
         'App\\Http\\Controllers\\Master\\DirectoryController' => __DIR__ . '/../..' . '/app/Http/Controllers/Master/DirectoryController.php',
         'App\\Http\\Controllers\\Master\\MastersController' => __DIR__ . '/../..' . '/app/Http/Controllers/Master/MastersController.php',

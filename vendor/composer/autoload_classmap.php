@@ -98,6 +98,7 @@ return array(
     'App\\Http\\Controllers\\Import\\EntityImportController' => $baseDir . '/app/Http/Controllers/Import/EntityImportController.php',
     'App\\Http\\Controllers\\LocaleController' => $baseDir . '/app/Http/Controllers/LocaleController.php',
     'App\\Http\\Controllers\\MaintenanceController' => $baseDir . '/app/Http/Controllers/MaintenanceController.php',
+    'App\\Http\\Controllers\\Master\\Concerns\\RespondsWithPartyJson' => $baseDir . '/app/Http/Controllers/Master/Concerns/RespondsWithPartyJson.php',
     'App\\Http\\Controllers\\Master\\CustomFieldController' => $baseDir . '/app/Http/Controllers/Master/CustomFieldController.php',
     'App\\Http\\Controllers\\Master\\DirectoryController' => $baseDir . '/app/Http/Controllers/Master/DirectoryController.php',
     'App\\Http\\Controllers\\Master\\MastersController' => $baseDir . '/app/Http/Controllers/Master/MastersController.php',

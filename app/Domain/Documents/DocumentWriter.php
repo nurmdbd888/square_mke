@@ -240,7 +240,7 @@ final class DocumentWriter
         $from = $document->doc_date->toDateString();
         $products = $document->lines()->pluck('product_id')->all();
 
-        $document->forceFill([
+        $voidFill = [
             'status' => Document::STATUS_VOID,
             'voided_at' => now(),
             'updated_by' => $by?->id,
@@ -250,7 +250,15 @@ final class DocumentWriter
             'commission_gross' => null,
             'commission_vat' => null,
             'commission_net' => null,
-        ])->save();
+        ];
+
+        // Drop collector queue flags so voided sales leave Fund Collector / overdue lists.
+        if ($document->isSale() && SafeAccess::hasColumn('documents', 'collection_status')) {
+            $voidFill['collection_status'] = null;
+            $voidFill['collection_confirmed_at'] = null;
+        }
+
+        $document->forceFill($voidFill)->save();
 
         AuditLogger::log('document.voided', $document, ['status' => Document::STATUS_POSTED], [
             'status' => Document::STATUS_VOID,
