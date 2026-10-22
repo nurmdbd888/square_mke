@@ -3,13 +3,13 @@
 @section('title', __('Payments'))
 
 @section('content')
-    <div class="flex flex-wrap items-end justify-between gap-3">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('Payments') }}</h1>
         @if ($canManage || ($canCollect ?? false))
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('payments.create', ['kind' => 'receipt']) }}" class="btn-primary">{{ __('Add receipt') }}</a>
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+                <a href="{{ route('payments.create', ['kind' => 'receipt']) }}" class="btn-primary w-full sm:w-auto">{{ __('Add receipt') }}</a>
                 @if ($canManage)
-                    <a href="{{ route('payments.create', ['kind' => 'payment']) }}" class="btn-secondary">{{ __('Add payment') }}</a>
+                    <a href="{{ route('payments.create', ['kind' => 'payment']) }}" class="btn-secondary w-full sm:w-auto">{{ __('Add payment') }}</a>
                 @endif
             </div>
         @endif

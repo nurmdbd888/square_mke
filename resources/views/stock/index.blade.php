@@ -16,29 +16,29 @@
         ]) }})"
         data-testid="stock-page"
     >
-        <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
             <h1 class="text-2xl font-semibold text-slate-900">{{ __('Stock') }}</h1>
             @if ($canStockCheck ?? false)
-                <div class="flex flex-wrap items-center gap-2" data-testid="stock-check-actions">
+                <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center" data-testid="stock-check-actions">
                     <button
                         type="button"
-                        class="btn-secondary"
+                        class="btn-secondary w-full sm:w-auto"
                         data-testid="stock-check-start"
                         @click="start()"
                         :disabled="checking"
                     >{{ __('Stock Check') }}</button>
                     <template x-if="checking">
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                             <button
                                 type="button"
-                                class="btn-primary"
+                                class="btn-primary w-full sm:w-auto"
                                 data-testid="stock-check-confirm"
                                 @click="confirmStock()"
                                 :disabled="!canConfirm || submitting"
                             >{{ __('CONFIRM STOCK') }}</button>
                             <button
                                 type="button"
-                                class="btn-secondary"
+                                class="btn-secondary w-full sm:w-auto"
                                 data-testid="stock-check-cancel"
                                 @click="cancel()"
                                 :disabled="submitting"
