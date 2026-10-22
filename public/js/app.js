@@ -249,5 +249,87 @@
             },
         };
     };
+
+    /**
+     * Stock index: physical stock check (IN STORE Available / Not Available).
+     */
+    window.stockCheckPage = function (config) {
+        config = config || {};
+
+        return {
+            checking: !!config.checking,
+            exportCheckId: config.exportCheckId || null,
+            confirmUrl: config.confirmUrl,
+            exportBase: config.exportBase,
+            startUrl: config.startUrl,
+            cancelUrl: config.cancelUrl,
+            csrf: config.csrf,
+            productIds: config.productIds || [],
+            marks: {},
+            submitting: false,
+
+            get markedCount() {
+                return Object.keys(this.marks).length;
+            },
+
+            get canConfirm() {
+                return this.productIds.length > 0 && this.markedCount === this.productIds.length;
+            },
+
+            get exportUrl() {
+                return this.exportCheckId ? (this.exportBase + '/' + this.exportCheckId + '/export') : '#';
+            },
+
+            start: function () {
+                if (this.checking) {
+                    return;
+                }
+                window.location = this.startUrl;
+            },
+
+            cancel: function () {
+                window.location = this.cancelUrl;
+            },
+
+            setMark: function (productId, value) {
+                this.marks = Object.assign({}, this.marks, { [productId]: value });
+            },
+
+            confirmStock: function () {
+                if (!this.canConfirm || this.submitting) {
+                    return;
+                }
+                this.submitting = true;
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = this.confirmUrl;
+                form.style.display = 'none';
+
+                var token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '_token';
+                token.value = this.csrf;
+                form.appendChild(token);
+
+                var self = this;
+                this.productIds.forEach(function (id, index) {
+                    var pid = document.createElement('input');
+                    pid.type = 'hidden';
+                    pid.name = 'items[' + index + '][product_id]';
+                    pid.value = String(id);
+                    form.appendChild(pid);
+
+                    var store = document.createElement('input');
+                    store.type = 'hidden';
+                    store.name = 'items[' + index + '][in_store]';
+                    store.value = self.marks[id];
+                    form.appendChild(store);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            },
+        };
+    };
 })();
 

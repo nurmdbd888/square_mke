@@ -70,6 +70,9 @@ return [
         'claim' => [
             'status_changed' => 'Claim status changed',
         ],
+        'stock_check' => [
+            'confirmed' => 'Stock check confirmed',
+        ],
         'month_lock' => [
             '*' => 'All month lock actions',
             'locked' => 'Month locked',
@@ -102,6 +105,7 @@ return [
         'stock_note_line' => 'Stock note line',
         'claim' => 'Claim',
         'stock_comparison' => 'Stock comparison',
+        'stock_check' => 'Stock check',
         'month_lock' => 'Month lock',
         'import_mapping_profile' => 'Import mapping profile',
         'master_import_batch' => 'Master import batch',

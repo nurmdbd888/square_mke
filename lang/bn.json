@@ -986,5 +986,15 @@
     "Removed :count from the list.": "তালিকা থেকে :countটি সরানো হয়েছে।",
     "Voided :count documents.": ":countটি নথি বাতিল করা হয়েছে।",
     "Applied 0. Skipped :skipped.": "প্রয়োগ ০। বাদ :skipped।",
-    "No documents were changed.": "কোনো নথি পরিবর্তন হয়নি।"
+    "No documents were changed.": "কোনো নথি পরিবর্তন হয়নি।",
+    "Stock Check": "স্টক চেক",
+    "CONFIRM STOCK": "স্টক নিশ্চিত",
+    "CANCEL": "বাতিল",
+    "IN STORE": "দোকানে আছে",
+    "Available": "আছে",
+    "Not Available": "নেই",
+    "Export report": "রিপোর্ট এক্সপোর্ট",
+    "Mark each product Available or Not Available, then confirm to export the report.": "প্রতিটি পণ্যে Available বা Not Available চিহ্নিত করুন, তারপর রিপোর্ট এক্সপোর্ট করতে নিশ্চিত করুন।",
+    "marked": "চিহ্নিত",
+    "Stock check confirmed. You can export the report.": "স্টক চেক নিশ্চিত হয়েছে। আপনি রিপোর্ট এক্সপোর্ট করতে পারেন।"
 }

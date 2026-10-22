@@ -70,6 +70,9 @@ return [
         'claim' => [
             'status_changed' => 'দাবির অবস্থা পরিবর্তন',
         ],
+        'stock_check' => [
+            'confirmed' => 'স্টক চেক নিশ্চিত',
+        ],
         'month_lock' => [
             '*' => 'সব মাস লক কাজ',
             'locked' => 'মাস লক করা হয়েছে',
@@ -102,6 +105,7 @@ return [
         'stock_note_line' => 'স্টক নোট লাইন',
         'claim' => 'দাবি',
         'stock_comparison' => 'স্টক তুলনা',
+        'stock_check' => 'স্টক চেক',
         'month_lock' => 'মাস লক',
         'import_mapping_profile' => 'ইমপোর্ট ম্যাপিং প্রোফাইল',
         'master_import_batch' => 'মাস্টার ইমপোর্ট ব্যাচ',
