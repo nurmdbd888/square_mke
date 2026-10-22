@@ -41,7 +41,16 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          # Authenticated GitHub downloads avoid unauthenticated codeload 429s.
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        run: |
+          for attempt in 1 2 3; do
+            composer install --no-interaction --no-progress --prefer-dist && exit 0
+            echo "composer install failed (attempt $attempt); retrying in $((attempt * 20))s..."
+            sleep $((attempt * 20))
+          done
+          exit 1
 
       - name: Validate composer.json
         run: composer validate --no-check-publish
@@ -103,7 +112,15 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        run: |
+          for attempt in 1 2 3; do
+            composer install --no-interaction --no-progress --prefer-dist && exit 0
+            echo "composer install failed (attempt $attempt); retrying in $((attempt * 20))s..."
+            sleep $((attempt * 20))
+          done
+          exit 1
 
       - name: Tests
         run: php -d disable_functions=${{ env.DISABLED_FUNCTIONS }} vendor/bin/phpunit
