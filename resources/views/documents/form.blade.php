@@ -97,6 +97,10 @@
                 :label="$isPurchase ? __('Supplier') : __('Retailer')"
                 :parties="$parties"
                 :selected-id="$isPurchase ? $document->supplier_id : $document->retailer_id"
+                :create-url="$isPurchase
+                    ? (auth()->user()->can('masters.manage') ? route('masters.directory.store', 'suppliers') : null)
+                    : (auth()->user()->can('retailers.manage') ? route('retailers.store') : null)"
+                :create-label="$isPurchase ? __('Add supplier') : __('Add retailer')"
             />
             <label class="block">
                 <span class="label">{{ __('Date') }}</span>
