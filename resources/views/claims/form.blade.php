@@ -3,7 +3,7 @@
 @section('title', $claim->exists ? __('Edit claim') : __('Add claim'))
 
 @section('content')
-    <a href="{{ route('claims.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to claims') }}</a>
+    <x-back-link :href="route('claims.index')">{{ __('Back to claims') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $claim->exists ? __('Edit claim') : __('Add claim') }}</h1>
 
     <form method="POST" action="{{ $claim->exists ? route('claims.update', $claim) : route('claims.store') }}" class="mt-6 card grid max-w-2xl gap-4">

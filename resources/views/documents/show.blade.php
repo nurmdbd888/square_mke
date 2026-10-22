@@ -10,7 +10,7 @@
 @section('title', $document->number)
 
 @section('content')
-    <a href="{{ route($indexRoute) }}" class="text-sm text-brand-700 underline">{{ $document->isPurchase() ? __('Back to purchases') : __('Back to sales') }}</a>
+    <x-back-link :href="route($indexRoute)">{{ $document->isPurchase() ? __('Back to purchases') : __('Back to sales') }}</x-back-link>
 
     <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>

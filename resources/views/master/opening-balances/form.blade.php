@@ -3,7 +3,7 @@
 @section('title', $row->exists ? __('Edit opening balance') : __('Add opening balance'))
 
 @section('content')
-    <a href="{{ route('masters.opening-balances.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to opening balances') }}</a>
+    <x-back-link :href="route('masters.opening-balances.index')">{{ __('Back to opening balances') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $row->exists ? __('Edit opening balance') : __('Add opening balance') }}</h1>
     <p class="mt-1 text-sm text-slate-600">{{ __('Opening balances are stored for later. They are not posted to stock or the books yet.') }}</p>
 

@@ -3,7 +3,7 @@
 @section('title', __('Import preview'))
 
 @section('content')
-    <a href="{{ route('imports.invoices.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to invoice import') }}</a>
+    <x-back-link :href="route('imports.invoices.index')">{{ __('Back to invoice import') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold">{{ __('Import preview') }} #{{ $batch->id }}</h1>
     <p class="text-sm text-slate-600">{{ $batch->doc_type }} · {{ $batch->original_name }} · {{ $batch->line_count }} {{ __('lines') }} · {{ $batch->error_count }} {{ __('errors') }}</p>
 

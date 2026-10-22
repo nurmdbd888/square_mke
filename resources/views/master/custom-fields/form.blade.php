@@ -3,7 +3,7 @@
 @section('title', $field->exists ? __('Edit custom field') : __('Add custom field'))
 
 @section('content')
-    <a href="{{ route('masters.custom-fields.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to custom fields') }}</a>
+    <x-back-link :href="route('masters.custom-fields.index')">{{ __('Back to custom fields') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $field->exists ? __('Edit custom field') : __('Add custom field') }}</h1>
 
     <div class="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">

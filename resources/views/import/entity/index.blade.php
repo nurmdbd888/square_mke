@@ -6,7 +6,7 @@
     @php
         $listParams = $def['list_route_params'] ?? [];
     @endphp
-    <a href="{{ route($def['list_route'], ...$listParams) }}" class="text-sm text-brand-700 underline">{{ __('Back to list') }}</a>
+    <x-back-link :href="route($def['list_route'], ...$listParams)">{{ __('Back to list') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold">{{ __('Import :entity', ['entity' => __($def['title'])]) }}</h1>
     <p class="mt-1 text-sm text-slate-600">{{ __('Download the template, fill rows, then upload for preview. PDF is not supported for generic import (use stock comparison for stock PDFs).') }}</p>
 

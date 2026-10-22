@@ -3,7 +3,7 @@
 @section('title', $payment->number)
 
 @section('content')
-    <a href="{{ route('payments.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to payments') }}</a>
+    <x-back-link :href="route('payments.index')">{{ __('Back to payments') }}</x-back-link>
 
     <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>

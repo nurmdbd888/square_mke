@@ -27,7 +27,7 @@
 @section('title', $title)
 
 @section('content')
-    <a href="{{ route('returns.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to returns') }}</a>
+    <x-back-link :href="route('returns.index')">{{ __('Back to returns') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $title }}</h1>
 
     <form method="POST" action="{{ $note->exists ? route('returns.update', $note) : route('returns.store') }}" class="mt-6 space-y-6">

@@ -3,7 +3,7 @@
 @section('title', $note->number)
 
 @section('content')
-    <a href="{{ route('returns.index') }}" class="text-sm text-brand-700 underline">{{ __('Back to returns') }}</a>
+    <x-back-link :href="route('returns.index')">{{ __('Back to returns') }}</x-back-link>
     <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">{{ $note->number }}</h1>

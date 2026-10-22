@@ -11,10 +11,23 @@
 @section('content')
     <div class="flex flex-wrap items-end justify-between gap-3">
         <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
-        @if ($canManage)
-            <a href="{{ route('imports.invoices.index') }}" class="btn-secondary">{{ __('Import from Excel') }}</a>
-            <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
-        @endif
+        <div class="flex flex-wrap items-center gap-2">
+            @if ($canManage)
+                <a href="{{ route('imports.invoices.index') }}" class="btn-secondary">{{ __('Import from Excel') }}</a>
+                <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
+            @endif
+            @if ($canDelete)
+                <button
+                    type="button"
+                    class="btn-danger"
+                    data-testid="documents-bulk-delete"
+                    data-bulk-delete-form="documents-bulk-form"
+                    data-bulk-delete-action="void"
+                    data-confirm="{{ __('Void or delete the selected documents?') }}"
+                    data-empty="{{ __('Select at least one row to delete.') }}"
+                >{{ __('Delete') }}</button>
+            @endif
+        </div>
     </div>
 
     <form method="GET" action="{{ route($indexRoute) }}" class="mt-4 flex flex-wrap items-end gap-3"
