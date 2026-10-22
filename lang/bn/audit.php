@@ -42,6 +42,8 @@ return [
             'generate_key' => 'APP_KEY তৈরি',
             'migrate' => 'মাইগ্রেশন চালানো',
             'clear_caches' => 'ক্যাশ পরিষ্কার',
+            'backup' => 'ব্যাকআপ তৈরি',
+            'restore' => 'ব্যাকআপ পুনরুদ্ধার',
             'owner_created' => 'মালিকের অ্যাকাউন্ট তৈরি',
             'owner_recovered' => 'মালিকের পাসওয়ার্ড রিসেট (রিকভারি)',
         ],

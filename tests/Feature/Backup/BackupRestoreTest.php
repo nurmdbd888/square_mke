@@ -12,6 +12,21 @@ class BackupRestoreTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        $catalog = app(BackupCatalog::class);
+        $dir = $catalog->directory();
+        foreach (glob($dir.'/'.BackupCatalog::PREFIX.'*.zip') ?: [] as $file) {
+            @unlink($file);
+        }
+        $manifest = $dir.'/last-backup.json';
+        if (is_file($manifest)) {
+            @unlink($manifest);
+        }
+
+        parent::tearDown();
+    }
+
     public function test_backup_creates_zip_and_restore_roundtrip_sqlite(): void
     {
         if (config('database.connections.sqlite.database') === ':memory:') {

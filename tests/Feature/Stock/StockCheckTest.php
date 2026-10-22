@@ -146,7 +146,7 @@ class StockCheckTest extends TestCase
             ->get(route('stock.checks.index'))
             ->assertOk()
             ->assertSee('data-testid="stock-checks-table"', false)
-            ->assertSee($owner->name, false)
+            ->assertSee($owner->name) // escape=true: Blade outputs e.g. D&#039;Amore
             ->assertSee('data-testid="stock-check-export-'.$check->id.'"', false);
 
         $this->actingAs($owner)
