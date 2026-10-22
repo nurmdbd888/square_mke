@@ -117,4 +117,8 @@
     <x-bulk-action-bar :actions="$bulkActions" />
     </form>
 @endif
+{{-- HTMX swaps only this partial (no layout), so flush remote delete forms here too. --}}
+@if (request()->header('HX-Request') && ! request()->header('HX-Boosted'))
+    @stack('remote-forms')
+@endif
 {{ $documents->links() }}

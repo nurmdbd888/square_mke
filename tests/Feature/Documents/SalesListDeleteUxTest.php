@@ -138,6 +138,101 @@ class SalesListDeleteUxTest extends TestCase
             ->assertSee('method="post"', false);
     }
 
+    public function test_sales_index_bulk_form_does_not_contain_nested_delete_method(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-NEST-1',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_POSTED,
+            'posted_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+        Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-NEST-2',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-16',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+
+        $html = $this->actingAs($owner)->get(route('sales.index'))->assertOk()->getContent();
+
+        libxml_use_internal_errors(true);
+        $dom = new \DOMDocument;
+        $dom->loadHTML($html);
+        $bulk = $dom->getElementById('documents-bulk-form');
+        $this->assertNotNull($bulk, 'documents-bulk-form must exist');
+
+        $bulkHtml = $dom->saveHTML($bulk);
+        $this->assertStringNotContainsString('name="_method"', $bulkHtml, 'Row DELETE spoof must not sit inside the bulk form');
+        $this->assertStringNotContainsString('<form', substr($bulkHtml, 5), 'Bulk form must not nest another <form>');
+
+        $checkboxes = [];
+        foreach ($bulk->getElementsByTagName('input') as $input) {
+            if ($input->getAttribute('name') === 'ids[]') {
+                $checkboxes[] = $input->getAttribute('value');
+            }
+        }
+        $this->assertCount(2, $checkboxes, 'Both row checkboxes must remain inside the bulk form');
+
+        // Remote destroy forms are stacked outside the bulk form (one per row).
+        $this->assertSame(2, substr_count($html, 'name="_method"'));
+    }
+
+    public function test_bulk_delete_two_selected_sales_voids_and_removes(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+        $posted = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-TWO-POST',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-17',
+            'status' => Document::STATUS_POSTED,
+            'posted_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+        $voided = Document::query()->create([
+            'type' => Document::TYPE_SALE,
+            'number' => 'S-TWO-VOID',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-16',
+            'status' => Document::STATUS_VOID,
+            'voided_at' => now(),
+            'subtotal' => '10',
+            'net_total' => '10',
+        ]);
+
+        $this->actingAs($owner)
+            ->post('/sales/bulk', [
+                'action' => 'void',
+                'ids' => [$posted->id, $voided->id],
+            ])
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHas('status', __('Voided :voided. Removed :removed.', [
+                'voided' => 1,
+                'removed' => 1,
+            ]));
+
+        $this->assertSame(Document::STATUS_VOID, $posted->fresh()->status);
+        $this->assertSoftDeleted('documents', ['id' => $voided->id]);
+
+        // Individual destroy still works on the remaining voided sale.
+        $this->actingAs($owner)
+            ->delete(route('sales.destroy', $posted->fresh()))
+            ->assertRedirect(route('sales.index'));
+        $this->assertSoftDeleted('documents', ['id' => $posted->id]);
+    }
+
     public function test_sales_show_rejects_non_numeric_document_segment(): void
     {
         $owner = $this->owner();

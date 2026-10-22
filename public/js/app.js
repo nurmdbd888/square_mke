@@ -32,9 +32,17 @@
         }
     });
 
-    // <form data-confirm="Are you sure?"> asks before submitting.
+    // <form data-confirm="…"> or submitter data-confirm asks before submitting.
     document.addEventListener('submit', function (event) {
+        // Header bulk Delete already confirmed in its click handler.
+        if (event.submitter && event.submitter.getAttribute('data-bulk-delete-form')) {
+            return;
+        }
+
         var message = event.target.getAttribute('data-confirm');
+        if (!message && event.submitter) {
+            message = event.submitter.getAttribute('data-confirm');
+        }
 
         if (message && !window.confirm(message)) {
             event.preventDefault();
