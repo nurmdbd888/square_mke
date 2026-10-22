@@ -69,6 +69,8 @@
         <input type="hidden" name="kind" value="{{ old('kind', $payment->kind) }}">
 
         @if ($isReceipt)
+            <x-ocr-scan-panel mode="receipt" />
+
             <section class="card space-y-3">
                 <h2 class="font-semibold text-slate-900">{{ __('Payment slip photos') }}</h2>
                 <p class="text-sm text-slate-600">{{ __('Take a photo or choose from gallery. Up to 5 images.') }}</p>

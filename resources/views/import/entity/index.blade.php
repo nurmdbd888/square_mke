@@ -8,7 +8,7 @@
     @endphp
     <x-back-link :href="route($def['list_route'], ...$listParams)">{{ __('Back to list') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold">{{ __('Import :entity', ['entity' => __($def['title'])]) }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('Download the template, fill rows, then upload for preview. PDF is not supported for generic import (use stock comparison for stock PDFs).') }}</p>
+    <p class="mt-1 text-sm text-slate-600">{{ __('Download the template, fill rows, then upload for a dry-run preview. Nothing is saved until you confirm. PDF is not supported for generic import (use stock comparison for stock PDFs).') }}</p>
 
     <div class="mt-4 flex flex-wrap gap-2">
         <a href="{{ route('imports.entity.template', [$entity, 'format' => 'csv']) }}" class="btn-secondary">{{ __('Download CSV template') }}</a>
@@ -29,7 +29,7 @@
                 </select>
             </label>
         @endif
-        <button class="btn-primary">{{ __('Upload for preview') }}</button>
+        <button class="btn-primary" data-testid="import-upload-dry-run">{{ __('Upload dry-run preview') }}</button>
     </form>
 
     <form method="POST" action="{{ route('imports.entity.profiles.store', $entity) }}" class="mt-6 card max-w-xl space-y-3">

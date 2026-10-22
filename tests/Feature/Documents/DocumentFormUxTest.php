@@ -23,7 +23,9 @@ class DocumentFormUxTest extends TestCase
                 ->assertSee('data-testid="invoice-total-footer"', false)
                 ->assertSee('invoiceTotal', false)
                 ->assertSee('linesSubtotal', false)
-                ->assertSee(__('Total payable'), false);
+                ->assertSee(__('Total payable'), false)
+                ->assertSee('data-testid="ocr-scan-panel"', false)
+                ->assertSee('data-ocr-mode="invoice"', false);
         }
     }
 

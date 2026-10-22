@@ -9,6 +9,13 @@
 
     <x-flash />
 
+    @if ($batch->status === \App\Models\DocumentImportBatch::STATUS_PREVIEW)
+        <div class="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900" data-testid="invoice-import-dry-run-banner">
+            <p class="font-semibold">{{ __('Dry-run preview') }}</p>
+            <p class="mt-1">{{ __('No invoices are posted until you confirm. Fix every red error (or rematch products) first.') }}</p>
+        </div>
+    @endif
+
     @if (($batch->header_warnings ?? []) !== [])
         <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <ul class="list-disc pl-5">

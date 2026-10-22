@@ -97,6 +97,36 @@ CSV;
         $this->assertSame('7287', SalesRep::query()->find(Retailer::query()->where('code', 'NEW1')->value('sales_rep_id'))?->code);
     }
 
+    public function test_preview_marks_missing_required_fields_as_errors(): void
+    {
+        $owner = $this->owner();
+        $csv = "Product code,Product name\n,Missing Code Row\nOK01,Ok Product\n";
+        $file = UploadedFile::fake()->createWithContent('bad-products.csv', $csv);
+        $batch = app(EntityImportService::class)->preview('products', $file, $owner)['batch'];
+
+        $this->assertGreaterThan(0, $batch->error_count);
+        $errorRow = $batch->rows()->where('status', 'error')->first();
+        $this->assertNotNull($errorRow);
+        $this->assertNotEmpty($errorRow->errors);
+
+        $this->actingAs($owner)
+            ->get(route('imports.entity.show', ['products', $batch]))
+            ->assertOk()
+            ->assertSee('data-testid="import-dry-run-banner"', false)
+            ->assertSee('data-testid="import-error-banner"', false)
+            ->assertSee('data-testid="import-preview-table"', false)
+            ->assertDontSee(json_encode($errorRow->parsed, JSON_UNESCAPED_UNICODE), false);
+
+        $this->actingAs($owner)
+            ->from(route('imports.entity.show', ['products', $batch]))
+            ->post(route('imports.entity.confirm', ['products', $batch]), ['duplicate_mode' => 'update'])
+            ->assertRedirect()
+            ->assertSessionHasErrors('import');
+
+        $this->assertSame(EntityImportBatch::STATUS_PREVIEW, $batch->fresh()->status);
+        $this->assertNull(Product::query()->where('code', 'OK01')->value('code'));
+    }
+
     public function test_retailers_confirm_via_http_does_not_error_on_xlsx_style_amounts(): void
     {
         SalesRep::query()->create(['code' => '7287', 'name' => 'Field Rep']);
