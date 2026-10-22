@@ -56,9 +56,11 @@ class DateInputFormatTest extends TestCase
         $this->assertStringContainsString('appDateInput', $html);
         $this->assertStringNotContainsString('type="date" name="doc_date"', $html);
         // Calendar hit target must keep a real layout box (not h-0/w-0); Chromium
-        // rejects showPicker()/click on a zero-size date input.
+        // rejects showPicker()/click on a zero-size date input. Width is inline so
+        // it cannot be dropped by Tailwind's content scan / purge.
         $this->assertStringContainsString('data-testid="date-picker-hit"', $html);
-        $this->assertStringContainsString('h-full w-full cursor-pointer opacity-0', $html);
+        $this->assertStringContainsString('width: 2.75rem', $html);
+        $this->assertStringContainsString('min-width: 2.75rem', $html);
         $this->assertStringNotContainsString('h-0 w-0 opacity-0', $html);
     }
 

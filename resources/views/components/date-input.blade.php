@@ -54,11 +54,13 @@
         :class="invalid ? 'border-red-500 ring-2 ring-red-200' : ''"
         :aria-invalid="invalid ? 'true' : 'false'"
     >
-    <div class="absolute inset-y-0 right-0 w-10" data-testid="date-picker-hit">
+    {{-- Fixed width (not a purged utility): Chromium needs a real layout box for the picker. --}}
+    <div class="absolute inset-y-0 right-0" style="width: 2.75rem" data-testid="date-picker-hit">
         <input
             type="date"
             x-ref="picker"
-            class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+            class="absolute inset-0 z-10 cursor-pointer opacity-0"
+            style="width: 100%; height: 100%; min-width: 2.75rem; min-height: 2.25rem"
             tabindex="-1"
             :value="iso"
             @change="fromPicker($event)"
