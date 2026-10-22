@@ -169,9 +169,12 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
         Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
         Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
-        // Bulk must be registered before /{document} and document ids are numeric only —
-        // otherwise GET /purchases/bulk is captured as show(document: "bulk") → 404.
-        Route::match(['get', 'post'], '/purchases/bulk', [DocumentController::class, 'bulk'])
+        // Bulk before /{document}; whereNumber so "bulk" never binds as a document id.
+        // Separate GET (redirect) + POST (action) so a stale POST-only route cache cannot 405 GETs.
+        Route::get('/purchases/bulk', [DocumentController::class, 'bulkRedirect'])
+            ->defaults('type', 'purchase')
+            ->name('purchases.bulk.redirect');
+        Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])
             ->defaults('type', 'purchase')
             ->name('purchases.bulk');
         Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->whereNumber('document')->name('purchases.show');
@@ -185,7 +188,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/sales/create', [DocumentController::class, 'create'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.create');
         Route::post('/sales', [DocumentController::class, 'store'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.store');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
-        Route::match(['get', 'post'], '/sales/bulk', [DocumentController::class, 'bulk'])
+        Route::get('/sales/bulk', [DocumentController::class, 'bulkRedirect'])
+            ->defaults('type', 'sale')
+            ->name('sales.bulk.redirect');
+        Route::post('/sales/bulk', [DocumentController::class, 'bulk'])
             ->defaults('type', 'sale')
             ->name('sales.bulk');
         Route::get('/sales/{document}', [DocumentController::class, 'show'])->middleware('can:sales.view')->whereNumber('document')->name('sales.show');

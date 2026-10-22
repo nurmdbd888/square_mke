@@ -17,8 +17,12 @@
                 <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
             @endif
             @if ($canDelete)
+                {{-- type=submit + form= associates with the table form so Delete POSTs with CSRF even if JS is delayed --}}
                 <button
-                    type="button"
+                    type="submit"
+                    form="documents-bulk-form"
+                    name="action"
+                    value="void"
                     class="btn-danger"
                     data-testid="documents-bulk-delete"
                     data-bulk-delete-form="documents-bulk-form"

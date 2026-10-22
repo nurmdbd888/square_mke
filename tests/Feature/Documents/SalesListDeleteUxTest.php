@@ -67,7 +67,7 @@ class SalesListDeleteUxTest extends TestCase
             ->assertSee('data-testid="documents-bulk-delete"', false);
     }
 
-    public function test_get_sales_bulk_redirects_to_index_not_404(): void
+    public function test_get_sales_bulk_redirects_to_index_not_404_or_405(): void
     {
         $owner = $this->owner();
 
@@ -81,7 +81,7 @@ class SalesListDeleteUxTest extends TestCase
             ->assertRedirect(route('purchases.index'));
     }
 
-    public function test_post_sales_bulk_void_path_succeeds_not_404(): void
+    public function test_post_sales_bulk_void_path_succeeds_not_405(): void
     {
         $owner = $this->owner();
         $retailer = Retailer::query()->create(['name' => 'Shop']);
@@ -96,16 +96,46 @@ class SalesListDeleteUxTest extends TestCase
             'net_total' => '10',
         ]);
 
-        $this->actingAs($owner)
+        $response = $this->actingAs($owner)
             ->post('/sales/bulk', [
                 'action' => 'void',
                 'ids' => [$document->id],
-            ])
-            ->assertRedirect(route('sales.index'))
+            ]);
+
+        $this->assertNotSame(405, $response->status());
+        $response->assertRedirect(route('sales.index'))
             ->assertSessionHas('status')
             ->assertSessionMissing('errors');
 
         $this->assertSoftDeleted('documents', ['id' => $document->id]);
+    }
+
+    public function test_disallowed_method_on_sales_bulk_redirects_instead_of_405_page(): void
+    {
+        $owner = $this->owner();
+
+        // PUT is not registered — without the exception render this is Symfony's 405 Oops page.
+        $this->actingAs($owner)
+            ->call('PUT', '/sales/bulk')
+            ->assertRedirect(route('sales.index'))
+            ->assertSessionHasErrors('bulk');
+
+        $this->actingAs($owner)
+            ->call('PUT', '/purchases/bulk')
+            ->assertRedirect(route('purchases.index'));
+    }
+
+    public function test_sales_index_delete_button_is_native_form_submit(): void
+    {
+        $owner = $this->owner();
+
+        $this->actingAs($owner)->get(route('sales.index'))
+            ->assertOk()
+            ->assertSee('type="submit"', false)
+            ->assertSee('form="documents-bulk-form"', false)
+            ->assertSee('name="action"', false)
+            ->assertSee('value="void"', false)
+            ->assertSee('method="post"', false);
     }
 
     public function test_sales_show_rejects_non_numeric_document_segment(): void

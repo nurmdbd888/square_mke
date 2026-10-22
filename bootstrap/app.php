@@ -13,6 +13,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -43,6 +44,29 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Stale route:cache with POST-only /sales/bulk yields Symfony "405 Method Not Allowed".
+        // Send the user back to the list instead of the Oops page.
+        $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) {
+            if (! preg_match('#^(sales|purchases)/bulk/?$#', $request->path())) {
+                return null;
+            }
+
+            $index = str_starts_with($request->path(), 'purchases')
+                ? 'purchases.index'
+                : 'sales.index';
+
+            if ($request->isMethodSafe()) {
+                return redirect()->route($index)->with(
+                    'status',
+                    __('Select rows on the list, then use Delete or Apply.')
+                );
+            }
+
+            return redirect()->route($index)->withErrors([
+                'bulk' => __('Bulk action could not run. On Maintenance, press Clear caches, then try Delete again.'),
+            ]);
+        });
     })->create();
 
 $shared = SharedPath::resolve(
