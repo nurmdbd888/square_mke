@@ -9,12 +9,12 @@
 @section('title', $title)
 
 @section('content')
-    <div class="flex flex-wrap items-end justify-between gap-3">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             @if ($canManage)
-                <a href="{{ route('imports.invoices.index') }}" class="btn-secondary">{{ __('Import from Excel') }}</a>
-                <a href="{{ route($createRoute) }}" class="btn-primary">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
+                <a href="{{ route('imports.invoices.index') }}" class="btn-secondary w-full sm:w-auto">{{ __('Import from Excel') }}</a>
+                <a href="{{ route($createRoute) }}" class="btn-primary w-full sm:w-auto">{{ $type === 'purchase' ? __('Add purchase') : __('Add sale') }}</a>
             @endif
             @if ($canDelete)
                 {{-- Associated with #documents-bulk-form (checkboxes + CSRF live in the table partial). --}}
@@ -23,7 +23,7 @@
                     form="documents-bulk-form"
                     name="action"
                     value="void"
-                    class="btn-danger"
+                    class="btn-danger w-full sm:w-auto"
                     data-testid="documents-bulk-delete"
                     data-bulk-delete-form="documents-bulk-form"
                     data-bulk-delete-action="void"
