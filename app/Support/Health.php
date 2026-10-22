@@ -6,6 +6,7 @@ use App\Domain\Backup\BackupCatalog;
 use App\Models\SmokeHeartbeat;
 use App\Support\Maintenance\DatabaseProbe;
 use App\Support\Maintenance\MigrationStatus;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -56,7 +57,7 @@ class Health
             $stale = true;
             if ($at !== null && $at !== '') {
                 try {
-                    $ageHours = (int) max(0, now()->diffInHours(\Illuminate\Support\Carbon::parse($at), absolute: true));
+                    $ageHours = (int) max(0, now()->diffInHours(Carbon::parse($at), absolute: true));
                     $stale = $ageHours >= $staleAfterHours;
                 } catch (Throwable) {
                     $stale = true;
