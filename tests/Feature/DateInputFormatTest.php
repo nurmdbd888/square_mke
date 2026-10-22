@@ -55,10 +55,11 @@ class DateInputFormatTest extends TestCase
         $this->assertSame(1, substr_count($html, 'name="doc_date"'));
         $this->assertStringContainsString('appDateInput', $html);
         $this->assertStringNotContainsString('type="date" name="doc_date"', $html);
-        // Full calendar chrome is a real <button>; the type=date sibling keeps a
-        // non-zero layout box for showPicker() (inline width so purge cannot drop it).
+        // Full calendar chrome is one role=button hit target; the type=date sibling
+        // keeps a non-zero layout box for showPicker() (inline width so purge cannot drop it).
         $this->assertStringContainsString('data-testid="date-picker-hit"', $html);
-        $this->assertStringContainsString('data-testid="date-picker-button"', $html);
+        $this->assertStringContainsString('role="button"', $html);
+        $this->assertStringContainsString('data-testid="date-picker-native"', $html);
         $this->assertStringContainsString('openPicker()', $html);
         $this->assertStringContainsString('width: 2.75rem', $html);
         $this->assertStringContainsString('min-width: 2.75rem', $html);

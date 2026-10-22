@@ -215,7 +215,7 @@
 
             /**
              * Keep the native control in sync before opening the UI.
-             * The calendar chrome is a real <button> (full hit target). The
+             * The calendar chrome is a full-size role=button hit target. The
              * type=date input stays sized (not h-0/w-0) so showPicker() is
              * allowed, but has pointer-events:none — Chromium only activates a
              * tiny glyph inside opacity-0 date overlays, which felt broken.
