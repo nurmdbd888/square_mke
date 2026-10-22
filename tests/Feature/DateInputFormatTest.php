@@ -55,6 +55,25 @@ class DateInputFormatTest extends TestCase
         $this->assertSame(1, substr_count($html, 'name="doc_date"'));
         $this->assertStringContainsString('appDateInput', $html);
         $this->assertStringNotContainsString('type="date" name="doc_date"', $html);
+        // Calendar hit target must keep a real layout box (not h-0/w-0); Chromium
+        // rejects showPicker()/click on a zero-size date input.
+        $this->assertStringContainsString('data-testid="date-picker-hit"', $html);
+        $this->assertStringContainsString('h-full w-full cursor-pointer opacity-0', $html);
+        $this->assertStringNotContainsString('h-0 w-0 opacity-0', $html);
+    }
+
+    public function test_app_js_loads_before_alpine_so_date_factory_exists(): void
+    {
+        $html = $this->actingAs($this->owner())
+            ->get(route('purchases.create'))
+            ->assertOk()
+            ->getContent();
+
+        $appPos = strpos($html, 'js/app.js');
+        $alpinePos = strpos($html, 'js/alpine.min.js');
+        $this->assertNotFalse($appPos);
+        $this->assertNotFalse($alpinePos);
+        $this->assertLessThan($alpinePos, $appPos);
     }
 
     public function test_receipt_form_uses_app_date_format(): void
