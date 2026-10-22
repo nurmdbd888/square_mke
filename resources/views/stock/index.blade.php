@@ -20,6 +20,11 @@
             <h1 class="text-2xl font-semibold text-slate-900">{{ __('Stock') }}</h1>
             @if ($canStockCheck ?? false)
                 <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center" data-testid="stock-check-actions">
+                    <a
+                        href="{{ route('stock.checks.index') }}"
+                        class="btn-secondary w-full sm:w-auto text-center"
+                        data-testid="stock-check-history"
+                    >{{ __('Past checks') }}</a>
                     <button
                         type="button"
                         class="btn-secondary w-full sm:w-auto"

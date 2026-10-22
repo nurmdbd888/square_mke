@@ -10,10 +10,44 @@ use App\Support\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StockCheckController extends Controller
 {
+    public function index(): View
+    {
+        $recent = StockCheck::query()
+            ->with('creator')
+            ->withCount([
+                'lines',
+                'lines as available_count' => fn ($q) => $q->where('in_store', StockCheckLine::IN_STORE_AVAILABLE),
+                'lines as not_available_count' => fn ($q) => $q->where('in_store', StockCheckLine::IN_STORE_NOT_AVAILABLE),
+            ])
+            ->orderByDesc('confirmed_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        return view('stock.checks.index', [
+            'recent' => $recent,
+        ]);
+    }
+
+    public function show(StockCheck $stockCheck): View
+    {
+        $stockCheck->load(['creator', 'lines.product']);
+
+        $available = $stockCheck->lines->where('in_store', StockCheckLine::IN_STORE_AVAILABLE)->count();
+        $notAvailable = $stockCheck->lines->where('in_store', StockCheckLine::IN_STORE_NOT_AVAILABLE)->count();
+
+        return view('stock.checks.show', [
+            'check' => $stockCheck,
+            'availableCount' => $available,
+            'notAvailableCount' => $notAvailable,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([

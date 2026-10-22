@@ -42,6 +42,8 @@ class AuthDashboardHardeningTest extends TestCase
 
         $this->actingAs($collector)
             ->get(route('collector.index'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('data-testid="collector-daily-summary"', false)
+            ->assertSee('data-testid="collector-filters"', false);
     }
 }

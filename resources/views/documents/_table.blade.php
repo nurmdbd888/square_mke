@@ -52,11 +52,10 @@
                             'bg-emerald-50 text-emerald-800' => $document->isPosted(),
                             'bg-slate-100 text-slate-600' => $document->isVoid(),
                         ])>{{ __(ucfirst($document->status)) }}</span>
-                        @if ($isSale && $document->isPosted() && $document->doc_date->lt(now()->subDays(30)))
+                        @if ($isSale && $document->isPosted())
                             @php
                                 try {
-                                    $rem = $collection->remainingAmount($document);
-                                    $isOverdue = $rem->isPositive();
+                                    $isOverdue = $collection->isOverdue($document);
                                 } catch (\Throwable) {
                                     $isOverdue = false;
                                 }

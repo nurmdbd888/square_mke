@@ -68,6 +68,30 @@ class UxPaymentsCollectionTest extends TestCase
         $this->assertSame(Document::COLLECTION_COMPLETED, $invoice->fresh()->collection_status);
     }
 
+    public function test_collections_page_shows_summary_overdue_and_collect_deep_link(): void
+    {
+        $invoice = $this->postedSale(); // doc_date 2026-10-01
+        $this->travelTo(now()->parse('2026-11-05')); // > 30 days past invoice date
+
+        $collector = $this->userWithRole('collector');
+
+        $html = $this->actingAs($collector)
+            ->get(route('collector.index'))
+            ->assertOk()
+            ->assertSee('data-testid="collector-daily-summary"', false)
+            ->assertSee('data-testid="collector-filters"', false)
+            ->assertSee(__('Overdue'), false)
+            ->assertSee('document_id='.$invoice->id, false)
+            ->getContent();
+
+        $this->assertStringContainsString('collector-overdue-badge', $html);
+
+        $this->actingAs($collector)
+            ->get(route('collector.index', ['overdue' => 1, 'status' => 'due']))
+            ->assertOk()
+            ->assertSee($invoice->number, false);
+    }
+
     public function test_open_invoices_htmx_with_retailer_id(): void
     {
         $invoice = $this->postedSale();
