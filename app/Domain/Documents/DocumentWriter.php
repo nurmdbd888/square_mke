@@ -86,11 +86,17 @@ final class DocumentWriter
                 $lines[$i]['header_discount_share'] = $shares[$i];
             }
 
+            // Square Toiletries invoice math (e.g. RUP-261000510):
+            //   Net Invoice Amount = subtotal − loading_adjustment − combo_discount (− header_discount)
+            //   Total Payable (net_total) = Net Invoice Amount + tds_amount (+ rounding_adjustment)
+            // DB maps: slab_adjustment = Loading Adjustment, combo_bonus_discount = Combo Discount.
             $headerDiscount = Exact::of($header['header_discount'] ?? 0);
-            $slab = Exact::of($header['slab_adjustment'] ?? 0);
+            $loading = Exact::of($header['slab_adjustment'] ?? 0);
             $combo = Exact::of($header['combo_bonus_discount'] ?? 0);
+            $tds = Exact::of($header['tds_amount'] ?? 0);
             $rounding = Exact::of($header['rounding_adjustment'] ?? 0);
-            $net = $subtotal->minus($headerDiscount)->minus($slab)->minus($combo)->plus($rounding);
+            $netInvoice = $subtotal->minus($headerDiscount)->minus($loading)->minus($combo);
+            $net = $netInvoice->plus($tds)->plus($rounding);
 
             $document->fill([
                 'type' => $type,
@@ -103,8 +109,9 @@ final class DocumentWriter
                 'route_id' => $header['route_id'] ?? null,
                 'vehicle_id' => $header['vehicle_id'] ?? null,
                 'header_discount' => Exact::money($headerDiscount),
-                'slab_adjustment' => Exact::money($slab),
+                'slab_adjustment' => Exact::money($loading),
                 'combo_bonus_discount' => Exact::money($combo),
+                'tds_amount' => Exact::money($tds),
                 'rounding_adjustment' => Exact::money($rounding),
                 'subtotal' => Exact::money($subtotal),
                 'net_total' => Exact::money($net),

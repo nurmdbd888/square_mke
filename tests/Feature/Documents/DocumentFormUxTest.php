@@ -23,7 +23,7 @@ class DocumentFormUxTest extends TestCase
                 ->assertSee('data-testid="invoice-total-footer"', false)
                 ->assertSee('invoiceTotal', false)
                 ->assertSee('linesSubtotal', false)
-                ->assertSee(__('Invoice total'), false);
+                ->assertSee(__('Total payable'), false);
         }
     }
 

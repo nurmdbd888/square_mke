@@ -153,9 +153,28 @@
         </div>
     @endif
 
-    <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+    @php
+        $showLoading = (float) $document->slab_adjustment != 0.0;
+        $showCombo = (float) $document->combo_bonus_discount != 0.0;
+        $showTds = (float) ($document->tds_amount ?? 0) != 0.0;
+        $netInvoice = (float) $document->subtotal
+            - (float) $document->header_discount
+            - (float) $document->slab_adjustment
+            - (float) $document->combo_bonus_discount;
+    @endphp
+    <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2" data-testid="invoice-adjustment-summary">
         <div><dt class="text-slate-500">{{ __('Subtotal') }}</dt><dd class="font-mono">{{ format_money($document->subtotal) }}</dd></div>
-        <div><dt class="text-slate-500">{{ __('Net total') }}</dt><dd class="font-mono font-semibold">{{ format_money($document->net_total) }}</dd></div>
+        @if ($showLoading)
+            <div><dt class="text-slate-500">{{ __('Loading Adjustment') }}</dt><dd class="font-mono">−{{ format_money($document->slab_adjustment) }}</dd></div>
+        @endif
+        @if ($showCombo)
+            <div><dt class="text-slate-500">{{ __('Combo Discount') }}</dt><dd class="font-mono">−{{ format_money($document->combo_bonus_discount) }}</dd></div>
+        @endif
+        @if ($showTds)
+            <div><dt class="text-slate-500">{{ __('Total TDS Amount') }}</dt><dd class="font-mono">+{{ format_money($document->tds_amount) }}</dd></div>
+        @endif
+        <div><dt class="text-slate-500">{{ __('Net invoice amount') }}</dt><dd class="font-mono">{{ format_money($netInvoice) }}</dd></div>
+        <div><dt class="text-slate-500">{{ __('Total payable') }}</dt><dd class="font-mono font-semibold">{{ format_money($document->net_total) }}</dd></div>
         @if ($document->notes)
             <div class="sm:col-span-2"><dt class="text-slate-500">{{ __('Notes') }}</dt><dd>{{ $document->notes }}</dd></div>
         @endif
