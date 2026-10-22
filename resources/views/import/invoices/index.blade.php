@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="text-2xl font-semibold text-slate-900">{{ __('Invoice import') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('Upload Square purchase challans or sales invoice reports (.xlsx, .xls, .csv).') }}</p>
+    <p class="mt-1 text-sm text-slate-600">{{ __('Upload Square purchase challans or sales invoice reports (.xlsx, .xls, .csv). First pass is a dry-run preview — nothing posts until you confirm, and confirm stays blocked while row errors remain.') }}</p>
 
     <x-flash />
 

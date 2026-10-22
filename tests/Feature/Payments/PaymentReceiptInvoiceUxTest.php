@@ -39,7 +39,9 @@ class PaymentReceiptInvoiceUxTest extends TestCase
             ->assertOk()
             ->assertSee('data-testid="payment-number"', false)
             ->assertSee(__('Receipt number'), false)
-            ->assertSee(__('Your receipt or collection voucher number — not the sales invoice number.'), false);
+            ->assertSee(__('Your receipt or collection voucher number — not the sales invoice number.'), false)
+            ->assertSee('data-testid="ocr-scan-panel"', false)
+            ->assertSee('data-ocr-mode="receipt"', false);
     }
 
     public function test_open_invoices_fragment_includes_picker_for_retailer(): void

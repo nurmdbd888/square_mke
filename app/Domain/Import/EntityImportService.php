@@ -115,6 +115,13 @@ final class EntityImportService
         if (! in_array($duplicateMode, [EntityImportBatch::MODE_UPDATE, EntityImportBatch::MODE_SKIP], true)) {
             throw ValidationException::withMessages(['duplicate_mode' => __('Choose update or skip for duplicates.')]);
         }
+        if ((int) $batch->error_count > 0) {
+            throw ValidationException::withMessages([
+                'import' => __('Fix or remove :count error rows, then upload again. Nothing is imported while errors remain.', [
+                    'count' => (string) $batch->error_count,
+                ]),
+            ]);
+        }
 
         $def = EntityImportRegistry::get($batch->entity);
 
