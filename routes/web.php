@@ -268,7 +268,11 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/accounts/closings', [BookController::class, 'close'])->middleware('can:accounts.manage')->name('accounts.closings.store');
 
         Route::middleware('can:reports.view')->group(function () {
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
             Route::get('/reports/pl', [ReportController::class, 'profitAndLoss'])->name('reports.pl');
+            Route::get('/reports/party-ledger', [ReportController::class, 'partyLedger'])->name('reports.party-ledger');
+            Route::get('/reports/brand-sales', [ReportController::class, 'brandSales'])->name('reports.brand-sales');
+            Route::get('/reports/invoice-adjustments', [ReportController::class, 'invoiceAdjustments'])->name('reports.invoice-adjustments');
             Route::get('/reports/month-locks', [MonthLockController::class, 'index'])->name('reports.month-locks');
         });
         Route::post('/reports/month-locks', [MonthLockController::class, 'store'])->middleware('can:reports.manage')->name('reports.month-locks.store');

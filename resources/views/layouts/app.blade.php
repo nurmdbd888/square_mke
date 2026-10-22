@@ -18,7 +18,7 @@
         ['route' => 'accounts.bank-book', 'label' => __('Bank book'), 'active' => 'accounts.bank-book', 'can' => 'accounts.view'],
         ['route' => 'accounts.day-book', 'label' => __('Day book'), 'active' => 'accounts.day-book', 'can' => 'accounts.view'],
         ['route' => 'accounts.closings', 'label' => __('Daily closing'), 'active' => 'accounts.closings', 'can' => 'accounts.view'],
-        ['route' => 'reports.pl', 'label' => __('Reports'), 'active' => 'reports.*', 'can' => 'reports.view'],
+        ['route' => 'reports.index', 'label' => __('Reports'), 'active' => 'reports.*', 'can' => 'reports.view'],
         ['route' => 'exports.downloads', 'label' => __('Downloads'), 'active' => 'exports.*', 'can' => 'exports.view'],
         ['route' => 'masters.index', 'label' => __('Masters'), 'active' => 'masters.*', 'can' => 'masters.view'],
         ['route' => 'users.index', 'label' => __('Users'), 'active' => 'users.*', 'can' => 'users.view'],

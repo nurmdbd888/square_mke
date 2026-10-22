@@ -4,7 +4,10 @@
 
 @section('content')
     <div class="flex flex-wrap items-end justify-between gap-3">
-        <h1 class="text-2xl font-semibold text-slate-900">{{ __('Profit and loss') }}</h1>
+        <div>
+            <x-back-link :href="route('reports.index')">{{ __('Back to reports') }}</x-back-link>
+            <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ __('Profit and loss') }}</h1>
+        </div>
         <div class="flex flex-wrap items-center gap-2">
             @include('export.partials.actions', ['exportKey' => 'reports_pl'])
             <a href="{{ route('reports.month-locks') }}" class="btn-secondary">{{ __('Month locks') }}</a>
