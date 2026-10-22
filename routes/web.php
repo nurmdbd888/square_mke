@@ -35,6 +35,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Sales\SalesDraftSyncController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Stock\ClaimController;
+use App\Http\Controllers\Stock\StockCheckController;
 use App\Http\Controllers\Stock\StockComparisonController;
 use App\Http\Controllers\Stock\StockNoteController;
 use App\Http\Controllers\TwoFactorController;
@@ -195,9 +196,11 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
             Route::get('/stock/comparison', [StockComparisonController::class, 'index'])->middleware('can:stock.compare')->name('stock.comparison.index');
             Route::get('/stock/comparison/{comparison}', [StockComparisonController::class, 'show'])->middleware('can:stock.compare')->name('stock.comparison.show');
+            Route::get('/stock/checks/{stockCheck}/export', [StockCheckController::class, 'export'])->middleware('can:stock.compare')->name('stock.checks.export');
             Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
         });
         Route::post('/stock/comparison', [StockComparisonController::class, 'store'])->middleware('can:stock.compare')->name('stock.comparison.store');
+        Route::post('/stock/checks', [StockCheckController::class, 'store'])->middleware('can:stock.compare')->name('stock.checks.store');
 
         Route::get('/returns', [StockNoteController::class, 'index'])->middleware('can:returns.view')->name('returns.index');
         Route::get('/returns/create', [StockNoteController::class, 'create'])->middleware('can:returns.manage')->name('returns.create');

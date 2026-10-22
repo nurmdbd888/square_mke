@@ -17,16 +17,24 @@ class StockController extends Controller
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
+            'checking' => ['nullable', 'boolean'],
+            'export_check' => ['nullable', 'integer', 'exists:stock_checks,id'],
         ]);
 
-        $products = Product::query()
+        $canStockCheck = $request->user()->can('stock.compare');
+        $checking = $canStockCheck && ($request->boolean('checking') || $request->boolean('stock_check'));
+
+        $query = Product::query()
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $like = '%'.addcslashes($term, '\\%_').'%';
                 $q->where(fn ($w) => $w->where('name_en', 'like', $like)->orWhere('code', 'like', $like)->orWhere('brand', 'like', $like));
             })
-            ->orderBy('name_en')
-            ->paginate(50)
-            ->withQueryString();
+            ->orderBy('name_en');
+
+        // Stock check needs the full list so marks survive without pagination.
+        $products = $checking
+            ? $query->get()
+            : $query->paginate(50)->withQueryString();
 
         $balances = StockLedgerEntry::query()
             ->select('product_id')
@@ -47,7 +55,9 @@ class StockController extends Controller
             'pending' => (bool) cache()->get('sdm.costing_pending'),
             'lowStock' => $this->alerts->lowStock(),
             'nearExpiry' => $this->alerts->nearExpiry(),
-            'canCompare' => $request->user()->can('stock.compare'),
+            'canStockCheck' => $canStockCheck,
+            'checking' => $checking,
+            'exportCheckId' => $canStockCheck ? ($filters['export_check'] ?? null) : null,
         ]);
     }
 
