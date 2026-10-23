@@ -12,40 +12,49 @@
 @section('content')
     <x-back-link :href="route($indexRoute)">{{ $document->isPurchase() ? __('Back to purchases') : __('Back to sales') }}</x-back-link>
 
-    <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-2">
         <div>
-            <h1 class="text-2xl font-semibold text-slate-900 font-mono">{{ $document->number }}</h1>
-            <p class="mt-1 text-sm text-slate-600">
-                {{ format_app_date($document->doc_date) }}
-                · {{ $document->partyLabel() }}
-                · <span @class([
-                    'font-medium',
-                    'text-amber-700' => $document->isDraft(),
-                    'text-emerald-700' => $document->isPosted(),
-                    'text-slate-500' => $document->isVoid(),
-                ])>{{ __(ucfirst($document->status)) }}</span>
-            </p>
+            <h1 class="text-xl font-semibold text-slate-900 font-mono">{{ $document->number }}</h1>
+            <dl class="mt-2 flex flex-wrap gap-2 text-sm" data-testid="document-summary">
+                <div class="rounded-md border border-slate-200 bg-white px-3 py-1.5" data-testid="document-date">
+                    <dt class="text-xs text-slate-500">{{ __('Date') }}</dt>
+                    <dd class="font-medium text-slate-800">{{ format_app_date($document->doc_date) }}</dd>
+                </div>
+                <div class="rounded-md border border-slate-200 bg-white px-3 py-1.5" data-testid="document-party">
+                    <dt class="text-xs text-slate-500">{{ $document->isPurchase() ? __('Supplier') : __('Retailer') }}</dt>
+                    <dd class="font-medium text-slate-800">{{ $document->partyLabel() }}</dd>
+                </div>
+                <div class="rounded-md border border-slate-200 bg-white px-3 py-1.5">
+                    <dt class="text-xs text-slate-500">{{ __('Status') }}</dt>
+                    <dd @class([
+                        'font-medium',
+                        'text-amber-700' => $document->isDraft(),
+                        'text-emerald-700' => $document->isPosted(),
+                        'text-slate-500' => $document->isVoid(),
+                    ])>{{ __(ucfirst($document->status)) }}</dd>
+                </div>
+            </dl>
         </div>
         @if (! $document->isVoid())
             <div class="flex flex-wrap gap-2">
                 @if ($document->isSale())
-                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a5']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice (A5)') }}</a>
-                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a4']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print invoice (A4)') }}</a>
-                    <a href="{{ route('sales.print.challan', [$document, 'size' => 'a5']) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
-                    <a href="{{ route('sales.print.thermal', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
+                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a5']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print invoice (A5)') }}</a>
+                    <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a4']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print invoice (A4)') }}</a>
+                    <a href="{{ route('sales.print.challan', [$document, 'size' => 'a5']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
+                    <a href="{{ route('sales.print.thermal', $document) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print receipt') }}</a>
                 @else
-                    <a href="{{ route('purchases.print.challan', $document) }}" class="btn-secondary" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
+                    <a href="{{ route('purchases.print.challan', $document) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
                 @endif
             </div>
         @endif
         @if ($canManage || ($canDelete ?? false))
-            <div class="mt-2 flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2">
                 @if ($canManage && ! $document->isVoid())
-                    <a href="{{ route($editRoute, $document) }}" class="btn-secondary">{{ __('Edit') }}</a>
+                    <a href="{{ route($editRoute, $document) }}" class="btn-secondary px-3 py-1.5 text-xs">{{ __('Edit') }}</a>
                     @if ($document->isDraft())
                         <form method="POST" action="{{ route($postRoute, $document) }}">
                             @csrf
-                            <button class="btn-primary">{{ __('Post') }}</button>
+                            <button class="btn-primary px-3 py-1.5 text-xs">{{ __('Post') }}</button>
                         </form>
                     @endif
                 @endif
@@ -77,8 +86,8 @@
         $bonusLines = $document->lines->filter(fn ($line) => $line->isComboBonus())->values();
     @endphp
 
-    <div class="mt-6 table-wrap">
-        <table class="data-table" data-testid="document-lines">
+    <div class="mt-4 table-wrap">
+        <table class="data-table [&_td]:py-2 [&_th]:py-2" data-testid="document-lines">
             <thead>
                 <tr>
                     <th>{{ __('SL. NO.') }}</th>
@@ -116,9 +125,9 @@
     </div>
 
     @if ($bonusLines->isNotEmpty())
-        <h2 class="mt-8 text-lg font-semibold text-slate-900" data-testid="invoice-combo-bonus-heading">{{ __('Invoice Combo Bonus') }}</h2>
-        <div class="mt-3 table-wrap">
-            <table class="data-table" data-testid="combo-bonus-lines">
+        <h2 class="mt-5 text-lg font-semibold text-slate-900" data-testid="invoice-combo-bonus-heading">{{ __('Invoice Combo Bonus') }}</h2>
+        <div class="mt-2 table-wrap">
+            <table class="data-table [&_td]:py-2 [&_th]:py-2" data-testid="combo-bonus-lines">
                 <thead>
                     <tr>
                         <th>{{ __('SL. NO.') }}</th>
@@ -164,23 +173,29 @@
             - (float) $document->slab_adjustment
             - (float) $document->combo_bonus_discount;
     @endphp
-    <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2" data-testid="invoice-adjustment-summary">
-        <div><dt class="text-slate-500">{{ __('Subtotal') }}</dt><dd class="font-mono">{{ format_money($document->subtotal) }}</dd></div>
-        @if ($showLoading)
-            <div><dt class="text-slate-500">{{ __('Loading Adjustment') }}</dt><dd class="font-mono">−{{ format_money($document->slab_adjustment) }}</dd></div>
-        @endif
-        @if ($showCombo)
-            <div><dt class="text-slate-500">{{ __('Combo Discount') }}</dt><dd class="font-mono">−{{ format_money($document->combo_bonus_discount) }}</dd></div>
-        @endif
-        @if ($showTds)
-            <div><dt class="text-slate-500">{{ __('Total TDS Amount') }}</dt><dd class="font-mono">+{{ format_money($document->tds_amount) }}</dd></div>
-        @endif
-        <div><dt class="text-slate-500">{{ __('Net invoice amount') }}</dt><dd class="font-mono">{{ format_money($netInvoice) }}</dd></div>
-        <div><dt class="text-slate-500">{{ __('Total payable') }}</dt><dd class="font-mono font-semibold">{{ format_money($document->net_total) }}</dd></div>
-        @if ($document->notes)
-            <div class="sm:col-span-2"><dt class="text-slate-500">{{ __('Notes') }}</dt><dd>{{ $document->notes }}</dd></div>
-        @endif
-    </dl>
+    <div class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.45fr)]" data-testid="invoice-adjustment-summary">
+        <dl class="grid content-start gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm sm:grid-cols-2">
+            <div><dt class="text-slate-500">{{ __('Subtotal') }}</dt><dd class="font-mono">{{ format_money($document->subtotal) }}</dd></div>
+            @if ($showLoading)
+                <div><dt class="text-slate-500">{{ __('Loading Adjustment') }}</dt><dd class="font-mono">−{{ format_money($document->slab_adjustment) }}</dd></div>
+            @endif
+            @if ($showCombo)
+                <div><dt class="text-slate-500">{{ __('Combo Discount') }}</dt><dd class="font-mono">−{{ format_money($document->combo_bonus_discount) }}</dd></div>
+            @endif
+            @if ($showTds)
+                <div><dt class="text-slate-500">{{ __('Total TDS Amount') }}</dt><dd class="font-mono">+{{ format_money($document->tds_amount) }}</dd></div>
+            @endif
+            @if ($document->notes)
+                <div class="sm:col-span-2"><dt class="text-slate-500">{{ __('Notes') }}</dt><dd>{{ $document->notes }}</dd></div>
+            @endif
+        </dl>
+        <section class="flex flex-col justify-center rounded-lg border border-brand-200 bg-brand-50 px-4 py-3" data-testid="invoice-total-card">
+            <p class="text-sm text-slate-600">{{ __('Net invoice amount') }}</p>
+            <p class="font-mono text-lg font-semibold text-slate-900">{{ format_money($netInvoice) }}</p>
+            <p class="mt-2 text-sm font-medium text-slate-700">{{ __('Total payable') }}</p>
+            <p class="font-mono text-2xl font-bold text-brand-800">{{ format_money($document->net_total) }}</p>
+        </section>
+    </div>
 
     @if ($document->attachments->isNotEmpty())
         <section class="mt-6 card">
