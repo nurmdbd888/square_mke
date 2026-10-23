@@ -40,4 +40,14 @@ class DocumentFormUxTest extends TestCase
             file_get_contents(resource_path('views/print/thermal-80mm.blade.php'))
         );
     }
+
+    public function test_hidden_retailer_quick_create_field_does_not_block_sales_form_submit(): void
+    {
+        $this->actingAs($this->owner())->get(route('sales.create'))
+            ->assertOk()
+            ->assertSee('x-ref="createName"', false)
+            ->assertSee(':required="creating"', false)
+            ->assertSee('name="action" value="save"', false)
+            ->assertSee('name="action" value="post"', false);
+    }
 }
