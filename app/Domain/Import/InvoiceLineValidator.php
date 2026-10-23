@@ -38,10 +38,17 @@ final class InvoiceLineValidator
             return compact('errors', 'warnings');
         }
 
+        if (! $qty->isZero() && ($line['unit_price'] ?? null) === null) {
+            $errors[] = __('Purchase unit cost is required.');
+        }
+        if (! $qty->isZero() && ($line['line_value'] ?? null) === null) {
+            $errors[] = __('Purchase line value is required.');
+        }
+
         $unit = Exact::of($line['unit_price'] ?? 0);
         $value = Exact::of($line['line_value'] ?? 0);
         if (! $qty->isZero() && $line['line_value'] !== null) {
-            $expected = $qty->multipliedBy($unit);
+            $expected = $qty->multipliedBy($unit)->minus(Exact::of($line['line_discount'] ?? 0));
             $tol = Exact::of('0.01');
             $qtyTol = $qty->multipliedBy(Exact::of('0.005'));
             if ($qtyTol->isGreaterThan($tol)) {

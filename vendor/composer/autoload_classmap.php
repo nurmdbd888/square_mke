@@ -45,6 +45,7 @@ return array(
     'App\\Domain\\Import\\InvoiceText' => $baseDir . '/app/Domain/Import/InvoiceText.php',
     'App\\Domain\\Import\\ProductMatcher' => $baseDir . '/app/Domain/Import/ProductMatcher.php',
     'App\\Domain\\Import\\SpreadsheetImportReader' => $baseDir . '/app/Domain/Import/SpreadsheetImportReader.php',
+    'App\\Domain\\Import\\SquareInvoiceOcrParser' => $baseDir . '/app/Domain/Import/SquareInvoiceOcrParser.php',
     'App\\Domain\\Money\\Exact' => $baseDir . '/app/Domain/Money/Exact.php',
     'App\\Domain\\Money\\Formatter' => $baseDir . '/app/Domain/Money/Formatter.php',
     'App\\Domain\\Ocr\\OcrTextParser' => $baseDir . '/app/Domain/Ocr/OcrTextParser.php',
