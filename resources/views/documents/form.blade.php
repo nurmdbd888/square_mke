@@ -37,6 +37,7 @@
             'id' => $product->id,
             'code' => (string) ($product->code ?? ''),
             'brand' => (string) ($product->brand ?? ''),
+            'pack_size' => (string) ($product->pack_size ?? ''),
             'name' => (string) $product->name_en,
             'name_bn' => (string) ($product->name_bn ?? ''),
             'searchText' => mb_strtolower(implode(' ', $searchParts)),
@@ -210,6 +211,9 @@
                                             <span class="text-xs font-medium text-brand-700" x-show="!brandFilter && product.brand" x-text="product.brand"></span>
                                         </span>
                                         <span class="mt-0.5 block font-medium text-slate-900" x-text="product.name"></span>
+                                        <span class="block text-xs text-slate-600" x-show="product.pack_size">
+                                            {{ __('Pack size') }}: <span x-text="product.pack_size"></span>
+                                        </span>
                                         <span class="block text-xs text-slate-600" x-show="product.name_bn" x-text="product.name_bn"></span>
                                     </button>
                                 </li>
