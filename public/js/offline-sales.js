@@ -11,6 +11,14 @@
   var storeName = 'drafts';
   var banner = document.getElementById('offline-sales-banner');
 
+  function isBrowserOffline() {
+    return typeof navigator !== 'undefined' && navigator.onLine === false;
+  }
+
+  function supportsOfflineDrafts() {
+    return typeof window !== 'undefined' && 'indexedDB' in window;
+  }
+
   function openDb() {
     return new Promise(function (resolve, reject) {
       var req = indexedDB.open(dbName, 1);
@@ -143,16 +151,27 @@
   }
 
   form.addEventListener('submit', function (event) {
-    if (navigator.onLine) {
+    if (form.dataset.offlineSubmitRetry === '1') {
+      delete form.dataset.offlineSubmitRetry;
       return;
     }
+
+    if (!isBrowserOffline() || !supportsOfflineDrafts()) {
+      return;
+    }
+
     event.preventDefault();
+
     var actionInput = form.querySelector('[name="action"]:focus') || form.querySelector('[name="action"]');
     var action = actionInput ? actionInput.value : 'save';
     var payload = formPayload(action);
     payload.idempotency_key = payload.number + '-' + payload.doc_date + '-' + Date.now();
+
     saveDraft(payload).then(function () {
       setBanner(form.getAttribute('data-offline-saved-label') || 'Saved offline. It will sync when you are back online.');
+    }).catch(function () {
+      form.dataset.offlineSubmitRetry = '1';
+      form.submit();
     });
   });
 
