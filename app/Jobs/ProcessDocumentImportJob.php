@@ -26,9 +26,19 @@ class ProcessDocumentImportJob implements ShouldQueue
             $path = Storage::path($batch->stored_path);
             $profile = $batch->mappingProfile?->mapping;
             $meta = $batch->meta ?? [];
-            $parsed = $reader->read($path, $batch->doc_type, $profile, $imports->defaultsFromMeta($batch->doc_type, $meta));
-            $batch->update(['layout' => $parsed['layout']]);
-            $imports->persistParsed($batch, $parsed['invoices']);
+            if (isset($meta['ocr_payload_path'])) {
+                $payloadPath = (string) $meta['ocr_payload_path'];
+                $invoices = json_decode(Storage::get($payloadPath), true, 512, JSON_THROW_ON_ERROR);
+                if (! is_array($invoices)) {
+                    throw new \UnexpectedValueException('The parsed OCR payload is invalid.');
+                }
+                $imports->persistParsed($batch, $invoices);
+                Storage::delete($payloadPath);
+            } else {
+                $parsed = $reader->read($path, $batch->doc_type, $profile, $imports->defaultsFromMeta($batch->doc_type, $meta));
+                $batch->update(['layout' => $parsed['layout']]);
+                $imports->persistParsed($batch, $parsed['invoices']);
+            }
         } catch (\Throwable $e) {
             $batch->update(['status' => DocumentImportBatch::STATUS_FAILED]);
             throw $e;

@@ -15,7 +15,7 @@ class DocumentImportLine extends Model
 
     protected $fillable = [
         'document_import_invoice_id', 'line_no', 'line_type', 'section',
-        'product_id', 'product_code', 'product_label', 'pack_size',
+        'product_id', 'product_code', 'product_label', 'pack_size', 'batch_no', 'mrp', 'provisional_cost',
         'qty', 'bonus_qty', 'unit_price', 'line_discount', 'line_value',
         'sd_pct', 'sd_amount', 'vat_pct', 'vat_amount', 'total_incl_tax',
         'errors', 'warnings',
@@ -24,8 +24,19 @@ class DocumentImportLine extends Model
     protected function casts(): array
     {
         return [
+            'qty' => 'decimal:3',
+            'bonus_qty' => 'decimal:3',
+            'unit_price' => 'decimal:4',
+            'line_discount' => 'decimal:2',
+            'line_value' => 'decimal:2',
+            'sd_pct' => 'decimal:4',
+            'sd_amount' => 'decimal:2',
+            'vat_pct' => 'decimal:4',
+            'vat_amount' => 'decimal:2',
+            'mrp' => 'decimal:2',
             'errors' => 'array',
             'warnings' => 'array',
+            'provisional_cost' => 'boolean',
         ];
     }
 

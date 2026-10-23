@@ -772,6 +772,7 @@
     "Set MAINTENANCE_TOKEN to a secret phrase of at least :min characters in the settings file, save it, then reload this page.": "সেটিংস ফাইলে MAINTENANCE_TOKEN-এ অন্তত :min অক্ষরের একটি গোপন শব্দগুচ্ছ দিন, সেভ করুন, তারপর পেজটি রিলোড করুন।",
     "Sets a temporary password and signs the user out everywhere. They must change it at next sign-in.": "একটি অস্থায়ী পাসওয়ার্ড দেয় এবং ব্যবহারকারীকে সব জায়গা থেকে সাইন আউট করে। পরের সাইন-ইনে তাকে এটি বদলাতে হবে।",
     "Settings": "সেটিংস",
+    "settings.title": "সেটিংস",
     "Settings file": "সেটিংস ফাইল",
     "Setup in progress: deploy smoke test (M0)": "সেটআপ চলছে: ডিপ্লয় স্মোক টেস্ট (M0)",
     "Setup is not finished yet": "সেটআপ এখনও শেষ হয়নি",

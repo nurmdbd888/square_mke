@@ -23,7 +23,7 @@
         ['route' => 'masters.index', 'label' => __('Masters'), 'active' => 'masters.*', 'can' => 'masters.view'],
         ['route' => 'users.index', 'label' => __('Users'), 'active' => 'users.*', 'can' => 'users.view'],
         ['route' => 'roles.index', 'label' => __('Roles and permissions'), 'active' => 'roles.*', 'can' => 'roles.manage'],
-        ['route' => 'settings.index', 'label' => __('Settings'), 'active' => 'settings.*', 'can' => 'settings.view'],
+        ['route' => 'settings.index', 'label' => __('settings.title'), 'active' => 'settings.*', 'can' => 'settings.view'],
         ['route' => 'audit.index', 'label' => __('Audit log'), 'active' => 'audit.*', 'can' => 'audit.view'],
         ['route' => 'health', 'label' => __('System health'), 'active' => 'health', 'can' => 'health.view'],
     ], fn ($item) => \App\Support\SafeAccess::routeExists($item['route']) && \App\Support\SafeAccess::can($user, $item['can'])));

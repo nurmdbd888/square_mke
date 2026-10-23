@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="text-2xl font-semibold text-slate-900">{{ __('Invoice import') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('Upload Square purchase challans or sales invoice reports (.xlsx, .xls, .csv). First pass is a dry-run preview — nothing posts until you confirm, and confirm stays blocked while row errors remain.') }}</p>
+    <p class="mt-1 text-sm text-slate-600">{{ __('Upload Square sales or purchase invoices as a spreadsheet, image, or PDF. Scans are read in your browser; review the dry-run preview and correct any extracted details before confirming.') }}</p>
 
     <x-flash />
 
@@ -23,7 +23,7 @@
 
         <section class="card">
             <h2 class="font-semibold">{{ __('Upload') }}</h2>
-            <form method="POST" action="{{ route('imports.invoices.store') }}" enctype="multipart/form-data" class="mt-3 space-y-3">
+            <form method="POST" action="{{ route('imports.invoices.store') }}" enctype="multipart/form-data" class="mt-3 space-y-3" data-invoice-ocr-form>
                 @csrf
                 <label class="block">
                     <span class="label">{{ __('Document type') }}</span>
@@ -33,9 +33,17 @@
                     </select>
                 </label>
                 <label class="block">
-                    <span class="label">{{ __('File') }}</span>
-                    <input type="file" name="file" accept=".csv,.xlsx,.xls" required class="input">
+                    <span class="label">{{ __('Spreadsheet') }}</span>
+                    <input type="file" name="file" accept=".csv,.xlsx,.xls" class="input" data-invoice-spreadsheet>
                 </label>
+                <label class="block">
+                    <span class="label">{{ __('Invoice images or PDFs') }}</span>
+                    <input type="file" name="scan_files[]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" multiple class="input" data-invoice-scans>
+                    <span class="mt-1 block text-xs text-slate-500">{{ __('Choose one PDF or multiple images (up to 100 pages per batch). Processing stays on this device.') }}</span>
+                </label>
+                <input type="hidden" name="ocr_pages" data-invoice-ocr-pages>
+                <p class="hidden text-sm text-slate-700" aria-live="polite" data-invoice-ocr-status></p>
+                <p class="hidden text-sm text-red-700" role="alert" data-invoice-ocr-error></p>
                 <label class="block">
                     <span class="label">{{ __('Invoice number (lines-only files)') }}</span>
                     <input type="text" name="invoice_no" class="input" placeholder="INV-ADU/4344/1026">
@@ -55,7 +63,7 @@
                         </select>
                     </label>
                 @endif
-                <button class="btn-primary">{{ __('Upload and preview') }}</button>
+                <button class="btn-primary" data-invoice-ocr-submit>{{ __('Upload and preview') }}</button>
             </form>
         </section>
     </div>
@@ -74,3 +82,7 @@
         </ul>
     </section>
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('js/document-import-ocr.js') }}?v={{ filemtime(public_path('js/document-import-ocr.js')) }}" defer></script>
+@endpush

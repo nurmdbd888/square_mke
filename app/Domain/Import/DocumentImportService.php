@@ -21,6 +21,7 @@ use App\Models\Vehicle;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv as CsvWriter;
@@ -34,6 +35,7 @@ final class DocumentImportService
         private readonly InvoiceLineValidator $validator,
         private readonly ProductMatcher $matcher,
         private readonly DocumentWriter $documents,
+        private readonly SquareInvoiceOcrParser $ocrParser,
     ) {}
 
     public function templateDownload(string $docType, string $layout, string $format = 'xlsx'): StreamedResponse
@@ -114,6 +116,96 @@ final class DocumentImportService
     }
 
     /**
+     * @param  list<UploadedFile>  $files
+     * @param  list<array{text: string}>  $pages
+     * @param  array<string, mixed>  $meta
+     * @return array{batch: DocumentImportBatch, queued: bool}
+     */
+    public function previewOcr(
+        string $docType,
+        array $files,
+        array $pages,
+        ?User $by = null,
+        array $meta = [],
+    ): array {
+        $this->assertDocType($docType);
+        $parsed = $this->ocrParser->parse($docType, $pages);
+        $lineCount = array_sum(array_map(fn ($invoice) => count($invoice['lines']), $parsed['invoices']));
+        $inline = (int) config('sdm.document_import_inline_limit', 500);
+        $storedPaths = [];
+        $payloadPath = null;
+        $batch = null;
+
+        try {
+            foreach ($files as $file) {
+                $stored = $file->store('document-imports');
+                if (! is_string($stored) || $stored === '') {
+                    throw new \RuntimeException('Unable to store an invoice source file.');
+                }
+                $storedPaths[] = $stored;
+            }
+
+            $names = array_map(fn (UploadedFile $file) => $file->getClientOriginalName(), $files);
+            $originalName = $names[0] ?? 'invoice-scan';
+            if (count($names) > 1) {
+                $originalName .= ' + '.(count($names) - 1).' '.__('more files');
+            }
+
+            if ($lineCount > $inline) {
+                $payloadPath = 'document-imports/parsed/ocr-'.Str::uuid().'.json';
+                if (! Storage::put($payloadPath, json_encode($parsed['invoices'], JSON_THROW_ON_ERROR))) {
+                    throw new \RuntimeException('Unable to store parsed invoice data.');
+                }
+            }
+
+            $batchMeta = array_merge($meta, [
+                'source_files' => array_map(
+                    fn (int $index) => ['name' => $names[$index], 'path' => $storedPaths[$index]],
+                    array_keys($storedPaths),
+                ),
+            ]);
+            if ($payloadPath !== null) {
+                $batchMeta['ocr_payload_path'] = $payloadPath;
+            }
+
+            $batch = DocumentImportBatch::query()->create([
+                'doc_type' => $docType,
+                'layout' => $parsed['layout'],
+                'original_name' => mb_strimwidth($originalName, 0, 255),
+                'stored_path' => $storedPaths[0] ?? null,
+                'status' => $lineCount > $inline
+                    ? DocumentImportBatch::STATUS_PROCESSING
+                    : DocumentImportBatch::STATUS_PREVIEW,
+                'meta' => $batchMeta,
+                'created_by' => $by?->id,
+            ]);
+
+            if ($lineCount > $inline) {
+                ProcessDocumentImportJob::dispatch($batch->id);
+
+                return ['batch' => $batch, 'queued' => true];
+            }
+
+            $this->persistParsed($batch, $parsed['invoices']);
+
+            return ['batch' => $batch->fresh(['invoices.lines']), 'queued' => false];
+        } catch (\Throwable $exception) {
+            if ($batch instanceof DocumentImportBatch) {
+                $batch->update(['status' => DocumentImportBatch::STATUS_FAILED]);
+                if ($payloadPath !== null) {
+                    Storage::delete($payloadPath);
+                }
+            } else {
+                Storage::delete($storedPaths);
+                if ($payloadPath !== null) {
+                    Storage::delete($payloadPath);
+                }
+            }
+            throw $exception;
+        }
+    }
+
+    /**
      * @param  list<array{invoice_no: string, header: array<string, mixed>, lines: list<array<string, mixed>>}>  $invoices
      */
     public function persistParsed(DocumentImportBatch $batch, array $invoices): void
@@ -158,11 +250,34 @@ final class DocumentImportService
                         (string) ($fields['product_label'] ?? ''),
                         $fields['pack_size'] ?? null,
                     );
+                    $unitPrice = $fields['unit_price'] ?? null;
+                    $lineValue = $fields['line_value'] ?? null;
+                    $lineWarnings = [];
+                    if (
+                        $batch->isPurchase()
+                        && ($fields['use_product_buy_price'] ?? false)
+                        && $unitPrice === null
+                        && $product !== null
+                    ) {
+                        $unitPrice = $product->buy_price ?? $product->buy_price_exact;
+                        if ($unitPrice !== null) {
+                            $lineValue = Exact::money(
+                                Exact::of($fields['qty'] ?? 0)
+                                    ->multipliedBy(Exact::of($unitPrice))
+                                    ->minus(Exact::of($fields['line_discount'] ?? 0)),
+                            );
+                            $lineWarnings[] = __('Provisional cost uses this product’s current buy price; verify it against the purchase invoice.');
+                        }
+                    }
                     $validation = $this->validator->validate($batch->doc_type, array_merge($fields, [
-                        'line_value' => $fields['line_value'],
+                        'unit_price' => $unitPrice,
+                        'line_value' => $lineValue,
                         'line_discount' => $fields['line_discount'] ?? '0',
                     ]));
                     $lineErrors = $validation['errors'];
+                    if ($batch->isPurchase() && ($fields['use_product_buy_price'] ?? false) && $unitPrice === null) {
+                        $lineErrors[] = __('No current buy price is available. Enter the purchase cost before confirming.');
+                    }
                     if ($product === null && ($fields['line_type'] ?? '') !== DocumentImportLine::TYPE_BONUS) {
                         $lineErrors[] = __('Product not matched.');
                     }
@@ -181,18 +296,23 @@ final class DocumentImportService
                         'product_code' => $fields['product_code'] ?? null,
                         'product_label' => (string) ($fields['product_label'] ?? ''),
                         'pack_size' => $fields['pack_size'] ?? null,
+                        'batch_no' => $fields['batch_no'] ?? null,
+                        'mrp' => $fields['mrp'] ?? null,
                         'qty' => $fields['qty'] ?? 0,
                         'bonus_qty' => $fields['bonus_qty'] ?? 0,
-                        'unit_price' => $fields['unit_price'],
+                        'unit_price' => $unitPrice,
                         'line_discount' => $fields['line_discount'] ?? 0,
-                        'line_value' => $fields['line_value'],
+                        'line_value' => $lineValue,
                         'sd_pct' => $fields['sd_pct'] ?? 0,
                         'sd_amount' => $fields['sd_amount'] ?? 0,
                         'vat_pct' => $fields['vat_pct'] ?? 0,
                         'vat_amount' => $fields['vat_amount'] ?? 0,
-                        'total_incl_tax' => $fields['total_incl_tax'],
+                        'total_incl_tax' => $fields['total_incl_tax'] ?? null,
+                        'provisional_cost' => $batch->isPurchase()
+                            && ($fields['use_product_buy_price'] ?? false)
+                            && $unitPrice !== null,
                         'errors' => $lineErrors,
-                        'warnings' => $validation['warnings'],
+                        'warnings' => array_values(array_unique(array_merge($validation['warnings'], $lineWarnings))),
                     ]);
                 }
             }
@@ -218,6 +338,14 @@ final class DocumentImportService
         if ($product !== null && $productId != $line->product_id) {
             $this->matcher->rememberAlias($product, $line->product_label, $by);
         }
+        $provisionalCost = $line->provisional_cost;
+        if (
+            $provisionalCost
+            && array_key_exists('unit_price', $input)
+            && ! Exact::of($input['unit_price'] ?? 0)->isEqualTo(Exact::of($line->unit_price ?? 0))
+        ) {
+            $provisionalCost = false;
+        }
 
         $line->fill([
             'product_id' => $product?->id,
@@ -226,6 +354,8 @@ final class DocumentImportService
             'unit_price' => $input['unit_price'] ?? $line->unit_price,
             'line_discount' => $input['line_discount'] ?? $line->line_discount,
             'line_value' => $input['line_value'] ?? $line->line_value,
+            'batch_no' => array_key_exists('batch_no', $input) ? $input['batch_no'] : $line->batch_no,
+            'provisional_cost' => $provisionalCost,
         ]);
 
         $validation = $this->validator->validate($line->invoice->batch->doc_type, [
@@ -250,6 +380,69 @@ final class DocumentImportService
         $this->refreshBatchErrorCounts($line->invoice->batch);
 
         return $line->fresh();
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    public function updateInvoice(DocumentImportInvoice $invoice, array $input): DocumentImportInvoice
+    {
+        $batch = $invoice->batch;
+        if ($batch->status !== DocumentImportBatch::STATUS_PREVIEW) {
+            throw ValidationException::withMessages(['batch' => __('This import batch can no longer be edited.')]);
+        }
+
+        $header = $invoice->header;
+        foreach ([
+            'invoice_no', 'doc_date', 'invoice_date', 'supplier_name', 'buyer_name',
+            'retailer_code', 'retailer_name', 'header_discount', 'slab_adjustment', 'combo_bonus_policy',
+            'combo_bonus_discount', 'tds_amount', 'rounding_adjustment', 'net_total',
+        ] as $key) {
+            if (array_key_exists($key, $input)) {
+                $header[$key] = $input[$key];
+            }
+        }
+        $header['invoice_no'] = trim((string) ($header['invoice_no'] ?? ''));
+        if ($header['invoice_no'] === '') {
+            throw ValidationException::withMessages(['invoice_no' => __('Invoice number is required.')]);
+        }
+
+        $dateKey = $batch->isPurchase() ? 'doc_date' : 'invoice_date';
+        $parsedDate = InvoiceText::parseDate((string) ($header[$dateKey] ?? ''));
+        if ($parsedDate === null) {
+            throw ValidationException::withMessages([$dateKey => __('Enter a valid invoice date.')]);
+        }
+        $header[$dateKey] = $parsedDate;
+        if (! $batch->isPurchase()) {
+            $header['doc_date'] = $parsedDate;
+        }
+        foreach ([
+            'header_discount', 'slab_adjustment', 'combo_bonus_policy', 'combo_bonus_discount',
+            'tds_amount', 'rounding_adjustment', 'net_total',
+        ] as $key) {
+            if (isset($header[$key])) {
+                $header[$key] = Exact::money(Exact::of($header[$key]));
+            }
+        }
+
+        $duplicate = $this->findDuplicateDocument($batch->doc_type, $header);
+        $errors = $duplicate === null ? [] : [__('A document with this number, party and total already exists.')];
+        $warnings = $this->partyWarnings($batch->doc_type, $header);
+        $invoice->update([
+            'invoice_no' => $header['invoice_no'],
+            'header' => $header,
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'status' => $errors === [] ? DocumentImportInvoice::STATUS_OK : DocumentImportInvoice::STATUS_DUPLICATE,
+        ]);
+        $this->refreshBatchErrorCounts($batch);
+        $batch->update([
+            'header_warnings' => array_values(array_unique(
+                $batch->invoices()->get()->flatMap(fn ($item) => $item->warnings ?? [])->all(),
+            )),
+        ]);
+
+        return $invoice->fresh();
     }
 
     public function confirm(DocumentImportBatch $batch, ?User $by = null): DocumentImportBatch
@@ -318,6 +511,7 @@ final class DocumentImportService
             $kind = $line->isComboBonus() ? DocumentLine::KIND_COMBO_BONUS : DocumentLine::KIND_NORMAL;
             $lines[] = [
                 'product_id' => $line->product_id,
+                'batch_no' => $line->batch_no,
                 'qty' => $line->qty,
                 'bonus_qty' => $line->bonus_qty,
                 'unit_price' => $line->unit_price ?? 0,
@@ -338,6 +532,11 @@ final class DocumentImportService
                 'number' => $invoice->invoice_no,
                 'supplier_id' => $supplier->id,
                 'doc_date' => $header['doc_date'] ?? now()->toDateString(),
+                'header_discount' => $header['header_discount'] ?? 0,
+                'slab_adjustment' => $header['slab_adjustment'] ?? 0,
+                'combo_bonus_discount' => $header['combo_bonus_discount'] ?? 0,
+                'tds_amount' => $header['tds_amount'] ?? 0,
+                'rounding_adjustment' => $header['rounding_adjustment'] ?? 0,
                 'action' => 'post',
             ], $lines, $by);
         }
@@ -414,6 +613,11 @@ final class DocumentImportService
         $header['invoice_no'] = $invoiceNo;
         if ($docType === DocumentImportBatch::TYPE_PURCHASE) {
             $header['doc_date'] = InvoiceText::parseDate($header['doc_date'] ?? null) ?? ($header['doc_date'] ?? null);
+            foreach (['header_discount', 'slab_adjustment', 'combo_bonus_discount', 'tds_amount', 'rounding_adjustment', 'net_total', 'source_total'] as $k) {
+                if (isset($header[$k]) && InvoiceText::parseNumber((string) $header[$k]) !== null) {
+                    $header[$k] = Exact::money(Exact::of(InvoiceText::parseNumber((string) $header[$k])));
+                }
+            }
         } else {
             $header['invoice_date'] = InvoiceText::parseDate($header['invoice_date'] ?? null) ?? ($header['invoice_date'] ?? null);
             $header['delivery_date'] = InvoiceText::parseDate($header['delivery_date'] ?? null);
@@ -491,6 +695,9 @@ final class DocumentImportService
         $batch->load('invoices.lines');
         $errors = 0;
         foreach ($batch->invoices as $invoice) {
+            if (($invoice->errors ?? []) !== []) {
+                $errors++;
+            }
             foreach ($invoice->lines as $line) {
                 if (($line->errors ?? []) !== []) {
                     $errors++;
