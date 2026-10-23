@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'title' => 'Settings',
     'groups' => [
         'firm' => 'Firm',
         'regional' => 'Language and calendar',

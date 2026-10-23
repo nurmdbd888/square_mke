@@ -149,6 +149,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::post('/', [DocumentImportController::class, 'store'])->name('imports.invoices.store');
             Route::post('/profiles', [DocumentImportController::class, 'storeProfile'])->name('imports.invoices.profiles.store');
             Route::get('/batches/{documentImportBatch}', [DocumentImportController::class, 'show'])->name('imports.invoices.show');
+            Route::put('/batches/{documentImportBatch}/invoices/{invoice}', [DocumentImportController::class, 'updateInvoice'])->name('imports.invoices.header.update');
             Route::put('/batches/{documentImportBatch}/lines/{line}', [DocumentImportController::class, 'updateLine'])->name('imports.invoices.lines.update');
             Route::post('/batches/{documentImportBatch}/confirm', [DocumentImportController::class, 'confirm'])->name('imports.invoices.confirm');
             Route::post('/batches/{documentImportBatch}/undo', [DocumentImportController::class, 'undo'])->name('imports.invoices.undo');

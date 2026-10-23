@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('Settings'))
+@section('title', __('settings.title'))
 
 @php
     use App\Settings\SettingDefinition;
@@ -10,7 +10,7 @@
 @endphp
 
 @section('content')
-    <h1 class="text-2xl font-semibold text-slate-900">{{ __('Settings') }}</h1>
+    <h1 class="text-2xl font-semibold text-slate-900">{{ __('settings.title') }}</h1>
     <p class="mt-1 text-sm text-slate-600">{{ __('Every change is kept in the audit log with the old and new value.') }}</p>
 
     <form method="POST" action="{{ route('settings.update') }}" class="mt-6 space-y-6">

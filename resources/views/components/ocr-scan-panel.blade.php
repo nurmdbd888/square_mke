@@ -77,6 +77,6 @@
 @once
     @push('scripts')
         {{-- Loaded after Alpine; recognize() only runs on user click. --}}
-        <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" defer></script>
     @endpush
 @endonce
