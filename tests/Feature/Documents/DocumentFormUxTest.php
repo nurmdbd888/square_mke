@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Documents;
 
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -39,6 +40,26 @@ class DocumentFormUxTest extends TestCase
             "__('SL. NO.')",
             file_get_contents(resource_path('views/print/thermal-80mm.blade.php'))
         );
+    }
+
+    public function test_invoice_line_prices_use_two_decimals_and_product_column_has_room(): void
+    {
+        $owner = $this->owner();
+        $owner->revokePermissionTo('settings.view');
+        Product::query()->create([
+            'name_en' => 'Price precision test',
+            'unit' => 'Pcs',
+            'buy_price' => '10.5000',
+            'sell_price' => '12.3456',
+        ]);
+
+        $this->actingAs($owner)->get(route('sales.create'))
+            ->assertOk()
+            ->assertSee('\u0022buy\u0022:\u002210.50\u0022', false)
+            ->assertSee('\u0022sell\u0022:\u002212.35\u0022', false)
+            ->assertSee('unit_price: priceInput(line.unit_price)', false)
+            ->assertSee('min-w-[58rem] table-fixed', false)
+            ->assertSee('w-[28%] min-w-[16rem]', false);
     }
 
     public function test_hidden_retailer_quick_create_field_does_not_block_sales_form_submit(): void
