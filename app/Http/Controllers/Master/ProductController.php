@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\CustomField;
 use App\Models\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -52,10 +53,33 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $product = Product::query()->create($this->validated($request));
         $this->syncAliases($product, (string) $request->input('aliases', ''));
+
+        if ($request->expectsJson()) {
+            $product->load('aliases');
+            $searchParts = array_filter([
+                $product->code,
+                $product->name_en,
+                $product->name_bn,
+                ...$product->aliases->pluck('name')->all(),
+            ]);
+
+            return response()->json([
+                'id' => $product->id,
+                'code' => (string) ($product->code ?? ''),
+                'brand' => (string) ($product->brand ?? ''),
+                'name' => (string) $product->name_en,
+                'name_bn' => (string) ($product->name_bn ?? ''),
+                'searchText' => mb_strtolower(implode(' ', $searchParts)),
+                'buy' => (string) ($product->buy_price ?? ''),
+                'sell' => (string) ($product->sell_price ?? ''),
+                'sd' => (string) ($product->sd_pct ?? '0'),
+                'vat' => (string) ($product->vat_pct ?? '15'),
+            ], 201);
+        }
 
         return redirect()->route('products.index')->with('status', __('Product :name was saved.', ['name' => $product->name_en]));
     }

@@ -76,6 +76,9 @@
             'combo_bonus_discount' => old('combo_bonus_discount', $document->combo_bonus_discount ?? '0'),
             'tds_amount' => old('tds_amount', $document->tds_amount ?? '0'),
             'rounding_adjustment' => old('rounding_adjustment', $document->rounding_adjustment ?? '0'),
+        ]) }}, {{ Js::from([
+            'productCreateUrl' => auth()->user()->can('products.manage') ? route('products.store') : null,
+            'csrfToken' => csrf_token(),
         ]) }})"
         @unless($isPurchase)
             data-offline-sales
@@ -212,6 +215,88 @@
                                 </li>
                             </template>
                         </ul>
+                        @can('products.manage')
+                            <div
+                                x-cloak
+                                x-show="productQuery.trim() !== '' && filteredProducts.length === 0"
+                                class="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
+                                data-testid="product-search-empty"
+                            >
+                                <p class="text-sm text-slate-600">{{ __('No matching product found.') }}</p>
+                                <button
+                                    type="button"
+                                    class="mt-2 text-sm font-semibold text-brand-700 hover:underline"
+                                    data-testid="product-quick-add"
+                                    @click="openProductCreate()"
+                                >
+                                    {{ __('Add product') }}:
+                                    <span x-text="productQuery"></span>
+                                </button>
+                            </div>
+                        @endcan
+                        @can('products.manage')
+                            <div
+                                x-cloak
+                                x-show="productCreateOpen"
+                                class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-900/40 p-4 sm:items-center"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-label="{{ __('Add product') }}"
+                                data-testid="product-quick-add-dialog"
+                                @keydown.escape.window="if (!productCreating) productCreateOpen = false"
+                                @keydown.enter="if ($event.target.tagName !== 'BUTTON') { $event.preventDefault(); saveNewProduct(); }"
+                            >
+                                <div class="my-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
+                                    <h2 class="text-lg font-semibold text-slate-900">{{ __('Add product') }}</h2>
+                                    <p class="mt-1 text-sm text-slate-600">{{ __('The product will be available in sales, purchases and stock.') }}</p>
+                                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                        <label class="block">
+                                            <span class="label">{{ __('Name') }}</span>
+                                            <input type="text" class="input" x-model="newProduct.name_en" maxlength="191" :required="productCreateOpen" data-testid="product-quick-add-name">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Code') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input font-mono" x-model="newProduct.code" maxlength="40">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Bangla name') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input" x-model="newProduct.name_bn" maxlength="191">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Brand') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input" x-model="newProduct.brand" maxlength="80">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Unit') }}</span>
+                                            <input type="text" class="input" x-model="newProduct.unit" maxlength="20" :required="productCreateOpen">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Buy price') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input font-mono" x-model="newProduct.buy_price" inputmode="decimal">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Sell price') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input font-mono" x-model="newProduct.sell_price" inputmode="decimal">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('SD %') }}</span>
+                                            <input type="text" class="input font-mono" x-model="newProduct.sd_pct" inputmode="decimal" :required="productCreateOpen">
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('VAT %') }}</span>
+                                            <input type="text" class="input font-mono" x-model="newProduct.vat_pct" inputmode="decimal" :required="productCreateOpen">
+                                        </label>
+                                    </div>
+                                    <p x-cloak x-show="productCreateError" class="mt-3 text-sm text-red-700" role="alert" x-text="productCreateError"></p>
+                                    <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                        <button type="button" class="btn-secondary" @click="productCreateOpen = false" :disabled="productCreating">{{ __('Cancel') }}</button>
+                                        <button type="button" class="btn-primary" data-testid="product-quick-add-save" @click="saveNewProduct()" :disabled="productCreating || !newProduct.name_en.trim() || !newProduct.unit.trim()">
+                                            <span x-text="productCreating ? '{{ __('Saving…') }}' : '{{ __('Save and add') }}'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endcan
                     </div>
                     @unless ($isPurchase)
                         <div class="mt-3" data-testid="line-add-kind">
@@ -383,9 +468,21 @@
     </form>
 
     <script>
-        function documentForm(initial, catalog, adjustments) {
+        function documentForm(initial, catalog, adjustments, options) {
             const isPurchase = @json($isPurchase);
             const adj = adjustments || {};
+            const productOptions = options || {};
+            const emptyProduct = () => ({
+                code: '',
+                name_en: '',
+                name_bn: '',
+                brand: '',
+                unit: 'Pcs',
+                buy_price: '',
+                sell_price: '',
+                sd_pct: '0',
+                vat_pct: '15',
+            });
             const lines = (initial || []).map((line) => ({
                 showTax: false,
                 kind: 'normal',
@@ -401,6 +498,12 @@
             return {
                 lines,
                 catalog: catalog || [],
+                productCreateUrl: productOptions.productCreateUrl || '',
+                csrfToken: productOptions.csrfToken || '',
+                productCreateOpen: false,
+                productCreating: false,
+                productCreateError: '',
+                newProduct: emptyProduct(),
                 header_discount: String(adj.header_discount ?? '0'),
                 slab_adjustment: String(adj.slab_adjustment ?? '0'),
                 combo_bonus_discount: String(adj.combo_bonus_discount ?? '0'),
@@ -488,6 +591,51 @@
                     }
 
                     return (product.code ? product.code + ' · ' : '') + product.name;
+                },
+                emptyProduct() {
+                    return emptyProduct();
+                },
+                openProductCreate() {
+                    if (!this.productCreateUrl) {
+                        return;
+                    }
+                    this.newProduct = this.emptyProduct();
+                    this.newProduct.name_en = this.productQuery.trim();
+                    this.productCreateError = '';
+                    this.productCreateOpen = true;
+                },
+                async saveNewProduct() {
+                    if (!this.productCreateUrl || this.productCreating) {
+                        return;
+                    }
+                    this.productCreating = true;
+                    this.productCreateError = '';
+                    try {
+                        const response = await fetch(this.productCreateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': this.csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: JSON.stringify(this.newProduct),
+                            credentials: 'same-origin',
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
+                            throw new Error(firstError || data.message || '{{ __('Could not save product. Please try again.') }}');
+                        }
+                        this.catalog = [data].concat(this.catalog.filter((product) => String(product.id) !== String(data.id)));
+                        this.productCreateOpen = false;
+                        this.addProduct(data);
+                        this.newProduct = this.emptyProduct();
+                    } catch (error) {
+                        this.productCreateError = error.message || '{{ __('Could not save product. Please try again.') }}';
+                    } finally {
+                        this.productCreating = false;
+                    }
                 },
                 addProduct(product) {
                     const kind = isPurchase ? 'normal' : (this.lineAddKind || 'normal');
