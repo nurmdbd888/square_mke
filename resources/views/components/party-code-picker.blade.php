@@ -119,7 +119,7 @@
                 <div class="mt-4 space-y-3">
                     <label class="block">
                         <span class="label">{{ __('Name') }}</span>
-                        <input type="text" class="input" x-ref="createName" x-model="createName" maxlength="191" required>
+                        <input type="text" class="input" x-ref="createName" x-model="createName" maxlength="191" :required="creating">
                     </label>
                     <label class="block">
                         <span class="label">{{ __('Code') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
