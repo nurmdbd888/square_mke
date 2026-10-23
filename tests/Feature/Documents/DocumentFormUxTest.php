@@ -48,6 +48,7 @@ class DocumentFormUxTest extends TestCase
         $owner->revokePermissionTo('settings.view');
         Product::query()->create([
             'name_en' => 'Price precision test',
+            'pack_size' => '250 ml',
             'unit' => 'Pcs',
             'buy_price' => '10.5000',
             'sell_price' => '12.3456',
@@ -57,9 +58,11 @@ class DocumentFormUxTest extends TestCase
             ->assertOk()
             ->assertSee('\u0022buy\u0022:\u002210.50\u0022', false)
             ->assertSee('\u0022sell\u0022:\u002212.35\u0022', false)
+            ->assertSee('\u0022pack_size\u0022:\u0022250 ml\u0022', false)
             ->assertSee('unit_price: priceInput(line.unit_price)', false)
             ->assertSee('min-w-[58rem] table-fixed', false)
-            ->assertSee('w-[28%] min-w-[16rem]', false);
+            ->assertSee('w-[28%] min-w-[16rem]', false)
+            ->assertSee(__('Pack size').': <span x-text="product.pack_size"></span>', false);
     }
 
     public function test_hidden_retailer_quick_create_field_does_not_block_sales_form_submit(): void

@@ -43,7 +43,7 @@ class ProductQuickCreateTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonStructure([
-                'id', 'code', 'brand', 'name', 'name_bn', 'searchText',
+                'id', 'code', 'brand', 'pack_size', 'name', 'name_bn', 'searchText',
                 'buy', 'sell', 'sd', 'vat',
             ])
             ->assertJsonPath('code', 'QS-1')

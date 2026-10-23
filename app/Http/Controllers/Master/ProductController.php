@@ -71,6 +71,7 @@ class ProductController extends Controller
                 'id' => $product->id,
                 'code' => (string) ($product->code ?? ''),
                 'brand' => (string) ($product->brand ?? ''),
+                'pack_size' => (string) ($product->pack_size ?? ''),
                 'name' => (string) $product->name_en,
                 'name_bn' => (string) ($product->name_bn ?? ''),
                 'searchText' => mb_strtolower(implode(' ', $searchParts)),
