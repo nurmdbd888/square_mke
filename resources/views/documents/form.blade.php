@@ -16,7 +16,7 @@
             'kind' => $l->kind,
             'qty' => $l->qty,
             'bonus_qty' => $l->bonus_qty,
-            'unit_price' => $l->unit_price,
+            'unit_price' => number_format((float) $l->unit_price, 2, '.', ''),
             'line_discount' => $l->line_discount,
             'line_value' => $l->line_value,
             'sd_pct' => $l->sd_pct,
@@ -40,8 +40,8 @@
             'name' => (string) $product->name_en,
             'name_bn' => (string) ($product->name_bn ?? ''),
             'searchText' => mb_strtolower(implode(' ', $searchParts)),
-            'buy' => (string) ($product->buy_price ?? ''),
-            'sell' => (string) ($product->sell_price ?? ''),
+            'buy' => number_format((float) ($product->buy_price ?? 0), 2, '.', ''),
+            'sell' => number_format((float) ($product->sell_price ?? 0), 2, '.', ''),
             'sd' => (string) ($product->sd_pct ?? '0'),
             'vat' => (string) ($product->vat_pct ?? '15'),
         ];
@@ -317,16 +317,16 @@
 
                 <div class="min-w-0">
                     <div class="table-wrap">
-                        <table class="data-table text-sm">
+                        <table class="data-table min-w-[58rem] table-fixed text-sm">
                             <thead>
                                 <tr>
                                     <th class="w-14 whitespace-nowrap">{{ __('SL. NO.') }}</th>
-                                    <th>{{ __('Product') }}</th>
-                                    <th class="min-w-[5.5rem]">{{ __('Qty') }}</th>
-                                    <th class="min-w-[6.5rem]">{{ __('Price') }}</th>
-                                    <th class="min-w-[5.5rem]">{{ __('Disc.') }}</th>
-                                    <th class="w-24 text-right">{{ __('Total') }}</th>
-                                    <th class="w-16"><span class="sr-only">{{ __('Actions') }}</span></th>
+                                    <th class="w-[28%] min-w-[16rem]">{{ __('Product') }}</th>
+                                    <th class="w-28">{{ __('Qty') }}</th>
+                                    <th class="w-32">{{ __('Price') }}</th>
+                                    <th class="w-28">{{ __('Disc.') }}</th>
+                                    <th class="w-28 text-right">{{ __('Total') }}</th>
+                                    <th class="w-20"><span class="sr-only">{{ __('Actions') }}</span></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -472,6 +472,13 @@
             const isPurchase = @json($isPurchase);
             const adj = adjustments || {};
             const productOptions = options || {};
+            const priceInput = (value) => {
+                if (value === null || value === undefined || value === '') {
+                    return '';
+                }
+                const price = Number(value);
+                return Number.isFinite(price) ? price.toFixed(2) : String(value);
+            };
             const emptyProduct = () => ({
                 code: '',
                 name_en: '',
@@ -493,6 +500,7 @@
                 sd_amount: '0',
                 vat_amount: '0',
                 ...line,
+                unit_price: priceInput(line.unit_price),
             }));
 
             return {
@@ -652,7 +660,7 @@
                             kind: kind,
                             qty: '1',
                             bonus_qty: '0',
-                            unit_price: isPurchase ? (product.buy || '') : (product.sell || product.buy || ''),
+                            unit_price: priceInput(isPurchase ? (product.buy || '') : (product.sell || product.buy || '')),
                             line_discount: '0',
                             line_value: kind === 'combo_bonus' ? '0.00' : '',
                             sd_pct: product.sd || '0',
