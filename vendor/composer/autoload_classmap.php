@@ -136,6 +136,7 @@ return array(
     'App\\Jobs\\SendDueRemindersJob' => $baseDir . '/app/Jobs/SendDueRemindersJob.php',
     'App\\Models\\AppJob' => $baseDir . '/app/Models/AppJob.php',
     'App\\Models\\AuditLog' => $baseDir . '/app/Models/AuditLog.php',
+    'App\\Models\\Brand' => $baseDir . '/app/Models/Brand.php',
     'App\\Models\\Claim' => $baseDir . '/app/Models/Claim.php',
     'App\\Models\\CustomField' => $baseDir . '/app/Models/CustomField.php',
     'App\\Models\\DailyClosing' => $baseDir . '/app/Models/DailyClosing.php',

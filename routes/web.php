@@ -98,7 +98,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         });
         Route::delete('/retailers/{retailer}', [RetailerController::class, 'destroy'])->middleware('can:retailers.delete')->name('retailers.destroy');
 
-        $masterKinds = 'suppliers|routes|sales-reps|vehicles';
+        $masterKinds = 'brands|suppliers|routes|sales-reps|vehicles';
 
         Route::middleware('can:masters.view')->group(function () use ($masterKinds) {
             Route::get('/masters', [MastersController::class, 'index'])->name('masters.index');

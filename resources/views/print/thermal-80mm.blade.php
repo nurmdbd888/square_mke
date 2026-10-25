@@ -43,7 +43,12 @@
             @foreach ($paidLines as $index => $line)
                 <tr>
                     <td class="mono">{{ $index + 1 }}</td>
-                    <td>{{ $line->product?->name_en }}</td>
+                    <td>
+                        {{ $line->product?->name_en }}
+                        @if ($line->product?->pack_size)
+                            <span class="meta" style="display:block;font-size:9px;">{{ __('Pack') }}: {{ $line->product->pack_size }}</span>
+                        @endif
+                    </td>
                     <td class="text-right mono">{{ local_digits($line->qty) }}</td>
                     <td class="text-right mono">{{ format_money($line->line_value) }}</td>
                 </tr>
@@ -66,7 +71,12 @@
                 @foreach ($bonusLines as $index => $line)
                     <tr>
                         <td class="mono">{{ $index + 1 }}</td>
-                        <td>{{ $line->product?->name_en }}</td>
+                        <td>
+                            {{ $line->product?->name_en }}
+                            @if ($line->product?->pack_size)
+                                <span class="meta" style="display:block;font-size:9px;">{{ __('Pack') }}: {{ $line->product->pack_size }}</span>
+                            @endif
+                        </td>
                         <td class="text-right mono">{{ local_digits($line->qty) }}</td>
                         <td class="text-right mono">{{ format_money(0) }}</td>
                     </tr>

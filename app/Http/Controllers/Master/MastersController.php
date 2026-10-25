@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\CustomField;
 use App\Models\OpeningBalance;
 use App\Models\PriceList;
@@ -18,6 +19,7 @@ class MastersController extends Controller
     {
         return view('master.hub', [
             'links' => [
+                ['url' => route('masters.directory.index', 'brands'), 'label' => __('Brands'), 'count' => Brand::query()->count()],
                 ['url' => route('masters.directory.index', 'suppliers'), 'label' => __('Suppliers'), 'count' => Supplier::query()->count()],
                 ['url' => route('masters.directory.index', 'routes'), 'label' => __('Routes'), 'count' => SalesRoute::query()->count()],
                 ['url' => route('masters.directory.index', 'sales-reps'), 'label' => __('Sales reps'), 'count' => SalesRep::query()->count()],

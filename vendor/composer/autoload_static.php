@@ -736,6 +736,7 @@ class ComposerStaticInit01a8349302b2462148bcaaf0da9ea1d1
         'App\\Jobs\\SendDueRemindersJob' => __DIR__ . '/../..' . '/app/Jobs/SendDueRemindersJob.php',
         'App\\Models\\AppJob' => __DIR__ . '/../..' . '/app/Models/AppJob.php',
         'App\\Models\\AuditLog' => __DIR__ . '/../..' . '/app/Models/AuditLog.php',
+        'App\\Models\\Brand' => __DIR__ . '/../..' . '/app/Models/Brand.php',
         'App\\Models\\Claim' => __DIR__ . '/../..' . '/app/Models/Claim.php',
         'App\\Models\\CustomField' => __DIR__ . '/../..' . '/app/Models/CustomField.php',
         'App\\Models\\DailyClosing' => __DIR__ . '/../..' . '/app/Models/DailyClosing.php',
