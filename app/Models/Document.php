@@ -85,6 +85,14 @@ class Document extends Model
     }
 
     /**
+     * @return BelongsTo<PurchaseOrder, $this>
+     */
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    /**
      * @return BelongsTo<Supplier, $this>
      */
     public function supplier(): BelongsTo
