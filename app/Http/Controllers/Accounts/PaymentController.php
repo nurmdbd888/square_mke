@@ -6,6 +6,7 @@ use App\Domain\Payments\Methods;
 use App\Domain\Payments\PartyBalance;
 use App\Domain\Payments\PaymentWriter;
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Models\ExpenseCategory;
 use App\Models\Payment;
 use App\Models\PaymentAttachment;
@@ -18,7 +19,9 @@ use App\Support\Bulk\BulkSelection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -32,15 +35,13 @@ class PaymentController extends Controller
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
-            'kind' => ['nullable', Rule::in(['receipt', 'payment', 'all'])],
             'status' => ['nullable', Rule::in(['draft', 'posted', 'void', 'all'])],
         ]);
-        $kind = $filters['kind'] ?? 'all';
         $status = $filters['status'] ?? 'all';
 
         $payments = Payment::query()
             ->with(['retailer', 'supplier', 'expenseCategory'])
-            ->when($kind !== 'all', fn ($q) => $q->where('kind', $kind))
+            ->where('kind', Payment::KIND_PAYMENT)
             ->when($status !== 'all', fn ($q) => $q->where('status', $status))
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $like = '%'.addcslashes($term, '\\%_').'%';
@@ -57,18 +58,20 @@ class PaymentController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $view = $request->header('HX-Request') && ! $request->header('HX-Boosted')
-            ? 'payments._table'
-            : 'payments.index';
-
         $user = $request->user();
 
-        return view($view, [
+        return view('payments.index', [
             'payments' => $payments,
-            'filters' => $filters + ['kind' => $kind, 'status' => $status],
+            'filters' => $filters + ['kind' => Payment::KIND_PAYMENT, 'status' => $status],
             'canManage' => PaymentAccess::canManage($user),
             'canDelete' => PaymentAccess::canDelete($user),
-            'canCollect' => PaymentAccess::canCollectReceipts($user),
+            'purchaseInvoices' => $this->balances->openInvoicesForAll('supplier')
+                ->when($filters['q'] ?? null, function (Collection $invoices, string $term) {
+                    $term = mb_strtolower($term);
+
+                    return $invoices->filter(fn ($invoice) => str_contains(mb_strtolower($invoice->number), $term)
+                        || str_contains(mb_strtolower($invoice->party_name), $term));
+                }),
         ]);
     }
 
@@ -87,16 +90,52 @@ class PaymentController extends Controller
             'method' => 'cash',
             'amount' => '0',
         ]);
-        if ($kind === Payment::KIND_RECEIPT && $request->filled('retailer_id')) {
-            $payment->retailer_id = (int) $request->query('retailer_id');
+
+        $lockedInvoice = null;
+        if ($request->filled('document_id')) {
+            $documentId = $request->validate([
+                'document_id' => ['required', 'integer', 'exists:documents,id'],
+            ])['document_id'];
+            $document = Document::query()->findOrFail($documentId);
+            $isReceipt = $kind === Payment::KIND_RECEIPT;
+            abort_unless(
+                ($isReceipt ? $document->isSale() : $document->isPurchase())
+                    && $document->status === Document::STATUS_POSTED
+                    && $document->partyId(),
+                404
+            );
+            $party = $isReceipt ? 'retailer' : 'supplier';
+            $partyId = (int) $document->partyId();
+            $queryPartyId = $request->query($isReceipt ? 'retailer_id' : 'supplier_id');
+            abort_if(filled($queryPartyId) && (int) $queryPartyId !== $partyId, 404);
+            $lockedInvoice = $this->balances->openInvoices($party, $partyId)
+                ->firstWhere('document_id', $document->id);
+            abort_if($lockedInvoice === null, 404);
+            $payment->{$isReceipt ? 'retailer_id' : 'supplier_id'} = $partyId;
         }
 
-        return view('payments.form', $this->formData($payment));
+        if ($kind === Payment::KIND_RECEIPT && ! $lockedInvoice && $request->filled('retailer_id')) {
+            $payment->retailer_id = (int) $request->query('retailer_id');
+        } elseif ($kind === Payment::KIND_PAYMENT && ! $lockedInvoice && $request->filled('supplier_id')) {
+            $payment->supplier_id = (int) $request->query('supplier_id');
+        }
+
+        $formData = $this->formData($payment);
+        if ($lockedInvoice !== null) {
+            $party = $kind === Payment::KIND_RECEIPT ? 'retailer' : 'supplier';
+            $formData['openInvoices'] = $this->balances->openInvoices($party, (int) $payment->{$party.'_id'})
+                ->where('document_id', $lockedInvoice->document_id)
+                ->values();
+            $formData['lockedInvoice'] = $lockedInvoice;
+        }
+
+        return view('payments.form', $formData);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        $data['allocations'] = $this->scopedAllocations($request, $data['header'], $data['allocations']);
         $this->assertCanWriteHeader($request, $data['header']);
         $payment = $this->writer->save($data['header'], $data['allocations'], $request->user());
         $this->storeAttachments($request, $payment);
@@ -109,6 +148,51 @@ class PaymentController extends Controller
             ->with('status', $message)
             ->with('print_receipt', $payment->isPosted() && $payment->isReceipt())
             ->with('print_receipt_id', $payment->isPosted() && $payment->isReceipt() ? $payment->id : null);
+    }
+
+    /**
+     * Invoice-based payments are restricted to their selected posted document.
+     *
+     * @param  array<string, mixed>  $header
+     * @param  list<array{document_id: int, amount: string}>  $allocations
+     * @return list<array{document_id: int, amount: string}>
+     */
+    private function scopedAllocations(Request $request, array $header, array $allocations): array
+    {
+        if (! $request->query->has('document_id')) {
+            return $allocations;
+        }
+
+        $documentId = $request->validate([
+            'document_id' => ['required', 'integer', 'exists:documents,id'],
+        ])['document_id'];
+        $document = Document::query()->findOrFail($documentId);
+        $isReceipt = $header['kind'] === Payment::KIND_RECEIPT;
+        abort_unless(
+            ($isReceipt ? $document->isSale() : $document->isPurchase())
+                && $document->isPosted()
+                && $document->partyId() === (int) ($header[$isReceipt ? 'retailer_id' : 'supplier_id'] ?? 0),
+            404
+        );
+        if ($allocations === []) {
+            $allocations = [[
+                'document_id' => (int) $documentId,
+                'amount' => (string) $header['amount'],
+            ]];
+        }
+        $allocationIds = collect($allocations)->pluck('document_id')->unique()->values();
+        $selectedAllocation = collect($allocations)->first(
+            fn (array $allocation) => $allocation['document_id'] === (int) $documentId
+                && (float) $allocation['amount'] > 0
+        );
+
+        if ($allocationIds->count() !== 1 || (int) $allocationIds->first() !== (int) $documentId || $selectedAllocation === null) {
+            throw ValidationException::withMessages([
+                'allocations' => __('An invoice payment must be allocated only to that invoice.'),
+            ]);
+        }
+
+        return $allocations;
     }
 
     public function print(Request $request, Payment $payment): View
@@ -322,7 +406,7 @@ class PaymentController extends Controller
     {
         $data = $request->validate([
             'kind' => ['required', Rule::in(['receipt', 'payment'])],
-            'number' => ['required', 'string', 'max:80'],
+            'number' => ['required_if:kind,payment', 'nullable', 'string', 'max:80'],
             'retailer_id' => ['nullable', 'integer', 'exists:retailers,id'],
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'method' => ['required', Rule::in(Payment::METHODS)],
@@ -357,7 +441,7 @@ class PaymentController extends Controller
         return [
             'header' => [
                 'kind' => $data['kind'],
-                'number' => $data['number'],
+                'number' => $data['number'] ?? $existing?->number ?? '',
                 'retailer_id' => $data['retailer_id'] ?? null,
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'method' => $data['method'],
