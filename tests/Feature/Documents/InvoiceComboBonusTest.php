@@ -130,7 +130,13 @@ class InvoiceComboBonusTest extends TestCase
             ->get(route('sales.show', $sale))
             ->assertOk()
             ->assertSee('data-testid="invoice-combo-bonus-heading"', false)
-            ->assertSee('data-testid="combo-bonus-lines"', false);
+            ->assertSee('data-testid="combo-bonus-lines"', false)
+            ->assertSee(__('Pack').': 100gm', false);
+
+        $this->actingAs($owner)
+            ->get(route('sales.print.thermal', $sale))
+            ->assertOk()
+            ->assertSee(__('Pack').': 100gm', false);
 
         $this->actingAs($owner)
             ->get(route('sales.create'))

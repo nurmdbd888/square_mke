@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Master\Concerns\RespondsWithPartyJson;
+use App\Models\Brand;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
 use App\Models\Supplier;
@@ -153,6 +154,7 @@ class DirectoryController extends Controller
     private function bulkFields(string $kind): array
     {
         return match ($kind) {
+            'brands' => [],
             'suppliers' => ['phone' => __('Phone'), 'bin' => __('BIN')],
             'routes' => ['code' => __('Code')],
             'sales-reps' => ['phone' => __('Phone'), 'user_id' => __('Linked user')],
@@ -167,6 +169,17 @@ class DirectoryController extends Controller
     private function meta(string $kind): array
     {
         return match ($kind) {
+            'brands' => [
+                'model' => Brand::class,
+                'title' => __('Brands'),
+                'add' => __('Add brand'),
+                'edit' => __('Edit brand'),
+                'empty' => __('No brands match.'),
+                'search_label' => __('Search brand name'),
+                'order' => 'name',
+                'search' => ['name'],
+                'columns' => ['name' => __('Brand')],
+            ],
             'suppliers' => [
                 'model' => Supplier::class,
                 'title' => __('Suppliers'),
@@ -225,6 +238,12 @@ class DirectoryController extends Controller
         $phone = ['name' => 'phone', 'label' => __('Phone'), 'type' => 'tel', 'max' => 20];
 
         return match ($kind) {
+            'brands' => [[
+                'name' => 'name',
+                'label' => __('Brand'),
+                'required' => true,
+                'max' => 80,
+            ]],
             'suppliers' => [
                 $code,
                 $name,
@@ -261,6 +280,9 @@ class DirectoryController extends Controller
         $unique = fn (string $table, string $column) => ['nullable', 'string', 'max:40', Rule::unique($table, $column)->ignore($row?->getKey())];
 
         $rules = match ($kind) {
+            'brands' => [
+                'name' => ['required', 'string', 'max:80', Rule::unique('brands', 'name')->ignore($row?->getKey())],
+            ],
             'suppliers' => [
                 'code' => $unique('suppliers', 'code'),
                 'name' => ['required', 'string', 'max:191'],
@@ -306,6 +328,7 @@ class DirectoryController extends Controller
         $name = $this->label($row);
 
         return match ($kind) {
+            'brands' => __('Brand :name was saved.', ['name' => $name]),
             'suppliers' => __('Supplier :name was saved.', ['name' => $name]),
             'routes' => __('Route :name was saved.', ['name' => $name]),
             'sales-reps' => __('Sales rep :name was saved.', ['name' => $name]),
@@ -319,6 +342,7 @@ class DirectoryController extends Controller
         $name = $this->label($row);
 
         return match ($kind) {
+            'brands' => __('Brand :name was deactivated.', ['name' => $name]),
             'suppliers' => __('Supplier :name was deactivated.', ['name' => $name]),
             'routes' => __('Route :name was deactivated.', ['name' => $name]),
             'sales-reps' => __('Sales rep :name was deactivated.', ['name' => $name]),
@@ -332,6 +356,7 @@ class DirectoryController extends Controller
         $name = $this->label($row);
 
         return match ($kind) {
+            'brands' => __('Brand :name can be used again.', ['name' => $name]),
             'suppliers' => __('Supplier :name can be used again.', ['name' => $name]),
             'routes' => __('Route :name can be used again.', ['name' => $name]),
             'sales-reps' => __('Sales rep :name can be used again.', ['name' => $name]),

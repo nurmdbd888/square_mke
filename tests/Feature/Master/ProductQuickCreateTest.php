@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Master;
 
+use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,6 +14,7 @@ class ProductQuickCreateTest extends TestCase
     public function test_document_forms_offer_product_quick_create_to_product_managers(): void
     {
         $owner = $this->owner();
+        Brand::query()->create(['name' => 'Quick Brand']);
 
         foreach (['sales.create', 'purchases.create'] as $route) {
             $this->actingAs($owner)->get(route($route))
@@ -20,6 +22,8 @@ class ProductQuickCreateTest extends TestCase
                 ->assertSee('data-testid="product-search-empty"', false)
                 ->assertSee('data-testid="product-quick-add"', false)
                 ->assertSee('data-testid="product-quick-add-dialog"', false)
+                ->assertSee('data-testid="quick-add-brand"', false)
+                ->assertSee('Quick Brand', false)
                 ->assertSee('productCreateUrl', false)
                 ->assertSee(__('The product will be available in sales, purchases and stock.'), false);
         }
@@ -28,6 +32,7 @@ class ProductQuickCreateTest extends TestCase
     public function test_json_product_store_creates_a_shared_product_and_returns_catalog_data(): void
     {
         $owner = $this->owner();
+        Brand::query()->create(['name' => 'Quick Brand']);
 
         $response = $this->actingAs($owner)
             ->postJson(route('products.store'), [

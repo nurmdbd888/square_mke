@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="text-2xl font-semibold text-slate-900">{{ __('Masters') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('Suppliers, routes, sales reps, vehicles, price lists, opening balances and custom fields.') }}</p>
+    <p class="mt-1 text-sm text-slate-600">{{ __('Brands, suppliers, routes, sales reps, vehicles, price lists, opening balances and custom fields.') }}</p>
 
     <ul class="mt-6 grid gap-3 sm:grid-cols-2">
         @foreach ($links as $link)

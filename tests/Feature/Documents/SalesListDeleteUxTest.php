@@ -54,6 +54,8 @@ class SalesListDeleteUxTest extends TestCase
             ->assertOk()
             ->assertSee('data-testid="back-link"', false)
             ->assertSee(__('Back to sales'), false)
+            ->assertSee('href="'.route('sales.create').'"', false)
+            ->assertSee(__('Add sale'), false)
             ->assertSee('btn-secondary', false)
             ->assertDontSee('text-sm text-brand-700 underline">'.__('Back to sales'), false);
     }

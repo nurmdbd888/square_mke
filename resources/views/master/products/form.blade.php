@@ -29,7 +29,15 @@
                 </label>
                 <label class="block">
                     <span class="label">{{ __('Brand') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
-                    <input type="text" name="brand" value="{{ old('brand', $product->brand) }}" maxlength="80" class="input">
+                    <select name="brand" class="input">
+                        <option value="">{{ __('None') }}</option>
+                        @if ($product->brand && ! $brands->contains($product->brand))
+                            <option value="{{ $product->brand }}" @selected(old('brand', $product->brand) === $product->brand)>{{ $product->brand }} ({{ __('Deactivated') }})</option>
+                        @endif
+                        @foreach ($brands as $brand)
+                            <option value="{{ $brand }}" @selected(old('brand', $product->brand) === $brand)>{{ $brand }}</option>
+                        @endforeach
+                    </select>
                 </label>
                 <label class="block sm:col-span-2">
                     <span class="label">{{ __('Name') }}</span>
