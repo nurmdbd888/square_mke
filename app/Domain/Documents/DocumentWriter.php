@@ -52,6 +52,11 @@ final class DocumentWriter
             if ($existing !== null && $existing->isVoid()) {
                 throw ValidationException::withMessages(['status' => __('A void document cannot be edited.')]);
             }
+            if ($existing?->purchase_order_id !== null) {
+                throw ValidationException::withMessages([
+                    'status' => __('This purchase invoice was created from a posted delivery and cannot be edited here.'),
+                ]);
+            }
 
             $wasPosted = $existing?->isPosted() ?? false;
             $oldDate = $existing?->doc_date?->toDateString();
@@ -229,6 +234,11 @@ final class DocumentWriter
     {
         if ($document->isVoid()) {
             return $document;
+        }
+        if ($document->purchase_order_id !== null) {
+            throw ValidationException::withMessages([
+                'status' => __('A purchase invoice created from an order cannot be voided separately.'),
+            ]);
         }
 
         if ($document->isDraft()) {

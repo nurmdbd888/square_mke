@@ -205,11 +205,12 @@ class PaymentController extends Controller
 
     public function show(Payment $payment): View
     {
-        $payment->load(['allocations.document', 'retailer', 'supplier', 'expenseCategory', 'salesRep', 'attachments']);
+        $payment->load(['allocations.document', 'retailer', 'supplier', 'expenseCategory', 'salesRep', 'attachments', 'purchaseOrders']);
         $user = request()->user();
 
         return view('payments.show', [
             'payment' => $payment,
+            'isPurchaseOrderPayment' => $payment->purchaseOrders->isNotEmpty(),
             'canManage' => PaymentAccess::canManage($user),
             'canDelete' => PaymentAccess::canDelete($user),
             'canWrite' => $payment->isReceipt()
@@ -221,6 +222,7 @@ class PaymentController extends Controller
     public function edit(Payment $payment): View
     {
         abort_if($payment->isVoid(), 404);
+        abort_if($payment->purchaseOrders()->exists(), 403);
         abort_unless(
             $payment->isReceipt()
                 ? PaymentAccess::canWriteReceipt(request()->user(), $payment)
@@ -235,6 +237,7 @@ class PaymentController extends Controller
     public function update(Request $request, Payment $payment): RedirectResponse
     {
         abort_if($payment->isVoid(), 404);
+        abort_if($payment->purchaseOrders()->exists(), 403);
         $data = $this->validated($request, $payment);
         $this->assertCanWriteHeader($request, $data['header'], $payment);
         $payment = $this->writer->save($data['header'], $data['allocations'], $request->user(), $payment);

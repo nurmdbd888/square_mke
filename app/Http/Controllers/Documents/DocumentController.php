@@ -149,7 +149,7 @@ class DocumentController extends Controller
     {
         $this->assertRouteMatches($request, $document);
         $this->authorizeView($request, $document->type);
-        $document->load(['lines.product', 'supplier', 'retailer', 'salesRep', 'route', 'vehicle', 'attachments']);
+        $document->load(['lines.product', 'supplier', 'retailer', 'salesRep', 'route', 'vehicle', 'attachments', 'purchaseOrder']);
 
         return view('documents.show', [
             'document' => $document,
@@ -164,6 +164,7 @@ class DocumentController extends Controller
         $this->assertRouteMatches($request, $document);
         $this->authorizeManage($request, $document->type);
         abort_if($document->isVoid(), 404);
+        abort_if($document->purchase_order_id !== null, 404);
         $document->load(['lines.product', 'attachments']);
 
         return view('documents.form', $this->formData($document->type, $document));
