@@ -50,6 +50,16 @@
                 <option value="void" @selected(($filters['status'] ?? '') === 'void')>{{ __('Void') }}</option>
             </select>
         </label>
+        @if ($type === 'sale')
+            <label class="block">
+                <span class="label">{{ __('From date') }}</span>
+                <x-date-input name="from" :value="$filters['from'] ?? ''" />
+            </label>
+            <label class="block">
+                <span class="label">{{ __('To date') }}</span>
+                <x-date-input name="to" :value="$filters['to'] ?? ''" />
+            </label>
+        @endif
         <button type="submit" class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 

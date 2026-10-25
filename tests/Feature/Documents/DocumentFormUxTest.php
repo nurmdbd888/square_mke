@@ -30,6 +30,21 @@ class DocumentFormUxTest extends TestCase
         }
     }
 
+    public function test_invoice_forms_check_invoice_numbers_as_they_are_entered(): void
+    {
+        $owner = $this->owner();
+
+        $this->actingAs($owner)->get(route('sales.create'))
+            ->assertOk()
+            ->assertSee('name="number"', false)
+            ->assertSee('x-ref="invoiceNumber"', false)
+            ->assertSee('@input="invoiceNumberChanged()"', false)
+            ->assertSee('@blur="checkInvoiceNumber(true)"', false)
+            ->assertSee('@submit="validateInvoiceBeforeSubmit($event)"', false)
+            ->assertSee('numberCheckUrl', false)
+            ->assertSee('check-number', false);
+    }
+
     public function test_print_line_tables_use_sl_no_heading(): void
     {
         $this->assertStringContainsString(

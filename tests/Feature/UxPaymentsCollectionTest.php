@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Domain\Documents\DocumentWriter;
+use App\Domain\Payments\SaleCollectionStatus;
 use App\Models\Document;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Retailer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,7 +70,7 @@ class UxPaymentsCollectionTest extends TestCase
         $this->assertSame(Document::COLLECTION_COMPLETED, $invoice->fresh()->collection_status);
     }
 
-    public function test_collections_page_shows_summary_overdue_and_collect_deep_link(): void
+    public function test_collections_page_lists_only_due_invoices_and_opens_compact_collection_form(): void
     {
         $invoice = $this->postedSale(); // doc_date 2026-10-01
         $this->travelTo(now()->parse('2026-11-05')); // > 30 days past invoice date
@@ -78,10 +80,11 @@ class UxPaymentsCollectionTest extends TestCase
         $html = $this->actingAs($collector)
             ->get(route('collector.index'))
             ->assertOk()
-            ->assertSee('data-testid="collector-daily-summary"', false)
             ->assertSee('data-testid="collector-filters"', false)
             ->assertSee(__('Overdue'), false)
-            ->assertSee('document_id='.$invoice->id, false)
+            ->assertSee(route('collector.show', $invoice), false)
+            ->assertDontSee(__('Ready to confirm'), false)
+            ->assertDontSee(__('View receipts'), false)
             ->getContent();
 
         $this->assertStringContainsString('collector-overdue-badge', $html);
@@ -90,6 +93,33 @@ class UxPaymentsCollectionTest extends TestCase
             ->get(route('collector.index', ['overdue' => 1, 'status' => 'due']))
             ->assertOk()
             ->assertSee($invoice->number, false);
+
+        $this->actingAs($collector)
+            ->get(route('collector.show', $invoice))
+            ->assertOk()
+            ->assertSee('data-testid="collection-invoice-details"', false)
+            ->assertSee('data-testid="collection-payment-form"', false)
+            ->assertSee('name="amount"', false)
+            ->assertSee('data-testid="collection-balance-due"', false)
+            ->assertSee('data-testid="collection-balance-after"', false)
+            ->assertDontSee('name="allocations[', false)
+            ->assertDontSee('name="method"', false);
+
+        $this->actingAs($collector)
+            ->post(route('collector.store', $invoice), ['amount' => '275'])
+            ->assertRedirect(route('payments.show', Payment::query()->first()))
+            ->assertSessionHas('status', fn ($status) => str_contains($status, 'Receipt '));
+
+        $receipt = Payment::query()->sole();
+        $this->assertSame(Payment::KIND_RECEIPT, $receipt->kind);
+        $this->assertTrue($receipt->isPosted());
+        $this->assertSame('275.00', $receipt->amount);
+        $this->actingAs($collector)
+            ->get(route('payments.show', $receipt))
+            ->assertOk()
+            ->assertSee($receipt->number, false)
+            ->assertSee('href="'.route('collector.index').'"', false);
+        $this->assertSame('725.00', (string) app(SaleCollectionStatus::class)->remainingAmount($invoice->fresh()));
     }
 
     public function test_open_invoices_htmx_with_retailer_id(): void

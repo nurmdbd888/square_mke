@@ -170,6 +170,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/purchases', [DocumentController::class, 'index'])->middleware('can:purchases.view')->defaults('type', 'purchase')->name('purchases.index');
         Route::get('/purchases/create', [DocumentController::class, 'create'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.create');
         Route::post('/purchases', [DocumentController::class, 'store'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.store');
+        Route::get('/purchases/check-number', [DocumentController::class, 'checkNumber'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->name('purchases.number-check');
+        Route::get('/purchases/{documentId}/check-number', [DocumentController::class, 'checkNumber'])->middleware('can:purchases.manage')->defaults('type', 'purchase')->whereNumber('documentId')->name('purchases.documents.number-check');
         // Bulk before /{document}; whereNumber so "bulk" never binds as a document id.
         // Separate GET (redirect) + POST (action) so a stale POST-only route cache cannot 405 GETs.
         Route::get('/purchases/bulk', [DocumentController::class, 'bulkRedirect'])
@@ -188,6 +190,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/sales', [DocumentController::class, 'index'])->middleware('can:sales.view')->defaults('type', 'sale')->name('sales.index');
         Route::get('/sales/create', [DocumentController::class, 'create'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.create');
         Route::post('/sales', [DocumentController::class, 'store'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.store');
+        Route::get('/sales/check-number', [DocumentController::class, 'checkNumber'])->middleware('can:sales.manage')->defaults('type', 'sale')->name('sales.number-check');
+        Route::get('/sales/{documentId}/check-number', [DocumentController::class, 'checkNumber'])->middleware('can:sales.manage')->defaults('type', 'sale')->whereNumber('documentId')->name('sales.documents.number-check');
         Route::post('/sales/sync-draft', SalesDraftSyncController::class)->middleware('can:sales.manage')->name('sales.sync-draft');
         Route::get('/sales/bulk', [DocumentController::class, 'bulkRedirect'])
             ->defaults('type', 'sale')
@@ -236,6 +240,14 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::delete('/claims/{claim}', [ClaimController::class, 'destroy'])->middleware('can:claims.delete')->name('claims.destroy');
 
         Route::get('/collections', [CollectorController::class, 'index'])->middleware('can:payments.collect')->name('collector.index');
+        Route::get('/collections/{document}', [CollectorController::class, 'show'])
+            ->middleware('can:payments.collect')
+            ->whereNumber('document')
+            ->name('collector.show');
+        Route::post('/collections/{document}', [CollectorController::class, 'store'])
+            ->middleware('can:payments.collect')
+            ->whereNumber('document')
+            ->name('collector.store');
         Route::post('/sales/{document}/collection/confirm', [CollectorController::class, 'confirm'])
             ->middleware('can:payments.collect')
             ->name('sales.collection.confirm');

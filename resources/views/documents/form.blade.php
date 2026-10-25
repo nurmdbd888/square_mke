@@ -9,6 +9,12 @@
     $action = $document->exists
         ? route($isPurchase ? 'purchases.update' : 'sales.update', $document)
         : route($isPurchase ? 'purchases.store' : 'sales.store');
+    $numberCheckRoute = $isPurchase
+        ? ($document->exists ? 'purchases.documents.number-check' : 'purchases.number-check')
+        : ($document->exists ? 'sales.documents.number-check' : 'sales.number-check');
+    $numberCheckUrl = $document->exists
+        ? route($numberCheckRoute, $document)
+        : route($numberCheckRoute);
     $oldLines = old('lines');
     if ($oldLines === null) {
         $oldLines = $document->lines->map(fn ($l) => [
@@ -78,6 +84,9 @@
             'tds_amount' => old('tds_amount', $document->tds_amount ?? '0'),
             'rounding_adjustment' => old('rounding_adjustment', $document->rounding_adjustment ?? '0'),
         ]) }}, {{ Js::from([
+            'numberCheckUrl' => $numberCheckUrl,
+            'numberDuplicateMessage' => __('A non-void document with this number already exists.'),
+            'numberCheckErrorMessage' => __('Could not verify this invoice number right now. The server will check it again when you save.'),
             'productCreateUrl' => auth()->user()->can('products.manage') ? route('products.store') : null,
             'csrfToken' => csrf_token(),
             'brands' => $brands,
@@ -90,6 +99,7 @@
             data-synced-label="{{ __('Offline drafts synced.') }}"
             data-sync-error-label="{{ __('Some drafts could not sync yet.') }}"
         @endunless
+        @submit="validateInvoiceBeforeSubmit($event)"
     >
         @csrf
         @if ($document->exists)
@@ -99,7 +109,21 @@
         <section class="card grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label class="block">
                 <span class="label">{{ __('Invoice number') }}</span>
-                <input type="text" name="number" value="{{ old('number', $document->number) }}" required maxlength="80" class="input font-mono">
+                <input
+                    type="text"
+                    name="number"
+                    value="{{ old('number', $document->number) }}"
+                    required
+                    maxlength="80"
+                    class="input font-mono"
+                    x-ref="invoiceNumber"
+                    @input="invoiceNumberChanged()"
+                    @blur="checkInvoiceNumber(true)"
+                    :aria-invalid="invoiceDuplicate ? 'true' : 'false'"
+                >
+                <p x-cloak x-show="invoiceChecking" class="mt-1 text-xs text-slate-500">{{ __('Checking invoice number…') }}</p>
+                <p x-cloak x-show="invoiceDuplicate" class="mt-1 text-sm font-medium text-red-700" role="alert" x-text="invoiceDuplicateMessage"></p>
+                <p x-cloak x-show="invoiceCheckError" class="mt-1 text-xs text-amber-800" x-text="invoiceCheckError"></p>
             </label>
             <x-party-code-picker
                 :name="$isPurchase ? 'supplier_id' : 'retailer_id'"
@@ -523,6 +547,18 @@
                 masterBrands,
                 productCreateUrl: productOptions.productCreateUrl || '',
                 csrfToken: productOptions.csrfToken || '',
+                numberCheckUrl: productOptions.numberCheckUrl || '',
+                invoiceDuplicateMessage: productOptions.numberDuplicateMessage || '',
+                invoiceCheckErrorMessage: productOptions.numberCheckErrorMessage || '',
+                invoiceChecking: false,
+                invoiceDuplicate: false,
+                invoiceCheckError: '',
+                invoiceCheckedNumber: null,
+                invoiceAlertedNumber: null,
+                invoiceCheckTimer: null,
+                invoiceCheckController: null,
+                invoiceCheckSequence: 0,
+                invoiceSubmitReplay: false,
                 productCreateOpen: false,
                 productCreating: false,
                 productCreateError: '',
@@ -533,6 +569,95 @@
                 tds_amount: String(adj.tds_amount ?? '0'),
                 rounding_adjustment: String(adj.rounding_adjustment ?? '0'),
                 lineAddKind: 'normal',
+                invoiceNumberChanged() {
+                    const number = this.$refs.invoiceNumber.value;
+                    this.invoiceDuplicate = false;
+                    this.invoiceCheckError = '';
+                    this.invoiceCheckedNumber = null;
+                    if (this.invoiceAlertedNumber !== number) {
+                        this.invoiceAlertedNumber = null;
+                    }
+                    clearTimeout(this.invoiceCheckTimer);
+                    if (!number) {
+                        this.invoiceChecking = false;
+                        return;
+                    }
+                    this.invoiceChecking = true;
+                    this.invoiceCheckTimer = setTimeout(() => this.checkInvoiceNumber(true), 300);
+                },
+                async checkInvoiceNumber(showPopup = false) {
+                    clearTimeout(this.invoiceCheckTimer);
+                    const number = this.$refs.invoiceNumber.value;
+                    if (number.trim() === '') {
+                        this.invoiceChecking = false;
+                        this.invoiceDuplicate = false;
+                        return true;
+                    }
+                    if (this.invoiceCheckedNumber === number) {
+                        return !this.invoiceDuplicate;
+                    }
+
+                    this.invoiceCheckController?.abort();
+                    const controller = new AbortController();
+                    this.invoiceCheckController = controller;
+                    const sequence = ++this.invoiceCheckSequence;
+                    this.invoiceChecking = true;
+                    this.invoiceCheckError = '';
+                    try {
+                        const url = new URL(this.numberCheckUrl, window.location.href);
+                        url.searchParams.set('number', number);
+                        const response = await fetch(url, {
+                            headers: { Accept: 'application/json' },
+                            credentials: 'same-origin',
+                            signal: controller.signal,
+                        });
+                        if (!response.ok) {
+                            throw new Error('Invoice number check failed.');
+                        }
+                        const result = await response.json();
+                        if (sequence !== this.invoiceCheckSequence || number !== this.$refs.invoiceNumber.value) {
+                            return false;
+                        }
+                        this.invoiceCheckedNumber = number;
+                        this.invoiceDuplicate = result.duplicate === true;
+                        if (this.invoiceDuplicate && showPopup && this.invoiceAlertedNumber !== number) {
+                            this.invoiceAlertedNumber = number;
+                            window.alert(result.message || this.invoiceDuplicateMessage);
+                        }
+                        return !this.invoiceDuplicate;
+                    } catch (error) {
+                        if (error.name === 'AbortError') {
+                            return false;
+                        }
+                        if (sequence === this.invoiceCheckSequence) {
+                            this.invoiceDuplicate = false;
+                            this.invoiceCheckError = this.invoiceCheckErrorMessage;
+                        }
+                        return true;
+                    } finally {
+                        if (sequence === this.invoiceCheckSequence) {
+                            this.invoiceChecking = false;
+                        }
+                    }
+                },
+                async validateInvoiceBeforeSubmit(event) {
+                    if (this.invoiceSubmitReplay) {
+                        this.invoiceSubmitReplay = false;
+                        return;
+                    }
+                    event.preventDefault();
+                    const isAvailable = await this.checkInvoiceNumber(true);
+                    if (!isAvailable || !this.$el.checkValidity()) {
+                        this.$el.reportValidity();
+                        return;
+                    }
+                    this.invoiceSubmitReplay = true;
+                    if (event.submitter) {
+                        this.$el.requestSubmit(event.submitter);
+                    } else {
+                        this.$el.requestSubmit();
+                    }
+                },
                 brandFilter: '',
                 productQuery: '',
                 productOpen: false,

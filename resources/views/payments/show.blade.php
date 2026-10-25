@@ -3,7 +3,9 @@
 @section('title', $payment->number)
 
 @section('content')
-    <x-back-link :href="route('payments.index')">{{ __('Back to payments') }}</x-back-link>
+    <x-back-link :href="route($payment->isReceipt() ? 'collector.index' : 'payments.index')">
+        {{ $payment->isReceipt() ? __('Back to Collections') : __('Back to payments') }}
+    </x-back-link>
 
     <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>

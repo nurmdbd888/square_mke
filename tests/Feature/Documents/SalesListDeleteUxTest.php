@@ -36,6 +36,49 @@ class SalesListDeleteUxTest extends TestCase
             ->assertDontSee('data-testid="documents-bulk-delete"', false);
     }
 
+    public function test_sales_index_can_filter_documents_by_an_inclusive_date_range(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Shop']);
+
+        foreach ([
+            ['S-BEFORE', '2026-10-23'],
+            ['S-FROM', '2026-10-24'],
+            ['S-TO', '2026-10-25'],
+            ['S-AFTER', '2026-10-26'],
+        ] as [$number, $date]) {
+            Document::query()->create([
+                'type' => Document::TYPE_SALE,
+                'number' => $number,
+                'retailer_id' => $retailer->id,
+                'doc_date' => $date,
+                'status' => Document::STATUS_DRAFT,
+                'subtotal' => '10',
+                'net_total' => '10',
+            ]);
+        }
+
+        $this->actingAs($owner)
+            ->get(route('sales.index', ['from' => '2026-10-24', 'to' => '2026-10-25']))
+            ->assertOk()
+            ->assertSee('S-FROM', false)
+            ->assertSee('S-TO', false)
+            ->assertDontSee('S-BEFORE', false)
+            ->assertDontSee('S-AFTER', false)
+            ->assertSee('data-testid="date-input-from"', false)
+            ->assertSee('data-testid="date-input-to"', false);
+    }
+
+    public function test_sales_index_rejects_a_date_range_with_end_before_start(): void
+    {
+        $owner = $this->owner();
+
+        $this->actingAs($owner)
+            ->get(route('sales.index', ['from' => '2026-10-25', 'to' => '2026-10-24']))
+            ->assertRedirect()
+            ->assertSessionHasErrors('to');
+    }
+
     public function test_sale_show_uses_back_link_button(): void
     {
         $owner = $this->owner();

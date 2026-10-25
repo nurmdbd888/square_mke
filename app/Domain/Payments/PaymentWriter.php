@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -48,9 +49,14 @@ final class PaymentWriter
                 throw ValidationException::withMessages(['amount' => __('Amount must be greater than zero.')]);
             }
 
+            $number = trim((string) ($header['number'] ?? ''));
+            if ($kind === Payment::KIND_RECEIPT && $number === '') {
+                $number = $this->generateReceiptNumber();
+            }
+
             $payment->fill([
                 'kind' => $kind,
-                'number' => trim((string) $header['number']),
+                'number' => $number,
                 'retailer_id' => $kind === Payment::KIND_RECEIPT ? ($header['retailer_id'] ?? null) : null,
                 'supplier_id' => $kind === Payment::KIND_PAYMENT ? ($header['supplier_id'] ?? null) : null,
                 'method' => $method,
@@ -188,6 +194,18 @@ final class PaymentWriter
         Document::query()->whereIn('id', $documentIds)->each(function (Document $document) {
             $this->collectionStatus->sync($document);
         });
+    }
+
+    private function generateReceiptNumber(): string
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $number = 'RC-'.now()->format('Ymd').'-'.Str::upper(Str::random(8));
+            if (! Payment::withTrashed()->where('number', $number)->exists()) {
+                return $number;
+            }
+        }
+
+        throw new \RuntimeException('Unable to generate a unique receipt number.');
     }
 
     public function clearPdc(Payment $payment, ?User $by = null, ?string $clearedOn = null): Payment
