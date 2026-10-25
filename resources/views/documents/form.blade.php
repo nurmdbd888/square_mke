@@ -80,6 +80,7 @@
         ]) }}, {{ Js::from([
             'productCreateUrl' => auth()->user()->can('products.manage') ? route('products.store') : null,
             'csrfToken' => csrf_token(),
+            'brands' => $brands,
         ]) }})"
         @unless($isPurchase)
             data-offline-sales
@@ -268,7 +269,12 @@
                                         </label>
                                         <label class="block">
                                             <span class="label">{{ __('Brand') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
-                                            <input type="text" class="input" x-model="newProduct.brand" maxlength="80">
+                                            <select class="input" x-model="newProduct.brand" data-testid="quick-add-brand">
+                                                <option value="">{{ __('None') }}</option>
+                                                <template x-for="brand in masterBrands" :key="brand">
+                                                    <option :value="brand" x-text="brand"></option>
+                                                </template>
+                                            </select>
                                         </label>
                                         <label class="block">
                                             <span class="label">{{ __('Unit') }}</span>
@@ -346,6 +352,9 @@
                                             <input type="hidden" :name="`lines[${index}][sd_amount]`" x-model="line.sd_amount">
                                             <input type="hidden" :name="`lines[${index}][vat_amount]`" x-model="line.vat_amount">
                                             <span class="font-medium text-slate-900" x-text="productLabel(line.product_id)"></span>
+                                            <span x-show="productPackSize(line.product_id)" class="block text-xs text-slate-600">
+                                                {{ __('Pack') }}: <span x-text="productPackSize(line.product_id)"></span>
+                                            </span>
                                             <span x-show="line.kind === 'combo_bonus'" class="ml-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">{{ __('Combo bonus') }}</span>
                                             <button type="button" class="mt-1 block text-xs text-brand-700 underline" @click="line.showTax = !line.showTax" x-text="line.showTax ? '{{ __('Hide tax & bonus') }}' : '{{ __('Tax & bonus') }}'"></button>
                                         </td>
@@ -476,6 +485,7 @@
             const isPurchase = @json($isPurchase);
             const adj = adjustments || {};
             const productOptions = options || {};
+            const masterBrands = productOptions.brands || [];
             const priceInput = (value) => {
                 if (value === null || value === undefined || value === '') {
                     return '';
@@ -510,6 +520,7 @@
             return {
                 lines,
                 catalog: catalog || [],
+                masterBrands,
                 productCreateUrl: productOptions.productCreateUrl || '',
                 csrfToken: productOptions.csrfToken || '',
                 productCreateOpen: false,
@@ -566,7 +577,7 @@
                     return this.money(Math.round(payable * 100) / 100);
                 },
                 get brandOptions() {
-                    const brands = new Set();
+                    const brands = new Set(this.masterBrands);
                     this.catalog.forEach((product) => {
                         if (product.brand) {
                             brands.add(product.brand);
@@ -603,6 +614,9 @@
                     }
 
                     return (product.code ? product.code + ' · ' : '') + product.name;
+                },
+                productPackSize(productId) {
+                    return this.catalog.find((row) => String(row.id) === String(productId))?.pack_size || '';
                 },
                 emptyProduct() {
                     return emptyProduct();

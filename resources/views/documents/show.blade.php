@@ -38,6 +38,9 @@
         @if (! $document->isVoid())
             <div class="flex flex-wrap gap-2">
                 @if ($document->isSale())
+                    @if ($canManage)
+                        <a href="{{ route('sales.create') }}" class="btn-primary px-3 py-1.5 text-xs">{{ __('Add sale') }}</a>
+                    @endif
                     <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a5']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print invoice (A5)') }}</a>
                     <a href="{{ route('sales.print.invoice', [$document, 'size' => 'a4']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print invoice (A4)') }}</a>
                     <a href="{{ route('sales.print.challan', [$document, 'size' => 'a5']) }}" class="btn-secondary px-3 py-1.5 text-xs" target="_blank" rel="noopener">{{ __('Print challan') }}</a>
@@ -107,6 +110,9 @@
                         <td>{{ $line->line_no }}</td>
                         <td>
                             <span class="font-medium">{{ $line->product?->name_en }}</span>
+                            @if ($line->product?->pack_size)
+                                <span class="block text-xs text-slate-600">{{ __('Pack') }}: {{ $line->product->pack_size }}</span>
+                            @endif
                             @if ($line->product?->code)
                                 <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>
                             @endif
@@ -146,6 +152,9 @@
                             <td>{{ $i + 1 }}</td>
                             <td>
                                 <span class="font-medium">{{ $line->product?->name_en }}</span>
+                                @if ($line->product?->pack_size)
+                                    <span class="block text-xs text-slate-600">{{ __('Pack') }}: {{ $line->product->pack_size }}</span>
+                                @endif
                                 <span class="ml-2 rounded bg-amber-100 px-1.5 text-xs text-amber-900">{{ __('Combo bonus') }}</span>
                                 @if ($line->product?->code)
                                     <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>

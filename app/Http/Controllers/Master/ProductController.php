@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\CustomField;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +51,7 @@ class ProductController extends Controller
         return view('master.products.form', [
             'product' => new Product(['unit' => 'Pcs', 'vat_pct' => '15', 'sd_pct' => '0']),
             'fields' => CustomField::query()->where('entity', 'product')->orderBy('sort')->get(),
+            'brands' => Brand::query()->orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -92,6 +94,7 @@ class ProductController extends Controller
         return view('master.products.form', [
             'product' => $product,
             'fields' => CustomField::query()->where('entity', 'product')->orderBy('sort')->get(),
+            'brands' => Brand::query()->orderBy('name')->pluck('name'),
         ]);
     }
 

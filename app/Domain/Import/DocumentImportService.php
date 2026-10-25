@@ -224,7 +224,7 @@ final class DocumentImportService
                 $headerWarnings = array_merge($headerWarnings, $invoiceWarnings);
 
                 if ($this->findDuplicateDocument($batch->doc_type, $header) !== null) {
-                    $invoiceErrors[] = __('A document with this number, party and total already exists.');
+                    $invoiceErrors[] = __('A non-void document with this number already exists.');
                 }
 
                 $invoice = DocumentImportInvoice::query()->create([
@@ -426,7 +426,7 @@ final class DocumentImportService
         }
 
         $duplicate = $this->findDuplicateDocument($batch->doc_type, $header);
-        $errors = $duplicate === null ? [] : [__('A document with this number, party and total already exists.')];
+        $errors = $duplicate === null ? [] : [__('A non-void document with this number already exists.')];
         $warnings = $this->partyWarnings($batch->doc_type, $header);
         $invoice->update([
             'invoice_no' => $header['invoice_no'],

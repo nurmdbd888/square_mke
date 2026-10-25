@@ -107,6 +107,29 @@ class CostingEngineTest extends TestCase
         ], [['product_id' => $product->id, 'qty' => '1', 'unit_price' => '10', 'line_value' => '10']], $owner);
     }
 
+    public function test_sale_invoice_number_cannot_be_reused_for_another_retailer_or_total(): void
+    {
+        $owner = $this->owner();
+        $product = Product::query()->create(['name_en' => 'Item', 'unit' => 'Pcs']);
+        $firstRetailer = Retailer::query()->create(['name' => 'First Shop']);
+        $secondRetailer = Retailer::query()->create(['name' => 'Second Shop']);
+        $writer = app(DocumentWriter::class);
+
+        $writer->save('sale', [
+            'number' => 'SALE-UNIQUE-1', 'retailer_id' => $firstRetailer->id, 'doc_date' => '2026-10-01', 'action' => 'post',
+        ], [['product_id' => $product->id, 'qty' => '1', 'unit_price' => '10', 'line_value' => '10']], $owner);
+
+        try {
+            $writer->save('sale', [
+                'number' => 'SALE-UNIQUE-1', 'retailer_id' => $secondRetailer->id, 'doc_date' => '2026-10-02', 'action' => 'save',
+            ], [['product_id' => $product->id, 'qty' => '2', 'unit_price' => '10', 'line_value' => '20']], $owner);
+            $this->fail('A duplicate sale invoice number should be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('number', $exception->errors());
+            $this->assertSame(__('A non-void document with this number already exists.'), $exception->errors()['number'][0]);
+        }
+    }
+
     public function test_editing_posted_document_writes_audit_and_recomputes(): void
     {
         $owner = $this->owner();

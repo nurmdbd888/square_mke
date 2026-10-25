@@ -60,6 +60,8 @@ class DocumentFormUxTest extends TestCase
             ->assertSee('\u0022sell\u0022:\u002212.35\u0022', false)
             ->assertSee('\u0022pack_size\u0022:\u0022250 ml\u0022', false)
             ->assertSee('unit_price: priceInput(line.unit_price)', false)
+            ->assertSee('productPackSize(line.product_id)', false)
+            ->assertSee(__('Pack').': <span x-text="productPackSize(line.product_id)"></span>', false)
             ->assertSee('min-w-[58rem] table-fixed', false)
             ->assertSee('w-[28%] min-w-[16rem]', false)
             ->assertSee(__('Pack size').': <span x-text="product.pack_size"></span>', false);
