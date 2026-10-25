@@ -43,15 +43,17 @@ final class PartyBalance
         $date = ($asOf === null ? now() : Carbon::parse($asOf))->toDateString();
         $type = $party === 'retailer' ? Document::TYPE_SALE : Document::TYPE_PURCHASE;
         $column = $party === 'retailer' ? 'retailer_id' : 'supplier_id';
+        $relation = $party === 'retailer' ? 'retailer' : 'supplier';
 
         $docs = Document::query()
             ->where('type', $type)
             ->where($column, $partyId)
             ->where('status', Document::STATUS_POSTED)
             ->whereDate('doc_date', '<=', $date)
+            ->with($relation)
             ->orderBy('doc_date')
             ->orderBy('id')
-            ->get(['id', 'number', 'doc_date', 'net_total']);
+            ->get(['id', 'number', 'doc_date', 'net_total', $column]);
 
         $allocated = PaymentAllocation::query()
             ->whereIn('document_id', $docs->pluck('id'))
@@ -72,7 +74,7 @@ final class PartyBalance
             ->groupBy('document_id')
             ->pluck('total', 'document_id');
 
-        return $docs->map(function (Document $doc) use ($allocated) {
+        return $docs->map(function (Document $doc) use ($allocated, $column, $relation) {
             $paid = Exact::of($allocated[$doc->id] ?? 0);
             $net = Exact::of($doc->net_total);
             $remaining = $net->minus($paid);
@@ -87,6 +89,70 @@ final class PartyBalance
                 'net_total' => Exact::money($net),
                 'allocated' => Exact::money($paid),
                 'remaining' => Exact::money($remaining),
+                'party_id' => (int) $doc->{$column},
+                'party_name' => (string) ($doc->{$relation}?->name ?? ''),
+            ];
+        })->filter()->values();
+    }
+
+    /**
+     * Open invoices for every party of a given type.
+     *
+     * @return Collection<int, object{document_id: int, number: string, doc_date: string, net_total: string, allocated: string, remaining: string, party_id: int, party_name: string}>
+     */
+    public function openInvoicesForAll(string $party, CarbonInterface|string|null $asOf = null): Collection
+    {
+        $date = ($asOf === null ? now() : Carbon::parse($asOf))->toDateString();
+        $type = $party === 'retailer' ? Document::TYPE_SALE : Document::TYPE_PURCHASE;
+        $column = $party === 'retailer' ? 'retailer_id' : 'supplier_id';
+        $relation = $party === 'retailer' ? 'retailer' : 'supplier';
+
+        $docs = Document::query()
+            ->where('type', $type)
+            ->where('status', Document::STATUS_POSTED)
+            ->whereNotNull($column)
+            ->whereDate('doc_date', '<=', $date)
+            ->with($relation)
+            ->orderBy('doc_date')
+            ->orderBy('id')
+            ->get(['id', 'number', 'doc_date', 'net_total', $column]);
+
+        $allocated = PaymentAllocation::query()
+            ->whereIn('document_id', $docs->pluck('id'))
+            ->whereHas('payment', function ($q) use ($date) {
+                $q->where('status', Payment::STATUS_POSTED)
+                    ->where(function ($w) use ($date) {
+                        $w->where(function ($pdc) use ($date) {
+                            $pdc->where('method', 'pdc')
+                                ->where('clearing_status', Payment::CLEARING_CLEARED)
+                                ->whereDate('cleared_at', '<=', $date);
+                        })->orWhere(function ($other) use ($date) {
+                            $other->where('method', '!=', 'pdc')
+                                ->whereDate('payment_date', '<=', $date);
+                        });
+                    });
+            })
+            ->select('document_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('document_id')
+            ->pluck('total', 'document_id');
+
+        return $docs->map(function (Document $doc) use ($allocated, $column, $relation) {
+            $paid = Exact::of($allocated[$doc->id] ?? 0);
+            $net = Exact::of($doc->net_total);
+            $remaining = $net->minus($paid);
+            if (! $remaining->isPositive()) {
+                return null;
+            }
+
+            return (object) [
+                'document_id' => $doc->id,
+                'number' => $doc->number,
+                'doc_date' => $doc->doc_date->toDateString(),
+                'net_total' => Exact::money($net),
+                'allocated' => Exact::money($paid),
+                'remaining' => Exact::money($remaining),
+                'party_id' => (int) $doc->{$column},
+                'party_name' => (string) ($doc->{$relation}?->name ?? ''),
             ];
         })->filter()->values();
     }

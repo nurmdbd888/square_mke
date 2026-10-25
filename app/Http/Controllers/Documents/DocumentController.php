@@ -15,6 +15,7 @@ use App\Models\Supplier;
 use App\Models\Vehicle;
 use App\Support\Bulk\BulkActionResult;
 use App\Support\Bulk\BulkSelection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -34,16 +35,25 @@ class DocumentController extends Controller
         $this->assertType($type);
         $this->authorizeView($request, $type);
 
-        $filters = $request->validate([
+        $filterRules = [
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(['draft', 'posted', 'void', 'all'])],
-        ]);
+        ];
+        if ($type === Document::TYPE_SALE) {
+            $filterRules['from'] = ['nullable', 'date_format:Y-m-d'];
+            $filterRules['to'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'];
+        }
+        $filters = $request->validate($filterRules);
         $status = $filters['status'] ?? 'all';
+        $fromDate = $type === Document::TYPE_SALE ? ($filters['from'] ?? null) : null;
+        $toDate = $type === Document::TYPE_SALE ? ($filters['to'] ?? null) : null;
 
         $documents = Document::query()
             ->where('type', $type)
             ->with($type === Document::TYPE_PURCHASE ? 'supplier' : 'retailer')
             ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when($fromDate, fn ($q, $date) => $q->whereDate('doc_date', '>=', $date))
+            ->when($toDate, fn ($q, $date) => $q->whereDate('doc_date', '<=', $date))
             ->when($filters['q'] ?? null, function ($q, $term) use ($type) {
                 $like = '%'.addcslashes($term, '\\%_').'%';
                 $q->where(function ($w) use ($like, $type) {
@@ -84,6 +94,37 @@ class DocumentController extends Controller
             'doc_date' => now()->toDateString(),
             'vat_pct_default' => '15',
         ])));
+    }
+
+    public function checkNumber(Request $request): JsonResponse
+    {
+        $type = (string) $request->route('type');
+        $this->assertType($type);
+        $this->authorizeManage($request, $type);
+
+        $document = null;
+        $documentId = $request->route('documentId');
+        if ($documentId !== null) {
+            $document = Document::query()->findOrFail($documentId);
+            $this->assertRouteMatches($request, $document);
+            abort_if($document->isVoid(), 404);
+        }
+
+        $number = $request->validate([
+            'number' => ['required', 'string', 'max:80'],
+        ])['number'];
+
+        $duplicate = Document::query()
+            ->where('type', $type)
+            ->where('number', $number)
+            ->where('status', '!=', Document::STATUS_VOID)
+            ->when($document !== null, fn ($query) => $query->where('id', '!=', $document->id))
+            ->exists();
+
+        return response()->json([
+            'duplicate' => $duplicate,
+            'message' => $duplicate ? __('A non-void document with this number already exists.') : null,
+        ]);
     }
 
     public function store(Request $request, string $type): RedirectResponse
