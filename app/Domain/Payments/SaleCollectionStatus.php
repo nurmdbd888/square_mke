@@ -190,7 +190,7 @@ final class SaleCollectionStatus
     }
 
     /**
-     * @param  array{status?: string|null, overdue?: bool, q?: string|null, sort?: string, direction?: string}  $filters
+     * @param  array{status?: string|null, overdue?: bool, q?: string|null, sort?: string, direction?: string, from?: string|null, to?: string|null}  $filters
      * @return LengthAwarePaginator<int, Document>
      */
     public function paginateForCollector(array $filters = [], int $perPage = 50): LengthAwarePaginator
@@ -200,6 +200,8 @@ final class SaleCollectionStatus
         $q = trim((string) ($filters['q'] ?? ''));
         $sort = $filters['sort'] ?? 'date';
         $direction = $filters['direction'] ?? 'asc';
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
         $sortColumn = match ($sort) {
             'invoice' => 'number',
             default => 'doc_date',
@@ -211,17 +213,29 @@ final class SaleCollectionStatus
         $allocatedSql = '(SELECT COALESCE(SUM(payment_allocations.amount), 0) FROM payment_allocations '
             .'INNER JOIN payments ON payments.id = payment_allocations.payment_id '
             .'WHERE payment_allocations.document_id = documents.id AND payments.status = ?)';
-        $query->whereRaw('(documents.net_total - '.$allocatedSql.') > 0', [Payment::STATUS_POSTED]);
+        $balanceSql = '(documents.net_total - '.$allocatedSql.')';
 
-        if (in_array($status, [self::DUE, self::PARTIAL], true)) {
-            $query->whereRaw(
-                $status === self::DUE ? $allocatedSql.' = 0' : $allocatedSql.' > 0',
-                [Payment::STATUS_POSTED],
-            );
+        if ($status === self::DUE) {
+            $query->whereRaw($balanceSql.' > 0', [Payment::STATUS_POSTED])
+                ->whereRaw($allocatedSql.' = 0', [Payment::STATUS_POSTED]);
+        } elseif ($status === self::PARTIAL) {
+            $query->whereRaw($balanceSql.' > 0', [Payment::STATUS_POSTED])
+                ->whereRaw($allocatedSql.' > 0', [Payment::STATUS_POSTED]);
+        } elseif ($status === 'paid') {
+            $query->whereRaw($balanceSql.' <= 0', [Payment::STATUS_POSTED]);
         }
 
         if ($overdueOnly) {
-            $query->whereDate('doc_date', '<', Carbon::today()->subDays($this->dueDays()));
+            $query->whereRaw($balanceSql.' > 0', [Payment::STATUS_POSTED])
+                ->whereDate('doc_date', '<', Carbon::today()->subDays($this->dueDays()));
+        }
+
+        if ($from !== null) {
+            $query->whereDate('doc_date', '>=', $from);
+        }
+
+        if ($to !== null) {
+            $query->whereDate('doc_date', '<=', $to);
         }
 
         if ($q !== '') {
@@ -235,7 +249,7 @@ final class SaleCollectionStatus
         $query->with('retailer');
         if ($sort === 'amount') {
             $query->orderByRaw(
-                '(documents.net_total - '.$allocatedSql.') '.$direction,
+                $balanceSql.' '.$direction,
                 [Payment::STATUS_POSTED],
             );
         } else {

@@ -30,10 +30,12 @@ class CollectorController extends Controller
 
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::in(['all', 'due', 'partial'])],
+            'status' => ['nullable', Rule::in(['all', 'due', 'partial', 'paid'])],
             'overdue' => ['nullable', Rule::in(['0', '1', 'true', 'false', 'on'])],
             'sort' => ['nullable', Rule::in(['date', 'invoice', 'amount'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $status = $filters['status'] ?? 'all';
@@ -47,11 +49,13 @@ class CollectorController extends Controller
         try {
             $dueDays = $this->collection->dueDays();
             $pending = $this->collection->paginateForCollector([
-                'status' => in_array($status, ['due', 'partial'], true) ? $status : null,
+                'status' => in_array($status, ['due', 'partial', 'paid'], true) ? $status : null,
                 'overdue' => $overdueOnly,
                 'q' => $q,
                 'sort' => $filters['sort'] ?? 'date',
                 'direction' => $filters['direction'] ?? 'asc',
+                'from' => $filters['from'] ?? null,
+                'to' => $filters['to'] ?? null,
             ]);
         } catch (Throwable $e) {
             report($e);
@@ -69,6 +73,8 @@ class CollectorController extends Controller
                 'overdue' => $overdueOnly,
                 'sort' => $filters['sort'] ?? 'date',
                 'direction' => $filters['direction'] ?? 'asc',
+                'from' => $filters['from'] ?? null,
+                'to' => $filters['to'] ?? null,
             ],
         ]);
     }
