@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Audit\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,9 +13,9 @@ class Product extends Model
     use Auditable, SoftDeletes;
 
     protected $fillable = [
-        'code', 'name_en', 'name_bn', 'brand', 'pack_size', 'unit', 'units_per_carton',
+        'code', 'name_en', 'name_bn', 'brand', 'brand_id', 'product_type_id', 'image_path', 'pack_size', 'unit', 'units_per_carton',
         'buy_price', 'buy_price_exact', 'sell_price', 'reorder_level', 'sd_pct', 'vat_pct',
-        'tracks_expiry', 'custom',
+        'tracks_expiry', 'custom', 'purchase_discount_pct',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class Product extends Model
             'reorder_level' => 'decimal:2',
             'sd_pct' => 'decimal:2',
             'vat_pct' => 'decimal:2',
+            'purchase_discount_pct' => 'decimal:2',
             'tracks_expiry' => 'boolean',
             'custom' => 'array',
         ];
@@ -38,5 +40,15 @@ class Product extends Model
     public function aliases(): HasMany
     {
         return $this->hasMany(ProductAlias::class);
+    }
+
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class);
+    }
+
+    public function brandMaster(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 }

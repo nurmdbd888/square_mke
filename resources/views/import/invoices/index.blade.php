@@ -27,10 +27,12 @@
                 @csrf
                 <label class="block">
                     <span class="label">{{ __('Document type') }}</span>
-                    <select name="doc_type" class="input" required>
+                    <select name="doc_type" class="input" data-invoice-doc-type>
+                        <option value="">{{ __('Choose or detect from scan') }}</option>
                         <option value="purchase">{{ __('Purchase') }}</option>
                         <option value="sale">{{ __('Sale') }}</option>
                     </select>
+                    <span class="mt-1 block text-xs text-slate-500">{{ __('For scans, the document type is detected from the invoice text. Review or change it before uploading.') }}</span>
                 </label>
                 <label class="block">
                     <span class="label">{{ __('Spreadsheet') }}</span>

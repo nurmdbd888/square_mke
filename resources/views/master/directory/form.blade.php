@@ -18,7 +18,7 @@
 
     <div class="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
         <section class="card">
-            <form method="POST" action="{{ $row->exists ? route('masters.directory.update', [$kind, $row]) : route('masters.directory.store', $kind) }}" class="grid gap-4 sm:grid-cols-2">
+            <form method="POST" enctype="multipart/form-data" action="{{ $row->exists ? route('masters.directory.update', [$kind, $row]) : route('masters.directory.store', $kind) }}" class="grid gap-4 sm:grid-cols-2">
                 @csrf
                 @if ($row->exists)
                     @method('PUT')
@@ -37,8 +37,14 @@
                                     <option value="{{ $id }}" @selected((string) old($field['name'], $row->{$field['name']}) === (string) $id)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                        @elseif (($field['type'] ?? '') === 'file')
+                            @if ($kind === 'brands' && $row->image_path)
+                                <img src="{{ asset('storage/'.$row->image_path) }}" alt="{{ $row->name }}" class="mb-2 h-24 w-24 rounded-lg object-cover">
+                            @endif
+                            <input type="file" name="{{ $field['name'] }}" accept="image/jpeg,image/png,image/webp" class="input">
+                            <span class="mt-1 block text-xs text-slate-500">{{ __('Image is cropped and saved at 800 × 800 px.') }}</span>
                         @else
-                            <input type="{{ $field['type'] ?? 'text' }}" name="{{ $field['name'] }}" value="{{ old($field['name'], $row->{$field['name']}) }}" maxlength="{{ $field['max'] }}" @if ($field['required'] ?? false) required @endif class="input">
+                            <input type="{{ $field['type'] ?? 'text' }}" name="{{ $field['name'] }}" value="{{ old($field['name'], $row->{$field['name']}) }}" @if (($field['type'] ?? '') === 'number') min="0" max="100" step="0.01" @else maxlength="{{ $field['max'] }}" @endif @if ($field['required'] ?? false) required @endif class="input">
                         @endif
                     </label>
                 @endforeach

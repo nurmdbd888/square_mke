@@ -4,18 +4,24 @@ namespace App\Http\Controllers\Accounts;
 
 use App\Domain\Payments\Books;
 use App\Domain\Payments\DailyCloser;
+use App\Domain\Payments\DailyClosingWhatsAppReport;
 use App\Http\Controllers\Controller;
 use App\Models\DailyClosing;
 use App\Support\Http\BusinessDaysFilter;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use RuntimeException;
 
 class BookController extends Controller
 {
     public function __construct(
         private readonly Books $books,
         private readonly DailyCloser $closer,
+        private readonly DailyClosingWhatsAppReport $closingReport,
     ) {}
 
     public function cash(Request $request): View
@@ -61,9 +67,27 @@ class BookController extends Controller
         ]);
 
         $closing = $this->closer->close($data['closed_on'], $request->user(), $data['notes'] ?? null);
+        $reportSent = false;
+        try {
+            $reportSent = $this->closingReport->send($closing);
+        } catch (ConnectionException|RequestException|RuntimeException $exception) {
+            Log::error('Day-end WhatsApp report could not be sent.', [
+                'daily_closing_id' => $closing->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
-        return redirect()->route('accounts.closings')
+        $redirect = redirect()->route('accounts.closings')
             ->with('status', __('Day :date was closed.', ['date' => $closing->closed_on->format('d-m-Y')]));
+
+        if ($reportSent) {
+            return $redirect->with('status', __('Day :date was closed and the WhatsApp report was sent.', ['date' => $closing->closed_on->format('d-m-Y')]));
+        }
+        if (trim((string) setting('day_end_whatsapp_recipient')) !== '') {
+            return $redirect->with('warning', __('The day was closed, but the WhatsApp report could not be sent. Check the WhatsApp credentials and server logs.'));
+        }
+
+        return $redirect;
     }
 
     private function showBook(Request $request, string $type): View

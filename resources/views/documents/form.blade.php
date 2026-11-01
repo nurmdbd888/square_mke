@@ -20,8 +20,8 @@
         $oldLines = $document->lines->map(fn ($l) => [
             'product_id' => $l->product_id,
             'kind' => $l->kind,
-            'qty' => $l->qty,
-            'bonus_qty' => $l->bonus_qty,
+            'qty' => format_qty($l->qty),
+            'bonus_qty' => format_qty($l->bonus_qty),
             'unit_price' => number_format((float) $l->unit_price, 2, '.', ''),
             'line_discount' => $l->line_discount,
             'line_value' => $l->line_value,
@@ -43,14 +43,19 @@
             'id' => $product->id,
             'code' => (string) ($product->code ?? ''),
             'brand' => (string) ($product->brand ?? ''),
+            'brandId' => (string) ($product->brand_id ?? ''),
             'pack_size' => (string) ($product->pack_size ?? ''),
+            'typeId' => (string) ($product->product_type_id ?? ''),
+            'type' => (string) ($product->productType?->name ?? ''),
+            'imageUrl' => $product->image_path ? asset('storage/'.$product->image_path) : null,
             'name' => (string) $product->name_en,
             'name_bn' => (string) ($product->name_bn ?? ''),
             'searchText' => mb_strtolower(implode(' ', $searchParts)),
             'buy' => number_format((float) ($product->buy_price ?? 0), 2, '.', ''),
-            'sell' => number_format((float) ($product->sell_price ?? 0), 2, '.', ''),
+            'sell' => number_format((float) ($product->latest_sale_price ?? $product->sell_price ?? 0), 2, '.', ''),
             'sd' => (string) ($product->sd_pct ?? '0'),
             'vat' => (string) ($product->vat_pct ?? '15'),
+            'purchase_discount_pct' => (string) ($product->purchase_discount_pct ?? $product->brandMaster?->purchase_discount_pct ?? '0'),
         ];
     })->values();
 @endphp
@@ -90,6 +95,8 @@
             'productCreateUrl' => auth()->user()->can('products.manage') ? route('products.store') : null,
             'csrfToken' => csrf_token(),
             'brands' => $brands,
+            'productTypes' => $productTypes,
+            'preserveRounding' => $preserveRounding,
         ]) }})"
         @unless($isPurchase)
             data-offline-sales
@@ -183,22 +190,34 @@
             <p class="mt-1 text-sm text-slate-600">{{ __('Search on the left, click a product to add it. Change quantity and price on the right.') }}</p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div class="sticky top-4 h-fit rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <label class="block">
                         <span class="label">{{ __('Brand') }}</span>
                         <select
                             class="input"
                             x-model="brandFilter"
                             data-testid="product-brand-filter"
-                            @change="productHighlight = 0; productOpen = filteredProducts.length > 0"
+                            @change="typeFilter = ''; productHighlight = 0; productOpen = filteredProducts.length > 0"
                         >
                             <option value="">{{ __('All brands') }}</option>
-                            <template x-for="brand in brandOptions" :key="brand">
-                                <option :value="brand" x-text="brand"></option>
+                            <template x-for="brand in masterBrands" :key="brand.id">
+                                <option :value="String(brand.id)" x-text="brand.name"></option>
                             </template>
                         </select>
                     </label>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('Pick a brand to work one brand at a time, or leave on All brands.') }}</p>
+                    <template x-if="selectedBrand?.image_url">
+                        <img :src="selectedBrand.image_url" :alt="selectedBrand.name" class="mt-2 h-16 w-16 rounded-lg object-cover">
+                    </template>
+                    <label class="mt-3 block">
+                        <span class="label">{{ __('Product type') }}</span>
+                        <select class="input" x-model="typeFilter" :disabled="!brandFilter" @change="productHighlight = 0; productOpen = filteredProducts.length > 0">
+                            <option value="">{{ __('All product types') }}</option>
+                            <template x-for="type in typesForSelectedBrand" :key="type.id">
+                                <option :value="String(type.id)" x-text="type.name"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Choose Brand, then Product Type, then search or select a product.') }}</p>
 
                     <div class="relative mt-3">
                         <label class="block">
@@ -233,8 +252,9 @@
                                     >
                                         <span class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                             <span class="font-mono text-xs text-slate-500" x-text="product.code || '—'"></span>
-                                            <span class="text-xs font-medium text-brand-700" x-show="!brandFilter && product.brand" x-text="product.brand"></span>
+                                            <span class="text-xs font-medium text-brand-700" x-show="product.type" x-text="product.type"></span>
                                         </span>
+                                        <img x-show="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="mb-1 h-12 w-12 rounded object-cover">
                                         <span class="mt-0.5 block font-medium text-slate-900" x-text="product.name"></span>
                                         <span class="block text-xs text-slate-600" x-show="product.pack_size">
                                             {{ __('Pack size') }}: <span x-text="product.pack_size"></span>
@@ -293,12 +313,25 @@
                                         </label>
                                         <label class="block">
                                             <span class="label">{{ __('Brand') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
-                                            <select class="input" x-model="newProduct.brand" data-testid="quick-add-brand">
+                                            <select class="input" x-model="newProduct.brand_id" @change="newProduct.brand = masterBrands.find((brand) => String(brand.id) === String(newProduct.brand_id))?.name || ''; newProduct.product_type_id = ''" data-testid="quick-add-brand">
                                                 <option value="">{{ __('None') }}</option>
-                                                <template x-for="brand in masterBrands" :key="brand">
-                                                    <option :value="brand" x-text="brand"></option>
+                                                <template x-for="brand in masterBrands" :key="brand.id">
+                                                    <option :value="String(brand.id)" x-text="brand.name"></option>
                                                 </template>
                                             </select>
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Product type') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <select class="input" x-model="newProduct.product_type_id" :disabled="!newProduct.brand_id" :required="Boolean(newProduct.brand_id)">
+                                                <option value="">{{ __('Choose product type') }}</option>
+                                                <template x-for="type in masterProductTypes.filter((item) => String(item.brand_id) === String(newProduct.brand_id))" :key="type.id">
+                                                    <option :value="String(type.id)" x-text="type.name"></option>
+                                                </template>
+                                            </select>
+                                        </label>
+                                        <label class="block">
+                                            <span class="label">{{ __('Pack size') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                                            <input type="text" class="input" x-model="newProduct.pack_size" maxlength="80">
                                         </label>
                                         <label class="block">
                                             <span class="label">{{ __('Unit') }}</span>
@@ -324,7 +357,7 @@
                                     <p x-cloak x-show="productCreateError" class="mt-3 text-sm text-red-700" role="alert" x-text="productCreateError"></p>
                                     <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                                         <button type="button" class="btn-secondary" @click="productCreateOpen = false" :disabled="productCreating">{{ __('Cancel') }}</button>
-                                        <button type="button" class="btn-primary" data-testid="product-quick-add-save" @click="saveNewProduct()" :disabled="productCreating || !newProduct.name_en.trim() || !newProduct.unit.trim()">
+                                        <button type="button" class="btn-primary" data-testid="product-quick-add-save" @click="saveNewProduct()" :disabled="productCreating || !newProduct.name_en.trim() || !newProduct.unit.trim() || (newProduct.brand_id && !newProduct.product_type_id)">
                                             <span x-text="productCreating ? '{{ __('Saving…') }}' : '{{ __('Save and add') }}'"></span>
                                         </button>
                                     </div>
@@ -383,13 +416,13 @@
                                             <button type="button" class="mt-1 block text-xs text-brand-700 underline" @click="line.showTax = !line.showTax" x-text="line.showTax ? '{{ __('Hide tax & bonus') }}' : '{{ __('Tax & bonus') }}'"></button>
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][qty]`" x-model="line.qty" required inputmode="decimal" class="input-num py-1.5 text-sm" @input="recalc(index)">
+                                            <input type="number" :name="`lines[${index}][qty]`" x-model="line.qty" required min="1" step="1" inputmode="numeric" class="input-num py-1.5 text-sm" @input="recalc(index)">
                                         </td>
                                         <td>
                                             <input type="text" :name="`lines[${index}][unit_price]`" x-model="line.unit_price" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" @input="recalc(index)">
                                         </td>
                                         <td>
-                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" :disabled="line.kind === 'combo_bonus'" @input="recalc(index)">
+                                            <input type="text" :name="`lines[${index}][line_discount]`" x-model="line.line_discount" inputmode="decimal" class="input-num py-1.5 text-sm font-mono" :disabled="line.kind === 'combo_bonus'" @input="line.discount_manual = true; recalc(index)">
                                         </td>
                                         <td class="text-right font-mono">
                                             <input type="hidden" :name="`lines[${index}][line_value]`" x-model="line.line_value">
@@ -413,7 +446,7 @@
                                                 @endunless
                                                 <label class="flex items-center gap-1">
                                                     <span>{{ __('Bonus qty') }}</span>
-                                                    <input type="text" x-model="line.bonus_qty" class="input w-16 py-1 text-xs font-mono">
+                                                    <input type="number" x-model="line.bonus_qty" min="0" step="1" inputmode="numeric" class="input w-16 py-1 text-xs font-mono">
                                                 </label>
                                                 <label class="flex items-center gap-1">
                                                     <span>{{ __('SD %') }}</span>
@@ -454,11 +487,15 @@
                             <span>{{ __('Net invoice amount') }}</span>
                             <span class="font-mono" data-testid="net-invoice-amount" x-text="netInvoiceAmount"></span>
                         </div>
+                        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2 text-sm text-slate-600">
+                            <span>{{ __('Rounding adjustment') }}</span>
+                            <span class="font-mono" data-testid="invoice-rounding-adjustment" x-text="roundingAdjustment"></span>
+                        </div>
                         <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2">
                             <span class="text-base font-semibold text-slate-900">{{ __('Total payable') }}</span>
                             <span class="font-mono text-lg font-semibold text-slate-900" data-testid="invoice-grand-total" x-text="invoiceTotal"></span>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">{{ __('Net invoice = subtotal − loading − combo. Total payable = net invoice + TDS.') }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Totals round to the nearest whole unit: up when the fractional part is above 0.50, otherwise down.') }}</p>
                     </div>
                 </div>
             </div>
@@ -484,7 +521,7 @@
             </div>
             {{-- Preserve legacy fields without showing duplicate Square-unrelated controls. --}}
             <input type="hidden" name="header_discount" x-model="header_discount">
-            <input type="hidden" name="rounding_adjustment" x-model="rounding_adjustment">
+            <input type="hidden" name="rounding_adjustment" :value="roundingAdjustment">
             <div class="mt-4 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3" data-testid="invoice-total-footer">
                 <div>
                     <div class="text-sm text-slate-600">{{ __('Net invoice amount') }}: <span class="font-mono" x-text="netInvoiceAmount"></span></div>
@@ -510,6 +547,7 @@
             const adj = adjustments || {};
             const productOptions = options || {};
             const masterBrands = productOptions.brands || [];
+            const masterProductTypes = productOptions.productTypes || [];
             const priceInput = (value) => {
                 if (value === null || value === undefined || value === '') {
                     return '';
@@ -517,11 +555,21 @@
                 const price = Number(value);
                 return Number.isFinite(price) ? price.toFixed(2) : String(value);
             };
+            const purchaseDiscountAmount = (qty, price, pct) => {
+                const quantity = Math.round(Number(qty) || 0);
+                const priceTenThousandths = Math.round((Number(price) || 0) * 10000);
+                const percentageHundredths = Math.round((Number(pct) || 0) * 100);
+                const discountCents = Math.round(priceTenThousandths * quantity * percentageHundredths / 1000000);
+                return (discountCents / 100).toFixed(2);
+            };
             const emptyProduct = () => ({
                 code: '',
                 name_en: '',
                 name_bn: '',
                 brand: '',
+                brand_id: '',
+                product_type_id: '',
+                pack_size: '',
                 unit: 'Pcs',
                 buy_price: '',
                 sell_price: '',
@@ -545,6 +593,7 @@
                 lines,
                 catalog: catalog || [],
                 masterBrands,
+                masterProductTypes,
                 productCreateUrl: productOptions.productCreateUrl || '',
                 csrfToken: productOptions.csrfToken || '',
                 numberCheckUrl: productOptions.numberCheckUrl || '',
@@ -567,7 +616,8 @@
                 slab_adjustment: String(adj.slab_adjustment ?? '0'),
                 combo_bonus_discount: String(adj.combo_bonus_discount ?? '0'),
                 tds_amount: String(adj.tds_amount ?? '0'),
-                rounding_adjustment: String(adj.rounding_adjustment ?? '0'),
+                preservedRounding: String(adj.rounding_adjustment ?? '0'),
+                preserveRounding: productOptions.preserveRounding === true,
                 lineAddKind: 'normal',
                 invoiceNumberChanged() {
                     const number = this.$refs.invoiceNumber.value;
@@ -659,6 +709,7 @@
                     }
                 },
                 brandFilter: '',
+                typeFilter: '',
                 productQuery: '',
                 productOpen: false,
                 productHighlight: 0,
@@ -694,32 +745,45 @@
                 get invoiceTotal() {
                     const netInvoice = parseFloat(this.netInvoiceAmount);
                     const tds = parseFloat(this.tds_amount || '0');
-                    const rounding = parseFloat(this.rounding_adjustment || '0');
                     const payable = (Number.isFinite(netInvoice) ? netInvoice : 0)
-                        + (Number.isFinite(tds) ? tds : 0)
-                        + (Number.isFinite(rounding) ? rounding : 0);
+                        + (Number.isFinite(tds) ? tds : 0);
 
-                    return this.money(Math.round(payable * 100) / 100);
+                    return this.money(payable + parseFloat(this.roundingAdjustment));
+                },
+                get roundingAdjustment() {
+                    if (this.preserveRounding) {
+                        return this.money(this.preservedRounding);
+                    }
+                    const netInvoice = parseFloat(this.netInvoiceAmount);
+                    const tds = parseFloat(this.tds_amount || '0');
+                    const cents = Math.round(((Number.isFinite(netInvoice) ? netInvoice : 0)
+                        + (Number.isFinite(tds) ? tds : 0)) * 100);
+                    const whole = Math.trunc(cents / 100);
+                    const fractionalCents = Math.abs(cents - whole * 100);
+                    const roundedWhole = fractionalCents > 50 ? whole + Math.sign(cents) : whole;
+
+                    return this.money(roundedWhole - cents / 100);
                 },
                 get brandOptions() {
-                    const brands = new Set(this.masterBrands);
-                    this.catalog.forEach((product) => {
-                        if (product.brand) {
-                            brands.add(product.brand);
-                        }
-                    });
-
-                    return [...brands].sort((a, b) => a.localeCompare(b));
+                    return this.masterBrands;
+                },
+                get selectedBrand() {
+                    return this.masterBrands.find((brand) => String(brand.id) === String(this.brandFilter));
+                },
+                get typesForSelectedBrand() {
+                    return this.masterProductTypes.filter((type) => String(type.brand_id) === String(this.brandFilter));
                 },
                 get brandScopedProducts() {
                     if (!this.brandFilter) {
                         return this.catalog;
                     }
 
-                    return this.catalog.filter((product) => (product.brand || '') === this.brandFilter);
+                    return this.catalog.filter((product) => String(product.brandId || '') === String(this.brandFilter));
                 },
                 get filteredProducts() {
-                    const pool = this.brandScopedProducts;
+                    const pool = this.brandScopedProducts.filter((product) =>
+                        !this.typeFilter || String(product.typeId || '') === String(this.typeFilter)
+                    );
                     const q = this.productQuery.trim().toLocaleLowerCase();
                     if (q === '') {
                         return pool;
@@ -752,6 +816,8 @@
                     }
                     this.newProduct = this.emptyProduct();
                     this.newProduct.name_en = this.productQuery.trim();
+                    this.newProduct.brand_id = this.brandFilter;
+                    this.newProduct.brand = this.selectedBrand?.name || '';
                     this.productCreateError = '';
                     this.productCreateOpen = true;
                 },
@@ -804,7 +870,9 @@
                             qty: '1',
                             bonus_qty: '0',
                             unit_price: priceInput(isPurchase ? (product.buy || '') : (product.sell || product.buy || '')),
-                            line_discount: '0',
+                            line_discount: isPurchase ? purchaseDiscountAmount(1, product.buy || '0', product.purchase_discount_pct || '0') : '0',
+                            discount_pct: isPurchase ? (product.purchase_discount_pct || '0') : '0',
+                            discount_manual: false,
                             line_value: kind === 'combo_bonus' ? '0.00' : '',
                             sd_pct: product.sd || '0',
                             vat_pct: product.vat || '15',
@@ -846,6 +914,9 @@
                     }
                     const qty = parseFloat(line.qty || '0');
                     const price = parseFloat(line.unit_price || '0');
+                    if (isPurchase && line.discount_manual !== true && line.discount_pct !== undefined) {
+                        line.line_discount = purchaseDiscountAmount(qty, price, line.discount_pct || '0');
+                    }
                     const discount = parseFloat(line.line_discount || '0');
                     if (!Number.isFinite(qty) || !Number.isFinite(price)) {
                         return;

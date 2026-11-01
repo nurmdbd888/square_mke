@@ -53,16 +53,29 @@
                 <option value="void" @selected(($filters['status'] ?? '') === 'void')>{{ __('Void') }}</option>
             </select>
         </label>
-        @if ($type === 'sale')
-            <label class="block">
-                <span class="label">{{ __('From date') }}</span>
-                <x-date-input name="from" :value="$filters['from'] ?? ''" />
-            </label>
-            <label class="block">
-                <span class="label">{{ __('To date') }}</span>
-                <x-date-input name="to" :value="$filters['to'] ?? ''" />
-            </label>
-        @endif
+        <label class="block">
+            <span class="label">{{ __('Sort by') }}</span>
+            <select name="sort" class="input">
+                <option value="date" @selected(($filters['sort'] ?? 'date') === 'date')>{{ __('Date') }}</option>
+                <option value="number" @selected(($filters['sort'] ?? '') === 'number')>{{ __('Invoice number') }}</option>
+                <option value="total" @selected(($filters['sort'] ?? '') === 'total')>{{ __('Total amount') }}</option>
+            </select>
+        </label>
+        <label class="block">
+            <span class="label">{{ __('Order') }}</span>
+            <select name="direction" class="input">
+                <option value="desc" @selected(($filters['direction'] ?? 'desc') === 'desc')>{{ __('Newest / highest first') }}</option>
+                <option value="asc" @selected(($filters['direction'] ?? '') === 'asc')>{{ __('Oldest / lowest first') }}</option>
+            </select>
+        </label>
+        <label class="block">
+            <span class="label">{{ __('From date') }}</span>
+            <x-date-input name="from" :value="$filters['from'] ?? ''" />
+        </label>
+        <label class="block">
+            <span class="label">{{ __('To date') }}</span>
+            <x-date-input name="to" :value="$filters['to'] ?? ''" />
+        </label>
         <button type="submit" class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 

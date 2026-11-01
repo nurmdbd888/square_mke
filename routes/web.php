@@ -28,6 +28,7 @@ use App\Http\Controllers\Master\MastersController;
 use App\Http\Controllers\Master\OpeningBalanceController;
 use App\Http\Controllers\Master\PriceListController;
 use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Master\ProductTypeController;
 use App\Http\Controllers\Master\RetailerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reports\MonthLockController;
@@ -106,6 +107,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             Route::get('/masters/price-lists', [PriceListController::class, 'index'])->name('masters.price-lists.index');
             Route::get('/masters/opening-balances', [OpeningBalanceController::class, 'index'])->name('masters.opening-balances.index');
             Route::get('/masters/custom-fields', [CustomFieldController::class, 'index'])->name('masters.custom-fields.index');
+            Route::get('/masters/product-types', [ProductTypeController::class, 'index'])->name('masters.product-types.index');
             Route::get('/masters/{kind}', [DirectoryController::class, 'index'])->where('kind', $masterKinds)->name('masters.directory.index');
         });
 
@@ -115,6 +117,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
         Route::middleware('can:masters.manage')->group(function () use ($masterKinds) {
             Route::post('/masters/price-lists', [PriceListController::class, 'store'])->name('masters.price-lists.store');
+            Route::post('/masters/product-types', [ProductTypeController::class, 'store'])->name('masters.product-types.store');
+            Route::put('/masters/product-types/{productType}', [ProductTypeController::class, 'update'])->name('masters.product-types.update');
             Route::put('/masters/price-lists/{priceList}', [PriceListController::class, 'update'])->withTrashed()->name('masters.price-lists.update');
             Route::post('/masters/price-lists/{priceList}/restore', [PriceListController::class, 'restore'])->withTrashed()->name('masters.price-lists.restore');
             Route::post('/masters/price-lists/{priceList}/items', [PriceListController::class, 'storeItem'])->name('masters.price-lists.items.store');
@@ -256,6 +260,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->middleware('can:payments.collect')
             ->whereNumber('document')
             ->name('collector.store');
+        Route::post('/collections/{document}/paid', [CollectorController::class, 'paid'])
+            ->middleware('can:payments.collect')
+            ->whereNumber('document')
+            ->name('collector.paid');
         Route::post('/sales/{document}/collection/confirm', [CollectorController::class, 'confirm'])
             ->middleware('can:payments.collect')
             ->name('sales.collection.confirm');

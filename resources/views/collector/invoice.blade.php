@@ -32,7 +32,7 @@
                     @foreach ($invoice->lines as $line)
                         <tr>
                             <td>{{ $line->product?->name_en }}</td>
-                            <td class="text-right font-mono">{{ local_digits($line->qty) }}</td>
+                            <td class="text-right font-mono">{{ format_qty($line->qty) }}</td>
                             <td class="text-right font-mono">{{ format_money($line->line_value) }}</td>
                         </tr>
                     @endforeach

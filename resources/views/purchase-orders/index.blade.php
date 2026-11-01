@@ -18,6 +18,22 @@
             <span class="label">{{ __('Search') }}</span>
             <input type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('Order number or supplier') }}" class="input">
         </label>
+        <label class="block">
+            <span class="label">{{ __('Sort by') }}</span>
+            <select name="sort" class="input">
+                <option value="date" @selected(($filters['sort'] ?? 'date') === 'date')>{{ __('Order date') }}</option>
+                <option value="number" @selected(($filters['sort'] ?? '') === 'number')>{{ __('Order number') }}</option>
+                <option value="arrival" @selected(($filters['sort'] ?? '') === 'arrival')>{{ __('Expected arrival') }}</option>
+                <option value="supplier" @selected(($filters['sort'] ?? '') === 'supplier')>{{ __('Supplier') }}</option>
+            </select>
+        </label>
+        <label class="block">
+            <span class="label">{{ __('Order') }}</span>
+            <select name="direction" class="input">
+                <option value="desc" @selected(($filters['direction'] ?? 'desc') === 'desc')>{{ __('Newest / highest first') }}</option>
+                <option value="asc" @selected(($filters['direction'] ?? '') === 'asc')>{{ __('Oldest / lowest first') }}</option>
+            </select>
+        </label>
         <button type="submit" class="btn-secondary">{{ __('Filter') }}</button>
     </form>
 

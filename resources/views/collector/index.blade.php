@@ -25,6 +25,21 @@
                         <option value="partial" @selected(($filters['status'] ?? '') === 'partial')>{{ __('Partially due') }}</option>
                     </select>
                 </label>
+                <label class="block min-w-[8rem]">
+                    <span class="label">{{ __('Sort by') }}</span>
+                    <select name="sort" class="input min-h-11">
+                        <option value="date" @selected(($filters['sort'] ?? 'date') === 'date')>{{ __('Invoice date') }}</option>
+                        <option value="invoice" @selected(($filters['sort'] ?? '') === 'invoice')>{{ __('Invoice number') }}</option>
+                        <option value="amount" @selected(($filters['sort'] ?? '') === 'amount')>{{ __('Amount due') }}</option>
+                    </select>
+                </label>
+                <label class="block min-w-[8rem]">
+                    <span class="label">{{ __('Order') }}</span>
+                    <select name="direction" class="input min-h-11">
+                        <option value="asc" @selected(($filters['direction'] ?? 'asc') === 'asc')>{{ __('Oldest / lowest first') }}</option>
+                        <option value="desc" @selected(($filters['direction'] ?? '') === 'desc')>{{ __('Newest / highest first') }}</option>
+                    </select>
+                </label>
                 <label class="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm">
                     <input type="checkbox" name="overdue" value="1" class="rounded border-slate-300" @checked(! empty($filters['overdue']))>
                     <span>{{ __('Overdue only') }}</span>
@@ -57,7 +72,13 @@
                             <td>{{ $invoice->retailer?->name }}</td>
                             <td class="text-right font-mono">{{ format_money($remaining) }}</td>
                             <td class="text-right">
-                                <a href="{{ route('collector.show', $invoice) }}" class="btn-primary px-3 py-1.5 text-xs min-h-10" data-testid="collector-collect-{{ $invoice->id }}">{{ __('Open invoice') }}</a>
+                                <div class="flex flex-wrap justify-end gap-2">
+                                    <form method="POST" action="{{ route('collector.paid', $invoice) }}">
+                                        @csrf
+                                        <button class="btn-secondary px-3 py-1.5 text-xs min-h-10" data-confirm="{{ __('Record full cash payment for this invoice?') }}" data-testid="collector-paid-{{ $invoice->id }}">{{ __('PAID') }}</button>
+                                    </form>
+                                    <a href="{{ route('collector.show', $invoice) }}" class="btn-primary px-3 py-1.5 text-xs min-h-10" data-testid="collector-collect-{{ $invoice->id }}">{{ __('Open invoice') }}</a>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -66,5 +87,6 @@
                 </tbody>
             </table>
         </div>
+        {{ $pending->links() }}
     </section>
 @endsection

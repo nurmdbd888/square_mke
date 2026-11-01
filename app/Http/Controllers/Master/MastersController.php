@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\CustomField;
 use App\Models\OpeningBalance;
 use App\Models\PriceList;
+use App\Models\ProductType;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
 use App\Models\Supplier;
@@ -20,6 +21,7 @@ class MastersController extends Controller
         return view('master.hub', [
             'links' => [
                 ['url' => route('masters.directory.index', 'brands'), 'label' => __('Brands'), 'count' => Brand::query()->count()],
+                ['url' => route('masters.product-types.index'), 'label' => __('Product types'), 'count' => ProductType::query()->count()],
                 ['url' => route('masters.directory.index', 'suppliers'), 'label' => __('Suppliers'), 'count' => Supplier::query()->count()],
                 ['url' => route('masters.directory.index', 'routes'), 'label' => __('Routes'), 'count' => SalesRoute::query()->count()],
                 ['url' => route('masters.directory.index', 'sales-reps'), 'label' => __('Sales reps'), 'count' => SalesRep::query()->count()],

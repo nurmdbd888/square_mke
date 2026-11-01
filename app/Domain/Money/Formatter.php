@@ -44,6 +44,14 @@ final class Formatter
         return '৳ '.self::number($value, 2, $locale);
     }
 
+    public static function quantity(BigNumber|int|string $value, ?string $locale = null): string
+    {
+        $decimal = self::decimal($value);
+        $scale = max(0, min(3, $decimal->strippedOfTrailingZeros()->getScale()));
+
+        return self::number($decimal, $scale, $locale);
+    }
+
     /**
      * Short form for dashboards: 1.23 crore, 12.35 lakh, 45,678.
      */

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Documents;
 use App\Domain\Money\Exact;
 use App\Domain\Purchases\PurchaseOrderWorkflow;
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\PurchaseOrderReceiptLine;
@@ -22,7 +24,17 @@ class PurchaseOrderController extends Controller
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
+            'sort' => ['nullable', Rule::in(['date', 'number', 'arrival', 'supplier'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
+        $sort = $filters['sort'] ?? 'date';
+        $direction = $filters['direction'] ?? 'desc';
+        $sortColumn = match ($sort) {
+            'number' => 'number',
+            'arrival' => 'expected_delivery_date',
+            'supplier' => null,
+            default => 'order_date',
+        };
 
         $orders = PurchaseOrder::query()
             ->with(['supplier', 'lines.product', 'payments'])
@@ -33,14 +45,18 @@ class PurchaseOrderController extends Controller
                         ->orWhereHas('supplier', fn ($supplier) => $supplier->where('name', 'like', $like)->orWhere('code', 'like', $like));
                 });
             })
-            ->orderByDesc('order_date')
-            ->orderByDesc('id')
+            ->when($sortColumn === null, fn ($query) => $query->orderBy(
+                Supplier::query()->select('name')->whereColumn('suppliers.id', 'purchase_orders.supplier_id'),
+                $direction,
+            ))
+            ->when($sortColumn !== null, fn ($query) => $query->orderBy($sortColumn, $direction))
+            ->orderBy('id', $direction)
             ->paginate(50)
             ->withQueryString();
 
         return view('purchase-orders.index', [
             'orders' => $orders,
-            'filters' => $filters,
+            'filters' => $filters + ['sort' => $sort, 'direction' => $direction],
             'canManage' => $request->user()->can('purchases.manage'),
         ]);
     }
@@ -49,7 +65,9 @@ class PurchaseOrderController extends Controller
     {
         return view('purchase-orders.form', [
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'code', 'name']),
-            'products' => Product::query()->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'unit', 'buy_price']),
+            'brands' => Brand::query()->orderBy('name')->get(['id', 'name', 'image_path']),
+            'productTypes' => ProductType::query()->orderBy('name')->get(['id', 'brand_id', 'name']),
+            'products' => Product::query()->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'brand', 'brand_id', 'product_type_id', 'pack_size', 'image_path', 'unit', 'buy_price']),
             'orderDate' => now()->toDateString(),
         ]);
     }
@@ -63,7 +81,7 @@ class PurchaseOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'items' => ['required', 'array', 'min:1', 'max:500'],
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
-            'items.*.qty' => ['required', 'decimal:0,3', 'gt:0'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'decimal:0,4', 'min:0'],
         ]);
 
@@ -116,7 +134,7 @@ class PurchaseOrderController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:500'],
             'items.*.purchase_order_line_id' => ['required', 'integer', 'distinct', 'exists:purchase_order_lines,id'],
             'items.*.status' => ['required', Rule::in([PurchaseOrderReceiptLine::STATUS_CONFIRMED, PurchaseOrderReceiptLine::STATUS_DUE])],
-            'items.*.due_qty' => ['nullable', 'decimal:0,3', 'min:0'],
+            'items.*.due_qty' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $receipt = $workflow->receive(

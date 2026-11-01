@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\Access\PaymentAccess;
 use App\Support\SafeAccess;
 use Brick\Math\BigDecimal;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -186,6 +187,62 @@ final class SaleCollectionStatus
             })
             ->take($limit)
             ->values();
+    }
+
+    /**
+     * @param  array{status?: string|null, overdue?: bool, q?: string|null, sort?: string, direction?: string}  $filters
+     * @return LengthAwarePaginator<int, Document>
+     */
+    public function paginateForCollector(array $filters = [], int $perPage = 50): LengthAwarePaginator
+    {
+        $status = $filters['status'] ?? null;
+        $overdueOnly = (bool) ($filters['overdue'] ?? false);
+        $q = trim((string) ($filters['q'] ?? ''));
+        $sort = $filters['sort'] ?? 'date';
+        $direction = $filters['direction'] ?? 'asc';
+        $sortColumn = match ($sort) {
+            'invoice' => 'number',
+            default => 'doc_date',
+        };
+
+        $query = Document::query()
+            ->where('type', Document::TYPE_SALE)
+            ->where('status', Document::STATUS_POSTED);
+        $allocatedSql = '(SELECT COALESCE(SUM(payment_allocations.amount), 0) FROM payment_allocations '
+            .'INNER JOIN payments ON payments.id = payment_allocations.payment_id '
+            .'WHERE payment_allocations.document_id = documents.id AND payments.status = ?)';
+        $query->whereRaw('(documents.net_total - '.$allocatedSql.') > 0', [Payment::STATUS_POSTED]);
+
+        if (in_array($status, [self::DUE, self::PARTIAL], true)) {
+            $query->whereRaw(
+                $status === self::DUE ? $allocatedSql.' = 0' : $allocatedSql.' > 0',
+                [Payment::STATUS_POSTED],
+            );
+        }
+
+        if ($overdueOnly) {
+            $query->whereDate('doc_date', '<', Carbon::today()->subDays($this->dueDays()));
+        }
+
+        if ($q !== '') {
+            $like = '%'.addcslashes($q, '\\%_').'%';
+            $query->where(function ($where) use ($like) {
+                $where->where('number', 'like', $like)
+                    ->orWhereHas('retailer', fn ($retailer) => $retailer->where('name', 'like', $like)->orWhere('code', 'like', $like));
+            });
+        }
+
+        $query->with('retailer');
+        if ($sort === 'amount') {
+            $query->orderByRaw(
+                '(documents.net_total - '.$allocatedSql.') '.$direction,
+                [Payment::STATUS_POSTED],
+            );
+        } else {
+            $query->orderBy($sortColumn, $direction);
+        }
+
+        return $query->orderBy('id', $direction)->paginate(max(1, min(100, $perPage)))->withQueryString();
     }
 
     /**

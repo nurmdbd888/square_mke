@@ -108,15 +108,46 @@
         button.textContent = busy ? 'Reading invoices…' : button.dataset.originalLabel;
     }
 
+    function detectDocumentType(pages) {
+        const text = pages.map(function (page) { return page.text || ''; }).join('\n').toLocaleLowerCase();
+        const contains = function (pattern) { return pattern.test(text); };
+        const purchase = (contains(/\b(?:purchase|supplier|vendor)\s+(?:tax\s+)?invoice\b/) ? 4 : 0)
+            + (contains(/\b(?:supplier|vendor)\s+name\b/) ? 4 : 0)
+            + (contains(/\b(?:supplier|vendor|buyer)\s*:/) ? 3 : 0)
+            + (contains(/\b(?:purchase\s+order|challan)\b/) ? 3 : 0)
+            + (contains(/\b(?:buyer|supplier)\s+(?:name|code|id)\b/) ? 2 : 0);
+        const sale = (contains(/\b(?:sales|sale)\s+(?:tax\s+)?invoice\b/) ? 4 : 0)
+            + (contains(/\bretailer\s+(?:name|code|id)\b/) ? 4 : 0)
+            + (contains(/\bretailer\b/) ? 4 : 0)
+            + (contains(/\b(?:sales\s+representative|sales\s+rep|distributor)\b/) ? 2 : 0)
+            + (contains(/\broute\s+(?:code|name)\b/) ? 1 : 0);
+
+        return purchase === sale || Math.max(purchase, sale) < 3 ? null : purchase > sale ? 'purchase' : 'sale';
+    }
+
     document.querySelectorAll('[data-invoice-ocr-form]').forEach(function (form) {
         const button = form.querySelector('[data-invoice-ocr-submit]');
         button.dataset.originalLabel = button.textContent;
         let readyToSubmit = false;
+        const scanInput = form.querySelector('[data-invoice-scans]');
+        const spreadsheetInput = form.querySelector('[data-invoice-spreadsheet]');
+        const docTypeSelect = form.querySelector('[data-invoice-doc-type]');
+        const updateDocTypeRequirement = function () {
+            docTypeSelect.required = (scanInput.files || []).length === 0;
+        };
+        const invalidatePreparedScan = function () {
+            form.querySelector('[data-invoice-ocr-pages]').value = '';
+            readyToSubmit = false;
+        };
+        scanInput.addEventListener('change', function () {
+            updateDocTypeRequirement();
+            invalidatePreparedScan();
+        });
+        spreadsheetInput.addEventListener('change', invalidatePreparedScan);
+        updateDocTypeRequirement();
 
         form.addEventListener('submit', async function (event) {
             if (readyToSubmit) return;
-            const scanInput = form.querySelector('[data-invoice-scans]');
-            const spreadsheetInput = form.querySelector('[data-invoice-spreadsheet]');
             const files = Array.from(scanInput.files || []);
             if (files.length === 0) return;
 
@@ -164,13 +195,24 @@
                     canvas.height = 0;
                 }
 
+                const detectedType = detectDocumentType(pages);
+                if (docTypeSelect && docTypeSelect.value === '' && detectedType) {
+                    docTypeSelect.value = detectedType;
+                }
+                if (docTypeSelect && docTypeSelect.value === '') {
+                    form.querySelector('[data-invoice-ocr-pages]').value = JSON.stringify(pages);
+                    readyToSubmit = true;
+                    docTypeSelect.focus();
+                    throw new Error('Could not confidently identify this invoice. Choose Purchase or Sale, then upload again.');
+                }
                 form.querySelector('[data-invoice-ocr-pages]').value = JSON.stringify(pages);
                 readyToSubmit = true;
-                setStatus(form, 'Text extraction complete. Uploading for review…');
+                const typeLabel = docTypeSelect.value === 'purchase' ? 'Purchase' : 'Sales';
+                setStatus(form, typeLabel + ' invoice selected. Text extraction complete; uploading for review…');
                 setBusy(form, false);
                 form.requestSubmit(button);
             } catch (scanError) {
-                readyToSubmit = false;
+                if (!form.querySelector('[data-invoice-ocr-pages]').value) readyToSubmit = false;
                 setError(form, scanError && scanError.message ? scanError.message : 'Could not read the selected files.');
                 setBusy(form, false);
             } finally {

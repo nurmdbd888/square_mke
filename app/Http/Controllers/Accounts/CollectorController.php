@@ -11,7 +11,7 @@ use App\Support\Access\PaymentAccess;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -32,31 +32,34 @@ class CollectorController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(['all', 'due', 'partial'])],
             'overdue' => ['nullable', Rule::in(['0', '1', 'true', 'false', 'on'])],
+            'sort' => ['nullable', Rule::in(['date', 'invoice', 'amount'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
 
         $status = $filters['status'] ?? 'all';
         $overdueOnly = in_array((string) ($filters['overdue'] ?? ''), ['1', 'true', 'on'], true);
         $q = $filters['q'] ?? null;
 
-        $pending = collect();
+        $pending = new LengthAwarePaginator([], 0, 50, 1, ['path' => route('collector.index')]);
         $warning = null;
         $dueDays = 30;
 
         try {
             $dueDays = $this->collection->dueDays();
-            $pending = $this->collection->pendingForCollector([
-                'limit' => 150,
+            $pending = $this->collection->paginateForCollector([
                 'status' => in_array($status, ['due', 'partial'], true) ? $status : null,
                 'overdue' => $overdueOnly,
                 'q' => $q,
-            ])->filter(fn (Document $document) => $this->collection->remainingAmount($document)->isPositive())->values();
+                'sort' => $filters['sort'] ?? 'date',
+                'direction' => $filters['direction'] ?? 'asc',
+            ]);
         } catch (Throwable $e) {
             report($e);
             $warning = __('Run migrations on the Maintenance page first.');
         }
 
         return view('collector.index', [
-            'pending' => $pending instanceof Collection ? $pending : collect($pending),
+            'pending' => $pending,
             'collection' => $this->collection,
             'warning' => $warning,
             'dueDays' => $dueDays,
@@ -64,6 +67,8 @@ class CollectorController extends Controller
                 'q' => $q,
                 'status' => $status,
                 'overdue' => $overdueOnly,
+                'sort' => $filters['sort'] ?? 'date',
+                'direction' => $filters['direction'] ?? 'asc',
             ],
         ]);
     }
@@ -130,5 +135,37 @@ class CollectorController extends Controller
         ]);
 
         return redirect()->back()->with('status', __('Invoice :number marked as fully collected.', ['number' => $document->number]));
+    }
+
+    public function paid(Request $request, Document $document): RedirectResponse
+    {
+        abort_unless(PaymentAccess::canCollectReceipts($request->user()), 403);
+        abort_unless($document->isSale() && $document->isPosted() && $document->retailer_id, 404);
+
+        $remaining = $this->collection->remainingAmount($document);
+        abort_if(! $remaining->isPositive(), 404);
+        $payment = $this->writer->save([
+            'kind' => 'receipt',
+            'number' => '',
+            'retailer_id' => $document->retailer_id,
+            'method' => 'cash',
+            'amount' => Exact::money($remaining),
+            'payment_date' => now()->toDateString(),
+            'action' => 'post',
+        ], [[
+            'document_id' => $document->id,
+            'amount' => Exact::money($remaining),
+        ]], $request->user());
+        $this->collection->confirmCollected($document->fresh(), $request->user());
+        AuditLogger::log('collection.confirmed', $document, null, [
+            'number' => $document->number,
+            'status' => SaleCollectionStatus::COMPLETED,
+        ], $request->user());
+
+        return redirect()->route('payments.show', $payment)
+            ->with('status', __('Invoice :number paid in full. Receipt :receipt.', [
+                'number' => $document->number,
+                'receipt' => $payment->number,
+            ]));
     }
 }
