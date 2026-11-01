@@ -11,10 +11,12 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Support\Bulk\BulkSelection;
+use App\Support\Images\CatalogImageStore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -24,6 +26,8 @@ use Illuminate\View\View;
 class DirectoryController extends Controller
 {
     use RespondsWithPartyJson;
+
+    public function __construct(private readonly CatalogImageStore $images) {}
 
     public function index(Request $request, string $kind): View
     {
@@ -79,7 +83,17 @@ class DirectoryController extends Controller
     public function store(Request $request, string $kind): RedirectResponse|JsonResponse
     {
         $meta = $this->meta($kind);
-        $row = $meta['model']::query()->create($this->validated($request, $kind));
+        $data = $this->validated($request, $kind);
+        $image = $data['image'] ?? null;
+        unset($data['image']);
+        $row = $meta['model']::query()->create($data);
+        if ($kind === 'brands') {
+            $row->productTypes()->firstOrCreate(['name' => 'Uncategorized']);
+        }
+        if ($kind === 'brands' && $image instanceof UploadedFile) {
+            $row->image_path = $this->images->store($image, 'catalog/brands');
+            $row->save();
+        }
 
         if ($kind === 'suppliers' && $this->wantsPartyJson($request)) {
             return $this->partyJson($row);
@@ -103,7 +117,16 @@ class DirectoryController extends Controller
     public function update(Request $request, string $kind, int $id): RedirectResponse
     {
         $row = $this->find($kind, $id);
-        $row->update($this->validated($request, $kind, $row));
+        $data = $this->validated($request, $kind, $row);
+        $image = $data['image'] ?? null;
+        unset($data['image']);
+        $row->update($data);
+        if ($kind === 'brands' && $image instanceof UploadedFile) {
+            $oldImage = $row->image_path;
+            $row->image_path = $this->images->store($image, 'catalog/brands');
+            $row->save();
+            $this->images->delete($oldImage);
+        }
 
         return redirect()->route('masters.directory.index', $kind)->with('status', __('Saved.'));
     }
@@ -178,7 +201,7 @@ class DirectoryController extends Controller
                 'search_label' => __('Search brand name'),
                 'order' => 'name',
                 'search' => ['name'],
-                'columns' => ['name' => __('Brand')],
+                'columns' => ['image_path' => __('Image'), 'name' => __('Brand')],
             ],
             'suppliers' => [
                 'model' => Supplier::class,
@@ -238,12 +261,16 @@ class DirectoryController extends Controller
         $phone = ['name' => 'phone', 'label' => __('Phone'), 'type' => 'tel', 'max' => 20];
 
         return match ($kind) {
-            'brands' => [[
-                'name' => 'name',
-                'label' => __('Brand'),
-                'required' => true,
-                'max' => 80,
-            ]],
+            'brands' => [
+                [
+                    'name' => 'name',
+                    'label' => __('Brand'),
+                    'required' => true,
+                    'max' => 80,
+                ],
+                ['name' => 'purchase_discount_pct', 'label' => __('Default purchase discount (%)'), 'type' => 'number', 'max' => 5],
+                ['name' => 'image', 'label' => __('Brand image (800 × 800 px)'), 'type' => 'file', 'max' => 120],
+            ],
             'suppliers' => [
                 $code,
                 $name,
@@ -282,6 +309,8 @@ class DirectoryController extends Controller
         $rules = match ($kind) {
             'brands' => [
                 'name' => ['required', 'string', 'max:80', Rule::unique('brands', 'name')->ignore($row?->getKey())],
+                'purchase_discount_pct' => ['nullable', 'decimal:0,2', 'min:0', 'max:100'],
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
             ],
             'suppliers' => [
                 'code' => $unique('suppliers', 'code'),

@@ -30,6 +30,13 @@ if (! function_exists('format_number')) {
     }
 }
 
+if (! function_exists('format_qty')) {
+    function format_qty(BigNumber|int|string $value): string
+    {
+        return Formatter::quantity($value);
+    }
+}
+
 if (! function_exists('format_money')) {
     function format_money(BigNumber|int|string $value): string
     {

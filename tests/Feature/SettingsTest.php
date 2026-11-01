@@ -45,6 +45,7 @@ class SettingsTest extends TestCase
                 'reminder_http_sms_url' => '',
                 'reminder_whatsapp_token' => '',
                 'reminder_whatsapp_phone_id' => '',
+                'day_end_whatsapp_recipient' => '',
             ],
             'settings_lines' => [
                 'calendar_working_dates' => '',

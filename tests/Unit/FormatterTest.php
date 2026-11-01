@@ -47,6 +47,14 @@ class FormatterTest extends TestCase
         $this->assertSame('1.2346', Formatter::number('1.23456', 4, 'en'));
     }
 
+    public function test_quantity_format_omits_zero_decimals_without_rounding_legacy_fractions(): void
+    {
+        $this->assertSame('12', Formatter::quantity('12.00', 'en'));
+        $this->assertSame('1.5', Formatter::quantity('1.50', 'en'));
+        $this->assertSame('1.234', Formatter::quantity('1.234', 'en'));
+        $this->assertSame('১২', Formatter::quantity('12.00', 'bn'));
+    }
+
     public function test_bangla_digits_are_accepted_as_input(): void
     {
         $this->assertSame('12,34,567.89', Formatter::number('১২৩৪৫৬৭.৮৯', locale: 'en'));

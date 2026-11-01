@@ -65,5 +65,15 @@ final class ReminderSettings
             label: 'WhatsApp phone number ID',
             rules: ['nullable', 'max:40'],
         ));
+
+        $registry->define(new SettingDefinition(
+            key: 'day_end_whatsapp_recipient',
+            type: SettingDefinition::STRING,
+            default: '',
+            group: 'reminders',
+            label: 'Day-end WhatsApp report recipient',
+            help: 'After a day is closed, send the cash and bank summary to this phone number. Leave blank to disable the report.',
+            rules: ['nullable', 'max:30', 'regex:/^(?=.*[0-9])[+0-9 ()-]+$/'],
+        ));
     }
 }

@@ -43,8 +43,8 @@
                         @endphp
                         <tr>
                             <td>{{ $line->product?->name_en ?? __('Product no longer available') }}</td>
-                            <td class="text-right font-mono">{{ format_number($line->qty) }}</td>
-                            <td class="text-right font-mono">{{ format_number($line->received_qty) }}</td>
+                            <td class="text-right font-mono">{{ format_qty($line->qty) }}</td>
+                            <td class="text-right font-mono">{{ format_qty($line->received_qty) }}</td>
                             <td class="text-right font-mono">{{ format_number($remainingQty) }}</td>
                             <td class="text-right font-mono">{{ format_money($line->unit_price) }}</td>
                             <td class="text-right font-mono">{{ format_money($lineTotal) }}</td>
@@ -120,8 +120,8 @@
                                 <tr>
                                     <td>{{ $receiptLine->orderLine?->product?->name_en }}</td>
                                     <td>{{ $receiptLine->status === \App\Models\PurchaseOrderReceiptLine::STATUS_CONFIRMED ? __('CONFIRMED') : __('DUE') }}</td>
-                                    <td class="text-right font-mono">{{ format_number($receiptLine->received_qty) }}</td>
-                                    <td class="text-right font-mono">{{ format_number($receiptLine->due_qty) }}</td>
+                                    <td class="text-right font-mono">{{ format_qty($receiptLine->received_qty) }}</td>
+                                    <td class="text-right font-mono">{{ format_qty($receiptLine->due_qty) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

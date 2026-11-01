@@ -75,6 +75,52 @@ class InvoiceAdjustmentTest extends TestCase
             ->assertSee(__('Total TDS Amount'), false);
     }
 
+    public function test_manual_invoice_automatically_rounds_to_whole_currency_units(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Round Shop']);
+        $product = Product::query()->create(['name_en' => 'Soap', 'unit' => 'Pcs']);
+
+        $this->actingAs($owner)->post(route('sales.store'), [
+            'number' => 'S-ROUND-1',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-10',
+            'action' => 'save',
+            'lines' => [[
+                'product_id' => $product->id,
+                'qty' => '1',
+                'unit_price' => '10.51',
+                'line_value' => '10.51',
+            ]],
+        ])->assertRedirect();
+
+        $document = Document::query()->where('number', 'S-ROUND-1')->firstOrFail();
+        $this->assertSame('0.49', (string) $document->rounding_adjustment);
+        $this->assertSame('11.00', (string) $document->net_total);
+    }
+
+    public function test_manual_invoice_rejects_fractional_quantities(): void
+    {
+        $owner = $this->owner();
+        $retailer = Retailer::query()->create(['name' => 'Whole Shop']);
+        $product = Product::query()->create(['name_en' => 'Soap', 'unit' => 'Pcs']);
+
+        $this->actingAs($owner)->post(route('sales.store'), [
+            'number' => 'S-WHOLE-1',
+            'retailer_id' => $retailer->id,
+            'doc_date' => '2026-10-10',
+            'action' => 'save',
+            'lines' => [[
+                'product_id' => $product->id,
+                'qty' => '1.5',
+                'unit_price' => '10',
+                'line_value' => '15',
+            ]],
+        ])->assertSessionHasErrors('lines.0.qty');
+
+        $this->assertDatabaseMissing('documents', ['number' => 'S-WHOLE-1']);
+    }
+
     public function test_sale_detail_separates_document_details_and_highlights_total_payable(): void
     {
         $owner = $this->owner();
