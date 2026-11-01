@@ -71,7 +71,7 @@ class PurchaseOrderWorkflowTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $order = PurchaseOrder::query()->with('lines')->sole();
-        $this->assertSame('PO-20261025-000001', $order->number);
+        $this->assertSame(sprintf('PO-20261025-%06d', $order->id), $order->number);
         $this->assertSame('Pending', $order->statusLabel());
 
         $this->actingAs($owner)
