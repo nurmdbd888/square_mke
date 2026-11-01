@@ -88,7 +88,7 @@ class UxPaymentsCollectionTest extends TestCase
         $this->assertSame('0.00', (string) app(SaleCollectionStatus::class)->remainingAmount($invoice->fresh()));
     }
 
-    public function test_collections_page_lists_only_due_invoices_and_opens_compact_collection_form(): void
+    public function test_collections_page_lists_due_invoices_and_opens_compact_collection_form(): void
     {
         $invoice = $this->postedSale(); // doc_date 2026-10-01
         $this->travelTo(now()->parse('2026-11-05')); // > 30 days past invoice date
@@ -141,6 +141,75 @@ class UxPaymentsCollectionTest extends TestCase
         $this->assertSame('725.00', (string) app(SaleCollectionStatus::class)->remainingAmount($invoice->fresh()));
     }
 
+    public function test_collections_page_lists_all_payment_statuses_and_filters_paid_invoices(): void
+    {
+        $owner = $this->owner();
+        $collector = $this->userWithRole('collector');
+        $due = $this->postedSale();
+        $partial = $this->postedSale();
+        $paid = $this->postedSale();
+
+        foreach ([[$partial, '250'], [$paid, '1000']] as [$invoice, $amount]) {
+            $this->actingAs($owner)->post(route('payments.store'), [
+                'kind' => 'receipt',
+                'number' => 'RC-'.uniqid(),
+                'retailer_id' => $invoice->retailer_id,
+                'method' => 'cash',
+                'amount' => $amount,
+                'payment_date' => '2026-10-17',
+                'action' => 'post',
+                'allocations' => [
+                    ['document_id' => $invoice->id, 'amount' => $amount],
+                ],
+            ])->assertRedirect();
+        }
+
+        $this->actingAs($collector)
+            ->get(route('collector.index'))
+            ->assertOk()
+            ->assertSee('data-testid="collector-payment-status-'.$due->id.'"', false)
+            ->assertSee('data-testid="collector-payment-status-'.$partial->id.'"', false)
+            ->assertSee('data-testid="collector-payment-status-'.$paid->id.'"', false)
+            ->assertSee(__('Due'))
+            ->assertSee(__('Partially paid'))
+            ->assertSee(__('Paid'))
+            ->assertSee('data-testid="collector-confirmation-status-'.$paid->id.'"', false)
+            ->assertSee(__('Pending'))
+            ->assertSee('data-testid="collector-confirm-'.$paid->id.'"', false);
+
+        $this->actingAs($collector)
+            ->post(route('sales.collection.confirm', $paid))
+            ->assertRedirect();
+
+        $this->actingAs($collector)
+            ->get(route('collector.index'))
+            ->assertOk()
+            ->assertSee('data-testid="collector-confirmation-status-'.$paid->id.'"', false)
+            ->assertSee(__('Confirmed'));
+
+        $this->actingAs($collector)
+            ->get(route('collector.index', ['status' => 'paid']))
+            ->assertOk()
+            ->assertSee($paid->number, false)
+            ->assertDontSee($due->number, false)
+            ->assertDontSee($partial->number, false);
+    }
+
+    public function test_collections_page_filters_invoices_by_date_range(): void
+    {
+        $collector = $this->userWithRole('collector');
+        $before = $this->postedSale('2026-10-01');
+        $within = $this->postedSale('2026-10-20');
+        $after = $this->postedSale('2026-11-01');
+
+        $this->actingAs($collector)
+            ->get(route('collector.index', ['from' => '2026-10-15', 'to' => '2026-10-31']))
+            ->assertOk()
+            ->assertSee($within->number, false)
+            ->assertDontSee($before->number, false)
+            ->assertDontSee($after->number, false);
+    }
+
     public function test_collections_pagination_counts_only_invoices_with_a_real_balance_due(): void
     {
         $collector = $this->userWithRole('collector');
@@ -178,7 +247,7 @@ class UxPaymentsCollectionTest extends TestCase
             ->assertSee($invoice->number, false);
     }
 
-    private function postedSale(): Document
+    private function postedSale(string $date = '2026-10-01'): Document
     {
         $owner = $this->owner();
         $product = Product::query()->create(['name_en' => 'Soap', 'unit' => 'Pcs', 'sell_price' => '100']);
@@ -187,7 +256,7 @@ class UxPaymentsCollectionTest extends TestCase
         return app(DocumentWriter::class)->save('sale', [
             'number' => 'S-UX-'.uniqid(),
             'retailer_id' => $retailer->id,
-            'doc_date' => '2026-10-01',
+            'doc_date' => $date,
             'action' => 'post',
         ], [['product_id' => $product->id, 'qty' => '10', 'unit_price' => '100', 'line_value' => '1000']], $owner);
     }
