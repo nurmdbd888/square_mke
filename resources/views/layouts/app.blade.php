@@ -136,7 +136,7 @@
             </ul>
         </nav>
 
-        <main id="main" class="min-w-0 flex-1 overflow-x-hidden px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <main id="main" class="min-w-0 flex-1 overflow-x-clip px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
             <x-flash />
             @yield('content')
         </main>
