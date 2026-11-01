@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Documents\DocumentPrintController;
+use App\Http\Controllers\Documents\PurchaseOrderController;
 use App\Http\Controllers\Documents\StockController;
 use App\Http\Controllers\Export\ExportController;
 use App\Http\Controllers\Google\GoogleDriveController;
@@ -180,6 +181,13 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/purchases/bulk', [DocumentController::class, 'bulk'])
             ->defaults('type', 'purchase')
             ->name('purchases.bulk');
+        Route::get('/purchases/orders', [PurchaseOrderController::class, 'index'])->middleware('can:purchases.view')->name('purchases.orders.index');
+        Route::get('/purchases/orders/create', [PurchaseOrderController::class, 'create'])->middleware('can:purchases.manage')->name('purchases.orders.create');
+        Route::post('/purchases/orders', [PurchaseOrderController::class, 'store'])->middleware('can:purchases.manage')->name('purchases.orders.store');
+        Route::get('/purchases/orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->middleware('can:purchases.view')->whereNumber('purchaseOrder')->name('purchases.orders.show');
+        Route::get('/purchases/orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->middleware('can:purchases.manage')->whereNumber('purchaseOrder')->name('purchases.orders.receive');
+        Route::post('/purchases/orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'storeReceipt'])->middleware('can:purchases.manage')->whereNumber('purchaseOrder')->name('purchases.orders.receive.store');
+        Route::post('/purchases/orders/{purchaseOrder}/payments', [PurchaseOrderController::class, 'storePayment'])->middleware('can:purchases.manage')->whereNumber('purchaseOrder')->name('purchases.orders.payments.store');
         Route::get('/purchases/{document}', [DocumentController::class, 'show'])->middleware('can:purchases.view')->whereNumber('document')->name('purchases.show');
         Route::get('/purchases/{document}/edit', [DocumentController::class, 'edit'])->middleware('can:purchases.manage')->whereNumber('document')->name('purchases.edit');
         Route::put('/purchases/{document}', [DocumentController::class, 'update'])->middleware('can:purchases.manage')->whereNumber('document')->name('purchases.update');

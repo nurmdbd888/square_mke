@@ -31,7 +31,7 @@
         @endif
         @if ((($canWrite ?? $canManage) || ($canDelete ?? false)) && ! $payment->isVoid())
             <div class="flex flex-wrap gap-2">
-                @if ($canWrite ?? $canManage)
+                @if (($canWrite ?? $canManage) && ! ($isPurchaseOrderPayment ?? false))
                     @unless ($payment->isPosted() && $payment->isPdc() && $payment->clearing_status === 'cleared')
                         <a href="{{ route('payments.edit', $payment) }}" class="btn-secondary">{{ __('Edit') }}</a>
                     @endunless
