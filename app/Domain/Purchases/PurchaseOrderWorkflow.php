@@ -107,9 +107,12 @@ final class PurchaseOrderWorkflow
                 ->whereHas('document', fn ($query) => $query
                     ->where('purchase_order_id', $order->id)
                     ->where('status', Document::STATUS_POSTED))
-                ->selectRaw('product_id, SUM(line_value) as invoiced_value')
+                ->get(['product_id', 'line_value'])
                 ->groupBy('product_id')
-                ->pluck('invoiced_value', 'product_id');
+                ->map(fn ($productLines) => $productLines->reduce(
+                    fn ($total, DocumentLine $invoiceLine) => $total->plus(Exact::of($invoiceLine->line_value)),
+                    Exact::of('0'),
+                ));
 
             foreach ($openLines as $line) {
                 $item = $itemsById->get($line->id);

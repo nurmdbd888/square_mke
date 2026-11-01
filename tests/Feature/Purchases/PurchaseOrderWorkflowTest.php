@@ -110,7 +110,7 @@ class PurchaseOrderWorkflowTest extends TestCase
         $this->assertTrue($order->isFullyReceived());
         $this->assertSame('Received', $order->statusLabel());
         $this->assertCount(2, $order->receipts);
-        $this->assertSame('1000.00', (string) PaymentAllocation::query()->where('payment_id', $payment->id)->sum('amount'));
+        $this->assertSame('1000.00', Exact::money((string) PaymentAllocation::query()->where('payment_id', $payment->id)->sum('amount')));
         $this->assertCount(0, app(PartyBalance::class)->openInvoices('supplier', $supplier->id));
     }
 
@@ -225,8 +225,8 @@ class PurchaseOrderWorkflowTest extends TestCase
 
         $this->assertSame('0.02', $order->fresh()->totalAmount());
         $this->assertSame('0.02', (string) Document::query()->where('purchase_order_id', $order->id)->sum('net_total'));
-        $this->assertSame('0.02', (string) DocumentLine::query()
+        $this->assertSame('0.02', Exact::money((string) DocumentLine::query()
             ->whereHas('document', fn ($query) => $query->where('purchase_order_id', $order->id))
-            ->sum('line_value'));
+            ->sum('line_value')));
     }
 }
