@@ -52,7 +52,7 @@
         @endif
         @if ($canManage || ($canDelete ?? false))
             <div class="flex flex-wrap gap-2">
-                @if ($canManage && ! $document->isVoid())
+                @if ($canManage && ! $document->isVoid() && ! $document->purchase_order_id)
                     <a href="{{ route($editRoute, $document) }}" class="btn-secondary px-3 py-1.5 text-xs">{{ __('Edit') }}</a>
                     @if ($document->isDraft())
                         <form method="POST" action="{{ route($postRoute, $document) }}">
@@ -61,7 +61,7 @@
                         </form>
                     @endif
                 @endif
-                @if ($canDelete ?? false)
+                @if (($canDelete ?? false) && ! $document->purchase_order_id)
                     <x-delete-form
                         :action="route($voidRoute, $document)"
                         :confirm="$document->isVoid()
@@ -72,6 +72,14 @@
                     />
                 @endif
             </div>
+        @endif
+        @if ($document->purchase_order_id)
+            <p class="mt-2 w-full text-sm text-slate-600">
+                {{ __('This purchase invoice was created automatically from a posted purchase-order delivery.') }}
+                @if ($document->purchaseOrder)
+                    <a href="{{ route('purchases.orders.show', $document->purchaseOrder) }}" class="text-brand-700 underline">{{ $document->purchaseOrder->number }}</a>
+                @endif
+            </p>
         @endif
     </div>
 
