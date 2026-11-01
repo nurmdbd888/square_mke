@@ -190,7 +190,7 @@
             <p class="mt-1 text-sm text-slate-600">{{ __('Search on the left, click a product to add it. Change quantity and price on the right.') }}</p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
-                <div class="sticky top-4 h-fit rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div class="h-fit rounded-lg border border-slate-200 bg-slate-50 p-3 lg:sticky lg:top-4 lg:self-start">
                     <label class="block">
                         <span class="label">{{ __('Brand') }}</span>
                         <select
