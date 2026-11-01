@@ -40,8 +40,8 @@
                                     <span class="font-medium">{{ $line->product?->name_en }}</span>
                                     <input type="hidden" name="items[{{ $index }}][purchase_order_line_id]" value="{{ $line->id }}">
                                 </td>
-                                <td class="text-right font-mono">{{ format_number($line->qty) }}</td>
-                                <td class="text-right font-mono">{{ format_number($line->received_qty) }}</td>
+                                <td class="text-right font-mono">{{ format_qty($line->qty) }}</td>
+                                <td class="text-right font-mono">{{ format_qty($line->received_qty) }}</td>
                                 <td>
                                     <select name="items[{{ $index }}][status]" x-model="status" class="input min-h-10">
                                         <option value="confirmed">{{ __('CONFIRMED') }}</option>
@@ -54,7 +54,7 @@
                                            value="{{ old("items.$index.due_qty", '0') }}"
                                            min="0"
                                            max="{{ $remaining }}"
-                                           step="0.001"
+                                           step="{{ $remaining->strippedOfTrailingZeros()->getScale() > 0 ? 'any' : '1' }}"
                                            :required="status === 'due'"
                                            :disabled="status !== 'due'"
                                            class="input min-h-10 text-right font-mono disabled:bg-slate-100"

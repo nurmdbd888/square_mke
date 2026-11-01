@@ -20,6 +20,29 @@ class PurchaseOrderWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_purchase_orders_can_be_sorted_and_have_page_jump_controls(): void
+    {
+        $owner = $this->owner();
+        $supplier = Supplier::query()->create(['name' => 'Soap Supplier']);
+        PurchaseOrder::query()->create([
+            'number' => 'PO-OLD',
+            'supplier_id' => $supplier->id,
+            'order_date' => '2026-10-24',
+        ]);
+        PurchaseOrder::query()->create([
+            'number' => 'PO-NEW',
+            'supplier_id' => $supplier->id,
+            'order_date' => '2026-10-25',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('purchases.orders.index', ['sort' => 'date', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['PO-OLD', 'PO-NEW'])
+            ->assertSee('name="sort"', false)
+            ->assertSee('name="direction"', false);
+    }
+
     public function test_purchase_orders_can_be_paid_and_received_in_partial_deliveries(): void
     {
         $owner = $this->owner();

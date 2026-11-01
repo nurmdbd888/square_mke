@@ -39,6 +39,12 @@
                         <td>
                             @if ($key === 'user')
                                 {{ $row->user?->name ?: '—' }}
+                            @elseif ($key === 'image_path')
+                                @if ($row->image_path)
+                                    <img src="{{ asset('storage/'.$row->image_path) }}" alt="{{ $row->name }}" class="h-10 w-10 rounded object-cover">
+                                @else
+                                    —
+                                @endif
                             @elseif ($key === 'phone' && $row->phone)
                                 {{ local_digits($row->phone) }}
                             @else

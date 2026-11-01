@@ -60,6 +60,10 @@
                 <p class="mt-1 font-mono text-lg font-semibold">{{ format_money($metrics['month_sales']) }}</p>
             </div>
             <div class="card">
+                <p class="text-xs font-medium uppercase text-slate-500">{{ __('Gross profit (month)') }}</p>
+                <p class="mt-1 font-mono text-lg font-semibold">{{ format_money($metrics['month_gross']) }}</p>
+            </div>
+            <div class="card">
                 <p class="text-xs font-medium uppercase text-slate-500">{{ __('Gross margin') }}</p>
                 <p class="mt-1 font-mono text-lg font-semibold">{{ local_digits($metrics['month_gross_margin_pct']) }}%</p>
             </div>
@@ -74,6 +78,10 @@
             <div class="card">
                 <p class="text-xs font-medium uppercase text-slate-500">{{ __('Receivables due') }}</p>
                 <p class="mt-1 font-mono text-lg font-semibold">{{ format_money($metrics['receivables_due']) }}</p>
+            </div>
+            <div class="card">
+                <p class="text-xs font-medium uppercase text-slate-500">{{ __('Profit before expenses (today)') }}</p>
+                <p class="mt-1 font-mono text-lg font-semibold">{{ format_money($metrics['today_profit_before_expenses']) }}</p>
             </div>
         </section>
 

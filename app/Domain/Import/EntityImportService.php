@@ -14,6 +14,7 @@ use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
 use App\Models\User;
+use App\Support\Catalog\ProductCatalogLinker;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class EntityImportService
 {
-    public function __construct(private readonly SpreadsheetImportReader $reader) {}
+    public function __construct(
+        private readonly SpreadsheetImportReader $reader,
+        private readonly ProductCatalogLinker $catalogLinker,
+    ) {}
 
     public function templateDownload(string $entity, string $format = 'csv'): StreamedResponse
     {
@@ -267,6 +271,7 @@ final class EntityImportService
             'sd_pct' => $parsed['sd_pct'] ?? null,
             'vat_pct' => $parsed['vat_pct'] ?? null,
         ], fn ($v) => $v !== null);
+        $attrs = $this->catalogLinker->withBrandAndType($attrs, $existing);
 
         if ($existing === null) {
             $created = Product::query()->create($attrs);

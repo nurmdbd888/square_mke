@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Import;
 
 use App\Domain\Import\DocumentImportService;
+use App\Domain\Import\InvoiceDocumentTypeDetector;
 use App\Domain\Import\InvoiceImportTemplates;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentImportBatch;
@@ -16,7 +17,10 @@ use Illuminate\View\View;
 
 class DocumentImportController extends Controller
 {
-    public function __construct(private readonly DocumentImportService $imports) {}
+    public function __construct(
+        private readonly DocumentImportService $imports,
+        private readonly InvoiceDocumentTypeDetector $typeDetector,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -42,7 +46,7 @@ class DocumentImportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'doc_type' => 'required|in:purchase,sale',
+            'doc_type' => 'nullable|in:purchase,sale',
             'file' => 'nullable|required_without:scan_files|file|mimes:csv,xlsx,xls|max:51200',
             'scan_files' => 'nullable|array|max:20',
             'scan_files.*' => 'file|mimes:pdf,jpg,jpeg,png,webp|max:51200',
@@ -52,7 +56,6 @@ class DocumentImportController extends Controller
             'doc_date' => 'nullable|string|max:32',
         ]);
 
-        $this->authorizeDocType($data['doc_type'], 'manage');
         $scanFiles = $request->file('scan_files', []);
         if ($scanFiles !== []) {
             if (isset($data['file'])) {
@@ -85,6 +88,14 @@ class DocumentImportController extends Controller
                 ]);
             }
 
+            $docType = $data['doc_type'] ?? $this->typeDetector->detect($pages);
+            if ($docType === null) {
+                throw ValidationException::withMessages([
+                    'doc_type' => __('We could not identify this document. Choose whether it is a sales or purchase invoice.'),
+                ]);
+            }
+            $this->authorizeDocType($docType, 'manage');
+
             $totalTextLength = array_sum(array_map(fn ($page) => mb_strlen($page['text']), $pages));
             if ($totalTextLength > 8_000_000) {
                 throw ValidationException::withMessages([
@@ -93,7 +104,7 @@ class DocumentImportController extends Controller
             }
 
             $result = $this->imports->previewOcr(
-                $data['doc_type'],
+                $docType,
                 $scanFiles,
                 $pages,
                 $request->user(),
@@ -104,6 +115,11 @@ class DocumentImportController extends Controller
 
             return redirect()->route('imports.invoices.show', $result['batch'])->with('status', $message);
         }
+
+        if (empty($data['doc_type'])) {
+            throw ValidationException::withMessages(['doc_type' => __('Choose whether this is a sales or purchase invoice.')]);
+        }
+        $this->authorizeDocType($data['doc_type'], 'manage');
 
         $meta = array_filter([
             'invoice_no' => $data['invoice_no'] ?? null,

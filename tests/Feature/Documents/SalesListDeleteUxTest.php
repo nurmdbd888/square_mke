@@ -4,6 +4,7 @@ namespace Tests\Feature\Documents;
 
 use App\Models\Document;
 use App\Models\Retailer;
+use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -77,6 +78,37 @@ class SalesListDeleteUxTest extends TestCase
             ->get(route('sales.index', ['from' => '2026-10-25', 'to' => '2026-10-24']))
             ->assertRedirect()
             ->assertSessionHasErrors('to');
+    }
+
+    public function test_purchase_index_can_filter_documents_by_an_inclusive_date_range(): void
+    {
+        $owner = $this->owner();
+        $supplier = Supplier::query()->create(['name' => 'Supplier']);
+
+        foreach ([
+            ['P-BEFORE', '2026-10-23'],
+            ['P-FROM', '2026-10-24'],
+            ['P-TO', '2026-10-25'],
+            ['P-AFTER', '2026-10-26'],
+        ] as [$number, $date]) {
+            Document::query()->create([
+                'type' => Document::TYPE_PURCHASE,
+                'number' => $number,
+                'supplier_id' => $supplier->id,
+                'doc_date' => $date,
+                'status' => Document::STATUS_DRAFT,
+                'subtotal' => '10',
+                'net_total' => '10',
+            ]);
+        }
+
+        $this->actingAs($owner)
+            ->get(route('purchases.index', ['from' => '2026-10-24', 'to' => '2026-10-25']))
+            ->assertOk()
+            ->assertSee('P-FROM', false)
+            ->assertSee('P-TO', false)
+            ->assertDontSee('P-BEFORE', false)
+            ->assertDontSee('P-AFTER', false);
     }
 
     public function test_sale_show_uses_back_link_button(): void

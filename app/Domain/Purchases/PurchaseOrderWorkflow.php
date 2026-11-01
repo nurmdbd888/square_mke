@@ -126,6 +126,11 @@ final class PurchaseOrderWorkflow
                 if ($item['status'] === PurchaseOrderReceiptLine::STATUS_DUE && (! $due->isPositive() || $due->isGreaterThan($remaining))) {
                     throw ValidationException::withMessages(['items' => __('Enter a due quantity greater than zero and no more than the quantity still outstanding.')]);
                 }
+                if ($item['status'] === PurchaseOrderReceiptLine::STATUS_DUE
+                    && $remaining->strippedOfTrailingZeros()->getScale() <= 0
+                    && $due->strippedOfTrailingZeros()->getScale() > 0) {
+                    throw ValidationException::withMessages(['items' => __('Pieces due must be a whole number for this order.')]);
+                }
 
                 $received = $remaining->minus($due);
                 PurchaseOrderReceiptLine::query()->create([

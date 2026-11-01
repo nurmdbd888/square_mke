@@ -3,6 +3,9 @@
 @section('title', $product->exists ? __('Edit product') : __('Add product'))
 
 @section('content')
+    @php
+        $selectedBrandId = old('brand_id', $brands->firstWhere('name', $product->brand)?->id);
+    @endphp
     <x-back-link :href="route('products.index')">{{ __('Back to products') }}</x-back-link>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $product->exists ? __('Edit product') : __('Add product') }}</h1>
 
@@ -18,7 +21,7 @@
 
     <div class="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
         <section class="card">
-            <form method="POST" action="{{ $product->exists ? route('products.update', $product) : route('products.store') }}" class="grid gap-4 sm:grid-cols-2">
+            <form method="POST" enctype="multipart/form-data" action="{{ $product->exists ? route('products.update', $product) : route('products.store') }}" class="grid gap-4 sm:grid-cols-2">
                 @csrf
                 @if ($product->exists)
                     @method('PUT')
@@ -27,15 +30,21 @@
                     <span class="label">{{ __('Code') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <input type="text" name="code" value="{{ old('code', $product->code) }}" maxlength="40" class="input font-mono">
                 </label>
-                <label class="block">
+                <label class="block" x-data="{ brandId: @js((string) $selectedBrandId) }">
                     <span class="label">{{ __('Brand') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
-                    <select name="brand" class="input">
-                        <option value="">{{ __('None') }}</option>
-                        @if ($product->brand && ! $brands->contains($product->brand))
-                            <option value="{{ $product->brand }}" @selected(old('brand', $product->brand) === $product->brand)>{{ $product->brand }} ({{ __('Deactivated') }})</option>
-                        @endif
+                    <select name="brand_id" class="input" x-model="brandId">
+                        <option value="" @selected((string) $selectedBrandId === '')>{{ __('None') }}</option>
                         @foreach ($brands as $brand)
-                            <option value="{{ $brand }}" @selected(old('brand', $product->brand) === $brand)>{{ $brand }}</option>
+                            <option value="{{ $brand->id }}" @selected((string) $selectedBrandId === (string) $brand->id)>{{ $brand->name }}</option>
+                        @endforeach
+                    </select>
+                    <span class="label mt-3 block">{{ __('Product type') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                    <select name="product_type_id" class="input" :required="brandId !== ''">
+                        <option value="">{{ __('None') }}</option>
+                        @foreach ($productTypes as $type)
+                            <option value="{{ $type->id }}" x-show="brandId === '{{ $type->brand_id }}'" @selected((string) old('product_type_id', $product->product_type_id) === (string) $type->id)>
+                                {{ $type->brand->name }} — {{ $type->name }}{{ $type->trashed() ? ' ('.__('Deactivated').')' : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </label>
@@ -46,6 +55,14 @@
                 <label class="block sm:col-span-2">
                     <span class="label">{{ __('Bangla name') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <input type="text" name="name_bn" value="{{ old('name_bn', $product->name_bn) }}" maxlength="191" class="input">
+                </label>
+                <label class="block sm:col-span-2">
+                    <span class="label">{{ __('Product image (800 × 800 px)') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                    @if ($product->image_path)
+                        <img src="{{ asset('storage/'.$product->image_path) }}" alt="{{ $product->name_en }}" class="mb-2 h-24 w-24 rounded-lg object-cover">
+                    @endif
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="input">
+                    <span class="mt-1 block text-xs text-slate-500">{{ __('Image is cropped and saved at 800 × 800 px.') }}</span>
                 </label>
                 <label class="block">
                     <span class="label">{{ __('Pack size') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
@@ -66,6 +83,11 @@
                 <label class="block">
                     <span class="label">{{ __('Buy price') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
                     <input type="text" name="buy_price" value="{{ old('buy_price', $product->buy_price) }}" inputmode="decimal" class="input">
+                </label>
+                <label class="block">
+                    <span class="label">{{ __('Purchase discount override (%)') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>
+                    <input type="number" name="purchase_discount_pct" value="{{ old('purchase_discount_pct', $product->purchase_discount_pct) }}" min="0" max="100" step="0.01" class="input">
+                    <span class="mt-1 block text-xs text-slate-500">{{ __('Leave blank to use the brand default.') }}</span>
                 </label>
                 <label class="block">
                     <span class="label">{{ __('Exact buy price') }} <span class="font-normal text-slate-500">({{ __('optional') }})</span></span>

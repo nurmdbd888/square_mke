@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Documents;
 
 use App\Domain\Documents\DocumentWriter;
+use App\Domain\Money\InvoiceRounding;
 use App\Domain\Payments\CreditLimit;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Document;
+use App\Models\DocumentImportInvoice;
+use App\Models\DocumentLine;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\Retailer;
 use App\Models\SalesRep;
 use App\Models\SalesRoute;
@@ -28,6 +32,7 @@ class DocumentController extends Controller
     public function __construct(
         private readonly DocumentWriter $writer,
         private readonly CreditLimit $creditLimit,
+        private readonly InvoiceRounding $rounding,
     ) {}
 
     public function index(Request $request, string $type): View
@@ -38,15 +43,22 @@ class DocumentController extends Controller
         $filterRules = [
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(['draft', 'posted', 'void', 'all'])],
+            'sort' => ['nullable', Rule::in(['date', 'number', 'total'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ];
-        if ($type === Document::TYPE_SALE) {
-            $filterRules['from'] = ['nullable', 'date_format:Y-m-d'];
-            $filterRules['to'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'];
-        }
+        $filterRules['from'] = ['nullable', 'date_format:Y-m-d'];
+        $filterRules['to'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'];
         $filters = $request->validate($filterRules);
         $status = $filters['status'] ?? 'all';
-        $fromDate = $type === Document::TYPE_SALE ? ($filters['from'] ?? null) : null;
-        $toDate = $type === Document::TYPE_SALE ? ($filters['to'] ?? null) : null;
+        $sort = $filters['sort'] ?? 'date';
+        $direction = $filters['direction'] ?? 'desc';
+        $sortColumn = match ($sort) {
+            'number' => 'number',
+            'total' => 'net_total',
+            default => 'doc_date',
+        };
+        $fromDate = $filters['from'] ?? null;
+        $toDate = $filters['to'] ?? null;
 
         $documents = Document::query()
             ->where('type', $type)
@@ -65,8 +77,8 @@ class DocumentController extends Controller
                     }
                 });
             })
-            ->orderByDesc('doc_date')
-            ->orderByDesc('id')
+            ->orderBy($sortColumn, $direction)
+            ->orderBy('id', $direction)
             ->paginate(50)
             ->withQueryString();
 
@@ -77,7 +89,7 @@ class DocumentController extends Controller
         return view($view, [
             'type' => $type,
             'documents' => $documents,
-            'filters' => $filters + ['status' => $status],
+            'filters' => $filters + ['status' => $status, 'sort' => $sort, 'direction' => $direction],
             'canManage' => $request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.manage' : 'sales.manage'),
             'canDelete' => $request->user()->can($type === Document::TYPE_PURCHASE ? 'purchases.delete' : 'sales.delete'),
         ]);
@@ -176,7 +188,11 @@ class DocumentController extends Controller
         $this->authorizeManage($request, $document->type);
         abort_if($document->isVoid(), 404);
 
-        $data = $this->validated($request, $document->type);
+        $data = $this->validated(
+            $request,
+            $document->type,
+            DocumentImportInvoice::query()->where('document_id', $document->id)->exists(),
+        );
         $document = $this->writer->save($document->type, $data['header'], $data['lines'], $request->user(), $document);
         $this->storeAttachments($request, $document);
 
@@ -358,8 +374,33 @@ class DocumentController extends Controller
         return [
             'type' => $type,
             'document' => $document,
-            'brands' => Brand::query()->orderBy('name')->pluck('name')->values(),
-            'products' => Product::query()->with('aliases:id,product_id,name')->orderBy('name_en')->get(['id', 'code', 'name_en', 'name_bn', 'brand', 'pack_size', 'buy_price', 'sell_price', 'sd_pct', 'vat_pct']),
+            'preserveRounding' => $document->exists && DocumentImportInvoice::query()->where('document_id', $document->id)->exists(),
+            'brands' => Brand::query()->orderBy('name')->get(['id', 'name', 'image_path'])->map(fn (Brand $brand) => [
+                'id' => $brand->id,
+                'name' => $brand->name,
+                'image_url' => $brand->image_path ? asset('storage/'.$brand->image_path) : null,
+            ])->values(),
+            'productTypes' => ProductType::query()->orderBy('name')->get(['id', 'brand_id', 'name']),
+            'products' => Product::query()
+                ->with([
+                    'aliases:id,product_id,name',
+                    'productType:id,brand_id,name',
+                    'brandMaster' => fn ($query) => $query->withTrashed()->select('id', 'purchase_discount_pct'),
+                ])
+                ->select(['products.id', 'products.code', 'products.name_en', 'products.name_bn', 'products.brand', 'products.brand_id', 'products.product_type_id', 'products.pack_size', 'products.image_path', 'products.buy_price', 'products.sell_price', 'products.sd_pct', 'products.vat_pct', 'products.purchase_discount_pct'])
+                ->selectSub(DocumentLine::query()
+                    ->select('document_lines.unit_price')
+                    ->join('documents', 'documents.id', '=', 'document_lines.document_id')
+                    ->whereColumn('document_lines.product_id', 'products.id')
+                    ->where('document_lines.kind', DocumentLine::KIND_NORMAL)
+                    ->where('documents.type', Document::TYPE_SALE)
+                    ->where('documents.status', Document::STATUS_POSTED)
+                    ->orderByDesc('documents.doc_date')
+                    ->orderByDesc('documents.id')
+                    ->orderByDesc('document_lines.id')
+                    ->limit(1), 'latest_sale_price')
+                ->orderBy('name_en')
+                ->get(),
             'parties' => $type === Document::TYPE_PURCHASE
                 ? Supplier::query()->orderBy('name')->get(['id', 'code', 'name'])
                 : Retailer::query()->orderBy('name')->get(['id', 'code', 'name']),
@@ -373,7 +414,7 @@ class DocumentController extends Controller
     /**
      * @return array{header: array<string, mixed>, lines: list<array<string, mixed>>}
      */
-    private function validated(Request $request, string $type): array
+    private function validated(Request $request, string $type, bool $preserveRounding = false): array
     {
         $partyKey = $type === Document::TYPE_PURCHASE ? 'supplier_id' : 'retailer_id';
         $partyTable = $type === Document::TYPE_PURCHASE ? 'suppliers' : 'retailers';
@@ -399,8 +440,8 @@ class DocumentController extends Controller
                 'nullable',
                 Rule::in($type === Document::TYPE_SALE ? ['normal', 'combo_bonus'] : ['normal']),
             ],
-            'lines.*.qty' => ['required', 'decimal:0,3'],
-            'lines.*.bonus_qty' => ['nullable', 'decimal:0,3'],
+            'lines.*.qty' => ['required', 'integer', 'min:1'],
+            'lines.*.bonus_qty' => ['nullable', 'integer', 'min:0'],
             'lines.*.unit_price' => ['nullable', 'decimal:0,4'],
             'lines.*.line_discount' => ['nullable', 'decimal:0,2'],
             'lines.*.line_value' => ['nullable', 'decimal:0,2'],
@@ -431,7 +472,12 @@ class DocumentController extends Controller
             'action' => $data['action'] ?? 'save',
         ];
 
-        return ['header' => $header, 'lines' => array_values($data['lines'])];
+        $lines = array_values($data['lines']);
+        if (! $preserveRounding) {
+            $header['rounding_adjustment'] = $this->rounding->adjustment($lines, $header);
+        }
+
+        return ['header' => $header, 'lines' => $lines];
     }
 
     private function storeAttachments(Request $request, Document $document): void

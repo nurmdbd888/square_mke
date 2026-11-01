@@ -244,6 +244,61 @@ class DocumentImportOcrTest extends TestCase
 
     }
 
+    public function test_upload_endpoint_detects_purchase_type_from_browser_extracted_invoice_text(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $owner = $this->owner();
+        $page = implode("\n", [
+            'Invoice No: CH-AUTO',
+            'Date: 14/10/2026',
+            'Supplier Name: Square Toiletries Ltd.',
+            'Buyer Name: Khaza Drug House',
+            'SKU Code Product Name Pack Size Issued Qty Bonus Qty Box Size Total Box/Pcs Total Qty MRP Batch No Batch Qty',
+            '1 P02 Sample Product 200 ml 10 0 12 1 Box, 0 Pcs 10 250 BATCH00001 10 1 Box, 0 Pcs',
+        ]);
+
+        $response = $this->asMaintenanceUser()->actingAs($owner)->post(route('imports.invoices.store'), [
+            'scan_files' => [
+                UploadedFile::fake()->createWithContent('invoice.pdf', "%PDF-1.4\n1 0 obj <</Type/Catalog>> endobj\n%%EOF"),
+            ],
+            'ocr_pages' => json_encode([['text' => $page]], JSON_THROW_ON_ERROR),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('document_import_batches', [
+            'doc_type' => DocumentImportBatch::TYPE_PURCHASE,
+            'original_name' => 'invoice.pdf',
+            'status' => DocumentImportBatch::STATUS_PREVIEW,
+        ]);
+    }
+
+    public function test_upload_endpoint_detects_sales_type_from_retailer_invoice_text(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $owner = $this->owner();
+        $page = implode("\n", [
+            'Invoice No: SALE-AUTO',
+            'Date: 10/10/2026',
+            'Retailer Code: 4831',
+            'Retailer Name: Khaza Drug House',
+            '1 Sample Product 25 gm 10 9.17 0 0 91.70',
+        ]);
+
+        $response = $this->asMaintenanceUser()->actingAs($owner)->post(route('imports.invoices.store'), [
+            'scan_files' => [
+                UploadedFile::fake()->createWithContent('sales.pdf', "%PDF-1.4\n1 0 obj <</Type/Catalog>> endobj\n%%EOF"),
+            ],
+            'ocr_pages' => json_encode([['text' => $page]], JSON_THROW_ON_ERROR),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('document_import_batches', [
+            'doc_type' => DocumentImportBatch::TYPE_SALE,
+            'original_name' => 'sales.pdf',
+            'status' => DocumentImportBatch::STATUS_PREVIEW,
+        ]);
+    }
+
     public function test_large_ocr_batches_queue_the_parsed_payload_for_processing(): void
     {
         Storage::fake(config('filesystems.default'));

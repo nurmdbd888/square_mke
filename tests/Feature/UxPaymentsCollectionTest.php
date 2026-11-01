@@ -70,6 +70,24 @@ class UxPaymentsCollectionTest extends TestCase
         $this->assertSame(Document::COLLECTION_COMPLETED, $invoice->fresh()->collection_status);
     }
 
+    public function test_paid_shortcut_posts_a_full_receipt_for_the_remaining_balance(): void
+    {
+        $invoice = $this->postedSale();
+        $collector = $this->userWithRole('collector');
+
+        $this->actingAs($collector)
+            ->post(route('collector.paid', $invoice))
+            ->assertRedirect();
+
+        $receipt = Payment::query()->sole();
+        $this->assertSame(Payment::KIND_RECEIPT, $receipt->kind);
+        $this->assertTrue($receipt->isPosted());
+        $this->assertSame('1000.00', $receipt->amount);
+        $this->assertNotSame('', $receipt->number);
+        $this->assertSame(Document::COLLECTION_COMPLETED, $invoice->fresh()->collection_status);
+        $this->assertSame('0.00', (string) app(SaleCollectionStatus::class)->remainingAmount($invoice->fresh()));
+    }
+
     public function test_collections_page_lists_only_due_invoices_and_opens_compact_collection_form(): void
     {
         $invoice = $this->postedSale(); // doc_date 2026-10-01
@@ -81,6 +99,7 @@ class UxPaymentsCollectionTest extends TestCase
             ->get(route('collector.index'))
             ->assertOk()
             ->assertSee('data-testid="collector-filters"', false)
+            ->assertSee('data-testid="collector-paid-'.$invoice->id.'"', false)
             ->assertSee(__('Overdue'), false)
             ->assertSee(route('collector.show', $invoice), false)
             ->assertDontSee(__('Ready to confirm'), false)
@@ -120,6 +139,32 @@ class UxPaymentsCollectionTest extends TestCase
             ->assertSee($receipt->number, false)
             ->assertSee('href="'.route('collector.index').'"', false);
         $this->assertSame('725.00', (string) app(SaleCollectionStatus::class)->remainingAmount($invoice->fresh()));
+    }
+
+    public function test_collections_pagination_counts_only_invoices_with_a_real_balance_due(): void
+    {
+        $collector = $this->userWithRole('collector');
+        $retailer = Retailer::query()->create(['name' => 'Page Shop']);
+
+        for ($index = 1; $index <= 51; $index++) {
+            Document::query()->create([
+                'type' => Document::TYPE_SALE,
+                'number' => sprintf('S-PAGE-%03d', $index),
+                'retailer_id' => $retailer->id,
+                'doc_date' => '2026-10-01',
+                'status' => Document::STATUS_POSTED,
+                'subtotal' => '100',
+                'net_total' => '100',
+                'collection_status' => Document::COLLECTION_DUE,
+            ]);
+        }
+
+        $this->actingAs($collector)
+            ->get(route('collector.index', ['page' => 2, 'sort' => 'invoice', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSee('Showing 51 to 51 of 51')
+            ->assertSee('S-PAGE-051', false)
+            ->assertDontSee('S-PAGE-001', false);
     }
 
     public function test_open_invoices_htmx_with_retailer_id(): void

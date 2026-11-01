@@ -38,7 +38,7 @@
                 </td>
                 <td>{{ $line->product?->pack_size ?: ($line->product?->unit ?: '—') }}</td>
                 <td class="text-right mono">{{ format_money($line->unit_price) }}</td>
-                <td class="text-right mono">{{ local_digits($line->qty) }}</td>
+                <td class="text-right mono">{{ format_qty($line->qty) }}</td>
                 <td class="text-right mono">{{ format_money($forceZeroAmounts ? 0 : $line->vat_amount) }}</td>
                 <td class="text-right mono">{{ format_money($forceZeroAmounts ? 0 : $line->line_discount) }}</td>
                 <td class="text-right mono">{{ format_money($forceZeroAmounts ? 0 : $line->line_value) }}</td>

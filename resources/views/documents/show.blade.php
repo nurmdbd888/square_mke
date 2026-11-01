@@ -125,8 +125,8 @@
                                 <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>
                             @endif
                         </td>
-                        <td class="text-right font-mono">{{ local_digits($line->qty) }}</td>
-                        <td class="text-right font-mono">{{ local_digits($line->bonus_qty) }}</td>
+                        <td class="text-right font-mono">{{ format_qty($line->qty) }}</td>
+                        <td class="text-right font-mono">{{ format_qty($line->bonus_qty) }}</td>
                         <td class="text-right font-mono">{{ format_number($line->unit_price, 4) }}</td>
                         <td class="text-right font-mono">{{ format_money($line->line_value) }}</td>
                         @if ($document->isSale() && $document->isPosted())
@@ -168,7 +168,7 @@
                                     <span class="block font-mono text-xs text-slate-500">{{ $line->product->code }}</span>
                                 @endif
                             </td>
-                            <td class="text-right font-mono">{{ local_digits($line->qty) }}</td>
+                            <td class="text-right font-mono">{{ format_qty($line->qty) }}</td>
                             <td class="text-right font-mono">{{ format_number($line->unit_price, 4) }}</td>
                             <td class="text-right font-mono">{{ format_money(0) }}</td>
                             @if ($document->isSale() && $document->isPosted())
