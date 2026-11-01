@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Purchases;
 
+use App\Domain\Money\Exact;
 use App\Domain\Payments\PartyBalance;
 use App\Models\Document;
 use App\Models\DocumentLine;
@@ -91,7 +92,7 @@ class PurchaseOrderWorkflowTest extends TestCase
             ->where('payment_id', $payment->id)
             ->where('document_id', $firstInvoice->id)
             ->value('amount'));
-        $this->assertSame('8.000', \App\Domain\Money\Exact::qty(
+        $this->assertSame('8.000', Exact::qty(
             StockLedgerEntry::query()->where('document_id', $firstInvoice->id)->sum('qty_in')
         ));
         $this->assertSame('Partially Received', $order->statusLabel());

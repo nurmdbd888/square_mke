@@ -1228,5 +1228,15 @@
     "Batch": "ব্যাচ",
     "MRP": "এমআরপি",
     "Provisional cost — verify before posting": "অস্থায়ী খরচ — পোস্টের আগে যাচাই করুন",
-    "Batch number": "ব্যাচ নম্বর"
+    "Batch number": "ব্যাচ নম্বর",
+    "Challan No.: :value": "চালান নং: :value",
+    "Vehicle No.: :value": "গাড়ি নং: :value",
+    "Choose supplier": "সরবরাহকারী নির্বাচন করুন",
+    "Line total": "লাইনের মোট",
+    "Choose product": "পণ্য নির্বাচন করুন",
+    "Product no longer available": "পণ্যটি আর উপলব্ধ নেই",
+    "Payment date": "পেমেন্টের তারিখ",
+    "Cheque due date": "চেকের মেয়াদপূর্তির তারিখ",
+    "No supplier payments recorded against this order.": "এই ক্রয় অর্ডারের বিপরীতে কোনো সরবরাহকারী পেমেন্ট রেকর্ড করা হয়নি।",
+    "Pieces due for :product": ":product-এর বাকি পিস সংখ্যা"
 }
